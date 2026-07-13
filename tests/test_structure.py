@@ -64,6 +64,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "scripts/audit.ps1",
             "assets/templates/AGENTS.md",
             "assets/templates/docs/branching.md",
+            "assets/templates/docs/production-readiness.md",
             "assets/templates/skills/start.md",
             "assets/templates/skills/clarify.md",
             "assets/templates/harness/tasks/_PACKET.template.md",
@@ -161,6 +162,22 @@ class FrameworkStructureTests(unittest.TestCase):
                         offenders.append(f"{path.relative_to(ROOT).as_posix()} contains {token!r}")
         self.assertEqual(offenders, [], "machine-local paths found:\n" + "\n".join(offenders))
 
+    def test_production_readiness_contract_is_wired_into_packets(self):
+        readiness = (ROOT / "assets/templates/docs/production-readiness.md").read_text(encoding="utf-8")
+        packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
+        schemas = (ROOT / "protocol/references/schemas.md").read_text(encoding="utf-8")
+        dispatch = (ROOT / "protocol/references/dispatch.md").read_text(encoding="utf-8")
+        self.assertIn("Functional correctness", readiness)
+        self.assertIn("Rollback and recovery", readiness)
+        self.assertIn("readiness_dimensions:", packet)
+        self.assertIn("required_verification:", packet)
+        self.assertIn("observed_flows:", packet)
+        self.assertIn("Impact analysis", packet)
+        self.assertIn("boundary/failure", packet)
+        self.assertIn("readiness_dimensions", schemas)
+        self.assertIn("verification-latest.json", dispatch)
+        self.assertIn("running product", dispatch)
+
     def test_version_matches_pyproject(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertRegex(version, r"^\d+\.\d+\.\d+")
@@ -189,6 +206,7 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(version["level"], "Standard")
             self.assertEqual(version.get("cli"), "python")
             self.assertTrue((target / "docs/branching.md").exists())
+            self.assertTrue((target / "docs/production-readiness.md").exists())
             self.assertTrue((target / "skills/clarify.md").exists())
             self.assertTrue((target / "skills/initiative.md").exists())
             self.assertTrue((target / "harness/initiatives/INDEX.md").exists())

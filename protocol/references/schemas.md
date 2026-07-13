@@ -27,6 +27,11 @@ handoff_writers:
     file_writer: <role|orchestrator>
 status: ready|in_progress|accepted|blocked
 dependencies: []                      # other P-00x; empty + serial default across initiative
+readiness_dimensions:                 # affected dimensions from docs/production-readiness.md
+  - functional-correctness
+required_verification:
+  commands: [build, test]              # ids from harness/verification.json
+  observed_flows: [<affected user or system flow>]
 risk_score: 0
 conflict_score: 0
 execution: serial|multitask|optional-worktree
@@ -34,8 +39,10 @@ execution_mode: subagent-required|direct-exception
 direct_exception_reason: null
 ```
 
-Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner`.  
-Phase cannot be `accepted` without `acceptance_doc`.  
+Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner`.
+Code/integration/release Packets must declare affected `readiness_dimensions`, command check IDs, and observable affected flows.
+Acceptance criteria must name an initial condition/input, action, observable result, boundary or failure behavior, and evidence source; vague completion statements do not pass Plan.
+Phase cannot be `accepted` without `acceptance_doc`, `VERIFY PASS` for all declared command checks, recorded observed flows, and readiness evidence.
 New plans must not use `Task N` / `WP-*` titles — see `glossary.md`.
 
 ## Handoff payload

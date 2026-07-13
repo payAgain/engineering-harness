@@ -99,10 +99,14 @@ Do NOT introduce yourself as "implementing Task N". You are the role above worki
 
 阶段可标 `accepted` 仅当：
 
-1. `role_pipeline` 中必选步骤已完成（handoff + evidence）  
-2. `acceptance_doc` 已写入且含验证摘要与 commit SHA（有变更时）  
-3. 工作分支 must-commit 已完成（或记录 `deferred_reason`）  
-4. invocations ledger 记录了本阶段各角色实例  
+1. `role_pipeline` 中必选步骤已完成（handoff + evidence）
+2. Packet acceptance criteria are observable and each has recorded evidence
+3. `harness/evidence/verification-latest.json` is `PASS` and covers every Packet `required_verification.commands` id
+4. every Packet `required_verification.observed_flows` entry was exercised against the running product and recorded
+5. every affected `readiness_dimensions` entry has evidence required by `docs/production-readiness.md`
+6. `acceptance_doc` 已写入且含验证摘要、observed-flow 结果、readiness 结论与 commit SHA（有变更时）
+7. 工作分支 must-commit 已完成（或记录 `deferred_reason`）
+8. invocations ledger 记录了本阶段各角色实例
 
 ## Reviewer gate (Full / high risk)
 
@@ -137,6 +141,9 @@ Fail G3 if:
 - forced role step missing invocation record
 - pipeline role ≠ actual_role ≠ handoff `from_role`
 - phase marked accepted without `acceptance_doc`
+- required command evidence is missing, not `PASS`, or does not cover the Packet check ids
+- an affected flow or readiness dimension was omitted, guessed, or declared not applicable without a reason
+- acceptance criteria describe an activity ("implemented", "optimized", "supported") without an observable result
 - human was asked to decide Phase parallel/同步
 - every phase auto-spawned a paired reviewer without risk/Full rule
 - verified work left uncommitted without `deferred_reason`

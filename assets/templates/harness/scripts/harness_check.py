@@ -12,6 +12,7 @@ LIGHT_REQUIRED = [
     "AGENTS.md",
     "current-task.md",
     "docs/verification.md",
+    "docs/production-readiness.md",
     "harness/session/session-state.json",
     "harness/session/session-log.md",
     "skills/clarify.md",

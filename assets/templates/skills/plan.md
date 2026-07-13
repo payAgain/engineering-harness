@@ -6,7 +6,10 @@
 
 ## Rules
 - Inspect relevant files first; keep scope tight
-- Include validation commands
+- Include command checks from `harness/verification.json` and affected flows that must be observed
+- Read `docs/production-readiness.md`; declare affected readiness dimensions and justify exclusions
+- Write acceptance criteria as condition/input → action → observable result, including boundary/failure behavior and evidence source
+- Record interface, data, security, reliability, performance, deployment/configuration, rollback, and compatibility impact; use explicit unaffected findings instead of omission
 - **Do not implement inside plan**
 - 使用对外名：Plan / Phase / Build；ID：`I-00x` / `P-00x` / `B-00x`
 - **禁止** `Task N` / `WP-*` 作为新计划标题
@@ -24,6 +27,9 @@ Phases:
   P-001 <动词短语>
       roles: researcher → <module> → test → (reviewer?)
       acceptance: harness/evidence/.../P-001/ACCEPTANCE.md
+      readiness: [functional-correctness, maintainability, ...]
+      command_checks: [build, test, ...]
+      observed_flows: [<affected user/system flow>]
       dependencies: []
   P-002 <动词短语>
       dependencies: [P-001]
