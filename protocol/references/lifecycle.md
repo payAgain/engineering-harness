@@ -31,8 +31,8 @@
 2. Classify  人类声明：hotfix | feature | major + 一句话目标
 3. Clarify   范围化澄清（只问本 Initiative；不是重做整个产品）
 4. Branch    从最新 main 拉 feat|fix|chore|hotfix/*
-5. Plan      写入 harness/initiatives/<id>/ 与 Task Packets / REGISTRY 增量
-6. Batches   每批新 orchestrator 实例 → workers → must-commit
+5. Plan      写入 harness/initiatives/<id>/；Plan 中每个 Task = Phase → Packets / REGISTRY
+6. Batches   每批新 orchestrator → 按阶段 role_pipeline 派角色 → 验收文档 → must-commit
 7. Gate      人审 SHA；授权 push/PR/merge；（major）再授权 tag/release
 8. Archive   handoff；Initiative 标 completed；可选把结论回写 Charter/ADR
 ```
@@ -69,7 +69,7 @@ Task Packets 通过 frontmatter / 正文引用 `initiative_id`。
 1. 新 Initiative **必须**新工作分支（除非 hotfix 且有明确例外记录）。
 2. 新 Initiative **必须**新 Human Gate 会话 + 新 orchestrator 实例；禁止在旧长会话「顺便开下一版本」。
 3. `resume` 只能续**当前** Initiative 的未完成 batch；若人类要开新目标 → 切 `initiative` 模式。
-4. Initiative 完成的定义：验收满足 + 相关任务关闭 + 验证证据 + **commit SHA**（有代码变更时）+ handoff。
+4. Initiative 完成的定义：各 Phase Task `accepted`（含 `acceptance_doc`）+ 验证证据 + **commit SHA**（有代码变更时）+ handoff。
 5. 合入 `main` / `tag` / `release` 仍需人类授权。
 
 ## Relationship to other modes

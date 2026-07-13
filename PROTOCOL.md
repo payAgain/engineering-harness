@@ -40,7 +40,7 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 8. **GitHub Flow** after G1. See `references/branching.md`.
 9. **Full:** risk≥8 `code` needs reviewer before must-commit.
 10. **Clarify before act** (product-wide or scoped to an Initiative). See `references/intent.md`.
-11. **Packets dispatch roles — not todolists.** Plan checklists (`### Task N`) are drafts only. SubAgents must be bound to `agents/<role>.md` via Task Packets. Forbidden: one todo → one implementer (+ one reviewer each). See `references/anti-patterns.md` and `references/dispatch.md`.
+11. **Task = Phase（进度单位）；执行按角色流水线。** 计划中的 Task 必须进入 REGISTRY。每个阶段由 `role_pipeline` 多角色协作，收尾写验收文档后才可 `accepted`。禁止「一阶段 = 一个匿名实现 Agent（+ 自动配 Review）」。见 `references/phases.md`、`anti-patterns.md`、`dispatch.md`。
 
 ## 3. Modes
 
@@ -94,7 +94,8 @@ Details: `references/lifecycle.md`.
 | Need | Read |
 |---|---|
 | Lifecycle / next feature | `references/lifecycle.md` |
-| Anti-patterns (todo dispatch) | `references/anti-patterns.md` |
+| Phase Tasks / 进度追踪 | `references/phases.md` |
+| Anti-patterns (匿名 Todo 工人) | `references/anti-patterns.md` |
 | Intent Clarity | `references/intent.md` |
 | Roles | `references/roles.md` |
 | Gates | `references/gates.md` |

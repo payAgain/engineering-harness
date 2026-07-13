@@ -1,16 +1,23 @@
 # Core Schemas
 
-## Task Packet (frontmatter essentials)
+## Phase Task Packet (frontmatter essentials)
+
+Task = **phase**（进度单位）。详见 `references/phases.md`。
 
 ```yaml
-task_id: <id>
+task_id: <id>                         # progress id; may map to plan Task N
 initiative_id: <I-…>
 batch_id: <batch>
+kind: phase                           # default
 task_type: code|test|research|review|doc|contract|integration|release|governance
-primary_owner: <role>                 # MUST exist as agents/<role>.md
-required_role: <role>                 # normally == primary_owner
+primary_owner: <role>                 # phase lead; MUST exist as agents/<role>.md
 code_owner: <role|null>
 test_owner: <role|null>
+acceptance_doc: harness/evidence/<lead>/<task_id>/ACCEPTANCE.md
+role_pipeline:                        # ordered role steps inside this phase
+  - role: <role>
+    purpose: explore|implement|verify|review|…
+    when: null|full_or_risk_ge_8      # optional gate for the step
 evidence_writers:
   <role>: harness/evidence/<role>/<task>/**
 handoff_writers:
@@ -18,7 +25,7 @@ handoff_writers:
     mode: file|return-payload
     path: harness/handoffs/...
     file_writer: <role|orchestrator>
-status: ready
+status: ready|in_progress|accepted|blocked
 dependencies: []
 risk_score: 0
 conflict_score: 0
@@ -27,8 +34,8 @@ execution_mode: subagent-required|direct-exception
 direct_exception_reason: null
 ```
 
-Dispatch is illegal without `task_id`, `task_type`, `primary_owner`, and registry entry.  
-Plan markdown checklists are drafts only — see `anti-patterns.md` AP-1.
+Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner` (minimal pipeline).  
+Phase cannot be `accepted` without `acceptance_doc`. See `anti-patterns.md`.
 
 ## Handoff payload
 

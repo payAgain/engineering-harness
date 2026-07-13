@@ -60,14 +60,14 @@ Human intent: <hotfix|feature|major> — <one-line goal>
 ## Round C — batch（Initiative 内）
 
 ```text
-I approve batch <batch_id> for initiative <id>: packets <WP-…, …> (NOT plan Task 0/1/2 alone).
+I approve batch <batch_id> for initiative <id>: phase tasks <WP-… / Task N, …>.
 
 1. Spawn a **new orchestrator** role instance. Human Gate must not orchestrate or implement.
-2. Orchestrator may dispatch ONLY from harness/tasks Packets + REGISTRY. If Packets missing → stop (dispatch-blocked).
-3. FORBIDDEN: one SubAgent per checklist row titled "implementing Task N"; FORBIDDEN: auto pair every todo with a reviewer.
-4. Merge same primary_owner packets into one worker invocation when safe. Worker prompts MUST use the skeleton in references/dispatch.md (role + agents/<role>.md + packet paths).
+2. Progress SSOT = REGISTRY + Phase Packets. Plan Task numbers must already be materialized; if missing → stop (packet-missing).
+3. Each Task is a **phase**: advance via role_pipeline (multi-role). FORBIDDEN: one anonymous "implementing Task N" agent; FORBIDDEN: auto pair every phase with a reviewer.
+4. Worker prompts MUST use references/dispatch.md skeleton (role + agents/<role>.md + phase packet + pipeline step).
 5. Spawn reviewer only if Full / risk>=8 code / human requested.
-6. After verify: must-commit on working branch; record SHA; handoff; no push/tag/release without human auth.
+6. Phase close: write acceptance_doc → must-commit → status=accepted → update REGISTRY. No push/tag/release without human auth.
 ```
 
 ## Round Close — Archive Initiative

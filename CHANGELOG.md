@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.1 - 2026-07-13
+
+### Clarified
+- **Task 保留且必要**：Task = Phase（进度单位），不是要取消的 checklist
+- 阶段内按 `role_pipeline` 多角色协作；收尾必须写 `acceptance_doc` 才可 `accepted`
+- 新增 `protocol/references/phases.md`；纠正 0.8.0 中易被读成「不要 Task」的表述
+
+### Changed
+- Packet 模板 / schemas / Round C / plan skill 对齐阶段模型
+- 反模式改名为「匿名 Todo 工人」，明确错的是无角色派工而非有 Task
+
 ## 0.8.0 - 2026-07-13
 
 ### Added

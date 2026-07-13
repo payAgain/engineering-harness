@@ -1,35 +1,46 @@
 # Plan Procedure
 
 ## Goal
-Turn a request into a scoped, verifiable **design draft** before non-trivial work.  
-A plan is **not** the dispatch unit.
+把请求落成可追踪的 **Phase Tasks（阶段）** 设计，再进入派发。  
+Plan 是设计草稿；**REGISTRY 里的 Phase Task 才是进度 SSOT**。
 
 ## Rules
 - Inspect relevant files first; keep scope tight
 - Include validation commands
 - Update `current-task.md` / session as needed
 - **Do not implement inside plan**
-- **Do not** tell orchestrators to “spawn one agent per checklist row”
-- After the plan is accepted, **materialize Task Packets** under `harness/tasks/` (see `_PACKET.template.md`) and register them in `REGISTRY.yaml` before any SubAgent dispatch
+- Plan 里的 `Task 0 / Task 1…` **要保留**——每个 Task = 一个阶段
+- **Do not** 把每个 Task 派成「一个实现 Agent + 一个 Review Agent」
+- 计划被接受后：为每个阶段写 Phase Packet（见 `_PACKET.template.md`），登记 `REGISTRY.yaml`，并写明 `role_pipeline` + `acceptance_doc`
 
-## Plan vs Packet
+## Plan → Phase Task
 
-| Plan (`docs/**/plans` or notes) | Packet (`harness/tasks/<id>.md`) |
+| Plan 条目 | 物化后 |
 |---|---|
-| Human-readable steps / design | Runtime SSOT for dispatch |
-| May say “Task 0, Task 1” | Must have `primary_owner` / `required_role` / `task_type` |
-| Not spawnable | Spawnable via role prompt skeleton |
+| `### Task N` 标题与目标 | `task_id` + Goal；`kind: phase` |
+| 本阶段要动谁 | `role_pipeline`（多角色，不是单工人） |
+| 怎么算做完 | `acceptance_doc` + Validation |
+| 依赖顺序 | Packet `dependencies` + REGISTRY |
+
+详见 `protocol/references/phases.md`。
 
 ## Output
 ```text
-Plan (draft only)
+Plan (phases)
 
 Goal:
 Scope / Non-Scope:
-Proposed Packets:   # ids + required_role — to be written next
+
+Phases:   # 即 Task 0/1/… — 进度单位
+  - Task 0 / WP-…: <阶段目标>
+      roles: researcher → <module> → test → (reviewer?)
+      acceptance: <path>
+  - Task 1 / WP-…: …
+
 Files Likely Affected:
 Validation:
 Risks:
 
-Next: write Packets + REGISTRY, then await batch approval (role dispatch — not todo dispatch)
+Next: write Phase Packets + REGISTRY, then await batch approval
+      (advance by role_pipeline inside each phase — track progress via tasks)
 ```

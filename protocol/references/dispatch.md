@@ -4,43 +4,48 @@
 
 | Surface | Allowed | Forbidden |
 |---|---|---|
-| Human Gate chat | clarify Q&A, approve batch scope, review SHAs, authorize push/tag/release | implement, test, review-as-worker, for-each todo 派工 |
-| Orchestrator role instance | read Packets, dispatch **role instances**, authenticity checks, session/handoff, require commits | writing module business code; pretending to be reviewer; “实现 Task N” 匿名工人 |
+| Human Gate chat | clarify Q&A, approve batch/phase scope, review SHAs, authorize push/tag/release | implement, test, review-as-worker, for-each 匿名 Task 派工 |
+| Orchestrator role instance | 推进 Phase Tasks、按 `role_pipeline` 派角色实例、验收收尾、session/handoff、require commits | 写业务模块代码；假装 reviewer；“实现 Task N” 匿名工人 |
 
 **The Human Gate chat must spawn the orchestrator as a separate role instance.**  
 If the host tool has no subagent mechanism, stop with `delegation-unavailable`.
+
+概念与阶段模型：`references/phases.md`。禁止形态：`references/anti-patterns.md`。
 
 ## Dispatch SSOT（关键）
 
 | 来源 | 可否直接派 SubAgent |
 |---|---|
-| `harness/tasks/<id>.md` Packet（含 `primary_owner` / `required_role`） | **可以** — 唯一派发 SSOT |
-| `harness/tasks/REGISTRY.yaml` | 索引，不代替 Packet |
-| `docs/**/plans/*.md` 里的 `### Task N` | **不可以** — 仅草稿，须先落成 Packet |
-| 聊天里的 todo 勾选列表 | **不可以** |
+| `harness/tasks/<id>.md` Phase Packet（含 `role_pipeline` / 角色字段） | **可以** — 进度与派发 SSOT |
+| `harness/tasks/REGISTRY.yaml` | 进度索引，不代替 Packet |
+| `docs/**/plans/*.md` 里的 `### Task N` | **先物化为 Phase Packet** 再派；不可跳过 REGISTRY |
+| 聊天里的 todo 勾选 | **不可以** 当派发或进度 SSOT |
 
-无 Packet 就派工 → 失败码 `packet-missing`。见 `references/anti-patterns.md`。
+无 Packet 就派工 → `packet-missing`。阶段无验收文档就关闭 → `acceptance-missing`。
 
 ## Temporary orchestrator
 
 Each approved batch creates a **new** orchestrator role instance that restores from:
 
 - Charter / ADR / contracts
-- ownership / **Task Registry + Packets**（不是 plan.md）
+- ownership / **Task Registry + Phase Packets**
 - active Initiative brief
 - `current-task.md` / `harness/session/*`
 - git status / HEAD / current branch
-- approval reference (batch scope)
+- approval reference (batch / phase scope)
 
 Missing required restore inputs → `context-incomplete`.
 
-## How to form a batch（不是 1 todo = 1 agent）
+## How to advance a Phase Task（不是 1 Task = 1 匿名 Agent）
 
-1. 从 REGISTRY 选出 **同一 Initiative**、依赖满足、写权可合并的 Packets  
-2. 按 `primary_owner` **分组**：同一角色可串行处理多个 Packet，或一次实例带多 Packet（若写权不冲突）  
-3. 每个 **角色组** 派 **一个** 角色实例（不是每个 Packet 都新开「实现者」人设）  
-4. `test` 在 code 组产出后派（若本 batch 需要）  
-5. `reviewer` **仅当** Full 或某 code Packet `risk_score ≥ 8` 时派 **一个** 审本 batch（不是每个 Packet 一个 reviewer）
+1. 从 REGISTRY 选出本 batch 批准的 Phase Tasks（依赖已满足）  
+2. 读 Packet 的 `role_pipeline`（若缺失：至少用 `primary_owner` + `test_owner` 推导最小流水线并写回 Packet）  
+3. **按角色步骤**派实例：每步绑定 `agents/<role>.md` + 同一 `task_id`  
+4. 同角色多步可合并；不同角色 = 不同实例（可串行；写权不冲突时可并行）  
+5. `reviewer` 仅当 Full 或本阶段 code `risk_score ≥ 8`（或人类点名）时插入  
+6. **收尾**：写/更新 `acceptance_doc` → must-commit → `status: accepted` → 更新 REGISTRY  
+
+一个 Phase Task **通常对应多个角色实例**；进度单位是阶段，执行单位是角色。
 
 ## Forced role delegation
 
@@ -48,7 +53,7 @@ Must create a **separate role instance** when any is true:
 
 - role is `orchestrator` for an approved batch
 - Packet `execution_mode: subagent-required`（默认）
-- `task_type` in `code|test|review|contract|integration|release|governance` with risk / impact rules
+- pipeline 中的任一步 `role`（含 code/test/review/contract/…）
 - risk score ≥ 8
 - multi-file / cross-module / public contract / data / version / migration / release
 
@@ -57,50 +62,59 @@ Must create a **separate role instance** when any is true:
 派给 worker 的提示词 **必须** 使用此骨架（可翻译，不可删字段）：
 
 ```text
-You are role: <required_role>
-Read and obey: agents/<required_role>.md
-Packet SSOT: harness/tasks/<task_id>.md
+You are role: <role>
+Read and obey: agents/<role>.md
+Phase Task (progress SSOT): harness/tasks/<task_id>.md
 Initiative: <initiative_id>
 Batch: <batch_id>
+Pipeline step: <purpose>   # explore|implement|verify|review|…
 
-task_type: <task_type>
-primary_owner: <primary_owner>
-Allowed write paths: <from packet>
-Forbidden: business paths outside ownership; do not act as other roles
+task_type: <task_type for this step>
+Allowed write paths: <from packet for this role>
+Forbidden: business paths outside ownership; do not act as other roles; do not close the phase
 
 Deliverables:
-1. Do the packet acceptance work
+1. Do this pipeline step's acceptance work for the phase
 2. Write handoff to <handoff path>
 3. Write evidence under <evidence paths>
-4. Stop. Do not start the next todo/packet unless it is listed in THIS prompt's packet set for your role.
+4. Stop. Do not mark the phase accepted; orchestrator closes after acceptance_doc.
 
-Do NOT introduce yourself as "implementing Task N". You are the role above.
+Do NOT introduce yourself as "implementing Task N". You are the role above working a tracked phase.
 ```
 
-环境/依赖/分支确认类 Packet：`task_type: research|governance`，`required_role: researcher` 或由 orchestrator 记录为 governance 探测——**禁止**写成匿名 Task 0 implementer。
+环境/依赖/分支确认：pipeline 的 `researcher` / `governance` 步——**禁止**写成匿名 Task implementer。
+
+## Phase close（orchestrator）
+
+阶段可标 `accepted` 仅当：
+
+1. `role_pipeline` 中必选步骤已完成（handoff + evidence）  
+2. `acceptance_doc` 已写入且含验证摘要与 commit SHA（有变更时）  
+3. 工作分支 must-commit 已完成（或记录 `deferred_reason`）  
+4. invocations ledger 记录了本阶段各角色实例  
 
 ## Reviewer gate (Full / high risk)
 
-At **Full**, or whenever a **code** Packet has `risk_score ≥ 8`:
+At **Full**, or whenever a phase’s **code** work has `risk_score ≥ 8`:
 
-- **one** reviewer instance per batch (or per coherent code group), not per todo line
+- insert **one** reviewer step in that phase’s pipeline（不是每个 checklist 行自动双人组）
 - record in invocations ledger
 - missing reviewer → fail G3 (unless one-time human waiver)
 
 ## Direct exception
 
-Only for `research|doc|governance`, and all of:
+Only for `research|doc|governance` 单步，且 all of:
 
 - risk ≤ 7
 - single file / single write domain
 - no public contract/data/version/migration/release impact
 - Packet records `execution_mode: direct-exception` and reason
 
-“Faster as a todo checklist” is not a valid exception.
+“Faster as a single anonymous agent” is not a valid exception.
 
 ## Runtime ledger
 
-`harness/runtime/invocations/<batch_id>.yaml` must list **Packets + roles**, never only “Task 0/1/2” titles without `required_role`.
+`harness/runtime/invocations/<batch_id>.yaml` must list **phase task_id + each role step**，不得只有 “Task 0/1/2” 标题而无 `role`。
 
 ## G3 authenticity checks
 
@@ -108,15 +122,14 @@ Fail G3 if:
 
 - orchestrator ran in Human Gate chat
 - SubAgent prompt used “implementing Task N” without role binding
-- dispatched from plan.md without Packet
-- forced task missing invocation record
-- Packet owner ≠ actual_role ≠ handoff `from_role`
-- every todo spawned its own reviewer without risk/Full rule
+- phase advanced without Packet / REGISTRY
+- forced role step missing invocation record
+- pipeline role ≠ actual_role ≠ handoff `from_role`
+- phase marked accepted without `acceptance_doc`
+- every phase auto-spawned a paired reviewer without risk/Full rule
 - verified work left uncommitted without `deferred_reason`
 
 ## Git checkpoint
-
-（must-commit / publish 规则同前）
 
 ```yaml
 version_control_checkpoint:
@@ -137,7 +150,7 @@ version_control_checkpoint:
 
 | Action | Who | Rule |
 |---|---|---|
-| `git commit` on working branches | role instance after verify | Required when batch has verified changes |
+| `git commit` on working branches | role instance / orchestrator after verify | Required when phase has verified changes |
 | `git push` / protected `main` / `tag` / release | human-authorized | explicit authorization |
 
 ## Boundary scripts

@@ -46,6 +46,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "protocol/references/gates.md",
             "protocol/references/dispatch.md",
             "protocol/references/branching.md",
+            "protocol/references/phases.md",
             "protocol/references/anti-patterns.md",
             "protocol/references/lifecycle.md",
             "protocol/references/roles.md",
@@ -84,8 +85,9 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("references/intent.md", text)
         self.assertIn("Clarify before act", text)
         self.assertIn("Must-commit", text)
+        self.assertIn("references/phases.md", text)
+        self.assertIn("Task = Phase", text)
         self.assertIn("references/anti-patterns.md", text)
-        self.assertIn("Packets dispatch", text)
         self.assertIn("references/lifecycle.md", text)
         self.assertIn("references/roles.md", text)
         self.assertIn("references/branching.md", text)
@@ -100,7 +102,7 @@ class FrameworkStructureTests(unittest.TestCase):
         ag = (ROOT / "assets/templates/AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("agents/", ag)
         self.assertIn("GitHub Flow", ag)
-        self.assertIn("todolists", ag.lower())
+        self.assertIn("role_pipeline", ag)
         self.assertIn("initiative.md", ag)
         self.assertIn("Must-commit", ag)
         self.assertIn("separate role instance", ag)
@@ -162,7 +164,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.8.0")
+        self.assertEqual(ver.stdout.strip(), "0.8.1")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)

@@ -1,4 +1,12 @@
 schema_version: 1
 charter_version: "0.0.0"
 updated: "{{TIMESTAMP}}"
+# Each entry is a Phase Task (progress unit). See protocol/references/phases.md
+# Example:
+# tasks:
+#   - task_id: WP-1.0
+#     title: "Phase: scaffold dialect"
+#     status: ready          # ready|in_progress|accepted|blocked
+#     packet: harness/tasks/WP-1.0.md
+#     acceptance_doc: harness/evidence/.../ACCEPTANCE.md
 tasks: []
