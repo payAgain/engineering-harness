@@ -18,10 +18,10 @@ from engineering_harness.paths import (
 
 APPROVAL_POLICY = """# Approval Policy
 
-- commit: human approval per batch
-- tag / push / release: explicit one-time authorization
-- migrate / destructive reset: explicit one-time authorization
-- G4 without commit SHA: explicit one-time waiver only
+- commit on working branches (`feat/*` etc.): required after verified work; agent-executed
+- tag / push / release / update protected `main|master`: explicit one-time human authorization
+- migrate / destructive reset: explicit one-time human authorization
+- G4 without commit SHA: not allowed (must-commit); waiver only with explicit one-time approval
 """
 
 

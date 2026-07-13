@@ -68,13 +68,14 @@ version_control_checkpoint:
   ahead_of_base: <int|unknown>
   pr_required: true
   base_commit: <SHA|none|unavailable>
-  candidate_commit: <SHA|pending-approval|none>
-  decision: created|awaiting-human-approval|deferred-by-human
-  approval_reference: ""
+  candidate_commit: <SHA>           # must be real after must-commit
+  decision: created|deferred-by-policy
+  approval_reference: ""            # push/tag/release authorization when relevant
   deferred_reason: ""
   uncommitted_file_count: 0
-  proposed_commit_message: ""
+  commit_message: ""
   branch_exception: null|main-allowed
 ```
 
-Branching policy: `references/branching.md` (GitHub Flow).
+Branching policy: `references/branching.md` (GitHub Flow).  
+Must-commit policy: `references/dispatch.md`. Role catalog: `references/roles.md`.

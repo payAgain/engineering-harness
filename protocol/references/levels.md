@@ -14,7 +14,7 @@ Minimum required:
 - `skills/start.md`, `skills/handoff.md`
 - `harness/scripts/harness_check.*`
 
-Still required: validation evidence, handoff, no unauthorized commit.
+Still required: validation evidence, handoff, must-commit on working branches when there are verified changes; no unauthorized push/tag/release.
 
 ## Standard (default)
 
@@ -27,7 +27,8 @@ Add:
 - `docs/architecture.md`, `docs/error-journal.md`
 - `progress-map.md`, `command-history.md`
 - `safe_bash_guard`
-- runtime invocations + batch git checkpoints
+- runtime invocations + batch git checkpoints (**must-commit** after verify)
+- role catalog: orchestrator / architect-contract / module / test / reviewer / integration-release (see `references/roles.md`)
 
 ## Full
 
@@ -35,9 +36,10 @@ Add on top of Standard:
 
 - complete G0–G6, integration barrier, readonly Reviewer
 - full change-type validation matrix
-- explicit approval policy for commit/tag/push/migrate/release
+- explicit approval policy for **tag / push / release / protected branch** (commits on feat/* are required, not beggar-gated)
 - optional pre-commit / CI harness-check
 - worktree/isolation criteria for high-conflict tasks
+- optional specialists: researcher / planner / security-reviewer when Task Packets name them
 
 ## Task routing inside a level
 

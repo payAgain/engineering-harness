@@ -31,12 +31,14 @@
 
 ## 核心原则（请先读）
 
-1. **先澄清目标，再行动**：用户也可能说不清要做成什么样；Agent 必须多轮提问、覆盖清单、消除二义性后，才能 Round A / 写代码。
-2. **人类聊天 = 审批闸门**，不是终身编排大脑；编排器按 batch 临时恢复。
-3. **未经明确授权**，不得 `commit` / `tag` / `push` / `release`。
-4. `code|test|review|contract|integration|release` 或风险 ≥ 8 的任务，必须作为**独立角色实例**执行。
+1. **先澄清目标，再行动**：多轮提问消除二义性后，才能 Round A / 写代码。
+2. **Human Gate ≠ 干活线程**：用户聊天只负责澄清、批准范围、审查 SHA、授权发布；编排与实现必须由**独立角色实例**（含 orchestrator）执行。
+3. **验证后必须 commit**：工作分支上留下可验收的 commit SHA；未提交的「已完成」视为流程失败。
+4. **人类把控发布面**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
 5. **运行时 SSOT 永远是目标项目仓库**。
 6. **GitHub Flow**：G1 之后不要在 `main`/`master` 上做实现类开发。
+
+角色目录与主流框架对照见 [`protocol/references/roles.md`](./protocol/references/roles.md)。
 
 完整执行协议：根目录 [`PROTOCOL.md`](./PROTOCOL.md)。
 
@@ -66,22 +68,6 @@
 | [`install.ps1`](./install.ps1) | 同上（PowerShell） |
 
 `scripts/` 下的 `init.ps1` / `audit.ps1` / `eh.cmd` 等仅为**兼容旧路径**的薄封装，新文档与日常使用请走根目录。
-
-### 可选：从旧 Cursor 模板迁移
-
-若目标仓只有 `.cursor/agents` / `.cursor/skills`（2026-07-09 旧模板产物），不要手工复制，直接：
-
-```text
-eh.cmd migrate <目标项目路径> --level Full
-```
-
-会生成/补齐：
-
-- `agents/`、`skills/`（从 `.cursor/*` 拷贝）
-- `.harness-version`、`docs/branching.md`、`harness/scripts/branch_check.py` 等
-- `harness/PROTOCOL.md`
-
-然后请人工更新 `AGENTS.md` 中的读取路径，并在下一实现 batch 前执行 `eh.cmd branch-new <slug> <path>`。
 
 ### 免安装（推荐）
 
@@ -116,25 +102,13 @@ python -m pip install -e .
 
 ## 五分钟上手
 
-### 0. 先澄清目标（Intent Clarity）
-
-把 `PROTOCOL.md` 交给任意 Agent，并粘贴 `protocol/references/prompts.md` 中的 **Round 0** 提示词。
-
-Agent 应：
-
-- 只读仓库、多轮提问（问题/验收/范围/约束/接口/选项/风险等）
-- 维护 `harness/drafts/INTENT-CLARITY.md` 与 Open Questions
-- 在你明确说「目标已明确，可以开始」之前，**不写业务代码、不冻结 G1**
-
 ### 1. 初始化目标仓库
 
 ```text
 eh.cmd init <project> --level Standard --name my-app
 ```
 
-会把模板复制进目标项目，并写入 `.harness-version`、`harness/PROTOCOL.md` 等。
-
-级别说明：
+会把模板复制进目标项目（含 `AGENTS.md`、`skills/`、`harness/PROTOCOL.md`、`.harness-version` 等）。
 
 | Level | 适用 |
 |---|---|
@@ -142,34 +116,29 @@ eh.cmd init <project> --level Standard --name my-app
 | **Standard**（默认） | 常规长期软件仓 |
 | **Full** | 生产 / 多角色 / 迁移发版风险高 |
 
-### 2. 把协议交给任意 Agent
+### 2. 启动 Agent：澄清目标（Intent Clarity）
 
-任选其一：
+把 **`<project>/harness/PROTOCOL.md`** 交给任意 Agent（也可直接用框架仓库的 `PROTOCOL.md`），并粘贴 `protocol/references/prompts.md` 里的 **Round 0** 提示词。
 
-- 框架侧：`PROTOCOL.md`
-- 项目侧：`<项目>/harness/PROTOCOL.md`（init 时已复制）
+Agent 只做澄清，直到你明确说「目标已明确，可以开始」：
 
-Agent 按需再读 `protocol/references/*`（门禁、调度、分支、会话等）。
+- 只读仓库，多轮提问（问题 / 验收 / 范围 / 约束 / 接口 / 选项 / 风险）
+- 维护 `harness/drafts/INTENT-CLARITY.md` 与 Open Questions
+- **不写业务代码、不冻结 G1**
 
-### 3. 审计
+通过后再按同文件中的 Round A / Round B 提示词继续。按需阅读 `protocol/references/*`（门禁、调度、分支、角色等）。
+
+### 3. 审计（可选但推荐）
 
 ```text
 eh.cmd audit <project>
 ```
 
-检查必需文件、危险命令护栏冒烟、以及 Standard+ 的分支策略文档等。
-
-### 4. 实现类工作前先离开 main
+### 4. 实现前离开 main
 
 ```text
-eh.cmd branch-new login-api <project>
+eh.cmd branch-new <slug> <project>
 eh.cmd branch-check <project>
-```
-
-或在目标项目内：
-
-```text
-python harness/scripts/branch_check.py
 ```
 
 ---
@@ -251,7 +220,6 @@ contracts/
 | `eh.cmd --version` | 打印框架版本 |
 | `eh.cmd doctor` | 打印框架路径与 Python |
 | `eh.cmd init <path> [--level] [--name] [--force]` | 初始化驾驭架文件 |
-| `eh.cmd migrate <path> [--level] [--force]` | 从旧 `.cursor/*` 布局迁移 |
 | `eh.cmd audit <path>` | 审计已初始化项目 |
 | `eh.cmd check <path>` | 仅做结构检查 |
 | `eh.cmd guard -- "<cmd>"` | 危险命令模式拦截 |

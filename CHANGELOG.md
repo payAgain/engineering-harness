@@ -1,27 +1,30 @@
 # Changelog
 
+## 0.6.1 - 2026-07-13
+
+### Removed
+- `eh migrate` 及旧 Cursor 模板迁移路径（不再维护）
+
+### Changed
+- README 五分钟上手：init → Intent Clarity（含交协议）→ audit → branch，去掉重复步骤
+
+## 0.6.0 - 2026-07-13
+
+### Changed
+- **Must-commit**：工作分支验证通过后必须 `git commit`；人类审查 SHA
+- **Human gate 收窄为发布面**：仅 `tag` / `push` / `release` / 受保护分支需要明确授权
+- **全角色独立实例**：含 ephemeral orchestrator；Human Gate 聊天禁止冒充编排/实现
+- 新增 `protocol/references/roles.md`（对照主流 supervisor / Spec Kit / CrewAI）
+
 ## 0.5.0 - 2026-07-13
 
 ### Added
-- **Intent Clarity（目标澄清）** 前置门禁：`protocol/references/intent.md`、`skills/clarify.md`、`harness/drafts/INTENT-CLARITY.md`
-- `clarify` mode：多轮提问覆盖问题/验收/范围/约束/接口/选项/风险，直到人类确认无二义性
-- Round 0 可复制提示词（先于 Round A）
+- **Intent Clarity** 前置门禁：`protocol/references/intent.md`、`skills/clarify.md`、`harness/drafts/INTENT-CLARITY.md`
+- `clarify` mode 与 Round 0 提示词
 
 ### Changed
 - G0 拆为 Clarity → Round A Charter → Round B G1
-- PROTOCOL / AGENTS / start：禁止在目标不清时「为了推进而猜」
-- 吸收 shardingsphere-xugu 会话教训：**需求不明时先问清楚，而不是先干活**
-
-## 0.5.0 - 2026-07-13
-
-### Added
-- **Intent Clarity** 前置阶段：`protocol/references/intent.md`、`skills/clarify.md`、`harness/drafts/INTENT-CLARITY.md`
-- G0-Clarity 门禁：多轮提问、覆盖清单、人类明确「无歧义」后才进入 Round A
-- 可复制提示词 Round 0
-
-### Changed
-- PROTOCOL 硬规则：Clarify before act；modes 增加 `clarify`
-- 实战教训回灌：需求不明时禁止 Agent 自行脑补目标
+- 吸收实战教训：需求不明时先问清楚，禁止自行脑补目标
 
 ## 0.4.1 - 2026-07-13
 
@@ -36,50 +39,32 @@
 ## 0.4.0 - 2026-07-13
 
 ### Added
-- GitHub Flow branching policy (`protocol/references/branching.md`, project `docs/branching.md`)
-- CLI: `branch-check`, `branch-new`
-- Project sensor: `harness/scripts/branch_check.py`
-- Root launchers: `eh.cmd`, `eh.ps1`, `install.cmd`, `install.ps1`
+- GitHub Flow branching policy（`protocol/references/branching.md`、项目 `docs/branching.md`）
+- CLI：`branch-check`、`branch-new`
+- 项目传感器：`harness/scripts/branch_check.py`
+- 根目录启动器：`eh.cmd`、`eh.ps1`、`install.cmd`、`install.ps1`
 
 ### Changed
-- Hard rule: do not implement on `main`/`master` after G1
-- `version_control_checkpoint` includes `branch`, `base_branch`, `pr_required`, `branch_exception`
-- `skills/start.md` / `skills/commit.md` / `AGENTS.md` require working-branch confirmation
-- README documents root install/launch scripts; `scripts/` is compatibility-only
+- 硬规则：G1 后禁止在 `main`/`master` 上实现
+- `version_control_checkpoint` 增加分支字段
+- README 以根目录 `eh.cmd` 为默认入口
 
 ## 0.3.0 - 2026-07-13
 
 ### Changed
-- Primary interface is now a **Python CLI** (`python -m engineering_harness` / `eh`)
-- Project sensors default to `harness/scripts/*.py` instead of PowerShell
-- PowerShell and bash scripts are thin wrappers around the Python CLI
-- Windows launcher: `scripts/eh.cmd`
+- 主入口改为 Python CLI（`python -m engineering_harness` / `eh`）
+- 项目传感器默认 `harness/scripts/*.py`
 
 ### Added
-- Package `src/engineering_harness/` with `init`, `audit`, `check`, `guard`, `doctor`
-- Standalone Python templates: `harness_check.py`, `safe_bash_guard.py`, `verify.py`
-- `pyproject.toml` entry point `eh`
-
-### Why
-- Windows-first, but avoid PowerShell quirks as the primary execution path
+- 包 `src/engineering_harness/`：`init` / `audit` / `check` / `guard` / `doctor`
 
 ## 0.2.0 - 2026-07-13
 
 ### Changed
-- Primary entry is now tool-agnostic `PROTOCOL.md` (not a Cursor Skill install)
-- Target project paths use neutral `agents/` and `skills/*.md`
-- Forced execution vocabulary is “separate role instance”, not Cursor-only Subagent
-- Added optional `integrations/*` adapters; none are required
-
-### Added
-- `protocol/references/layout.md`
-- `scripts/init.sh`, `scripts/audit.sh` wrappers
-- Project copy of protocol at `harness/PROTOCOL.md` during init
-
-### Removed as primary packaging
-- Cursor-global skill installation path and `.cursor/*` as runtime SSOT
+- 主入口改为工具无关 `PROTOCOL.md`
+- 目标项目路径使用中性 `agents/` 与 `skills/*.md`
 
 ## 0.1.0 - 2026-07-13
 
 ### Added
-- Initial split from monolithic Markdown template into skill/assets/scripts
+- 从单体 Markdown 模板拆出 skill/assets/scripts 初版

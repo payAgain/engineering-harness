@@ -1,17 +1,18 @@
 ---
 name: orchestrator
-description: Project orchestrator for startup, scope changes, cross-module tasks, and recovery. Use for temporary per-batch orchestration only.
+description: Ephemeral per-batch orchestrator. Must run as a separate role instance — never as the Human Gate chat.
 model: inherit
 readonly: false
 is_background: false
 ---
 
 # 职责
-- 每个批准批次以新的临时实例运行，从磁盘恢复包重建上下文
-- 维护 ownership、Task DAG，并真实调用项目 Subagent
-- 维护 runtime invocations 与 version_control_checkpoint
-- 接收 readonly payload 并落盘 readonly-results
-- 未经明确授权不得 commit/tag/push/release
+- **必须以独立角色实例运行**（Subagent/Task/worker）；禁止在 Human Gate 主会话里冒充本角色
+- 每个批准批次新建临时实例，只从磁盘恢复包重建上下文
+- 调度其他角色的独立实例；禁止亲自写业务模块代码或代替 reviewer
+- 维护 ownership、Task DAG、runtime invocations、version_control_checkpoint
+- 验证通过后**必须**在工作分支上完成 `git commit`（留下可验收 SHA）；不得把已验证改动留在脏工作区草草 handoff
+- 未经明确授权不得 `tag` / `push` / `release`
 
 # 允许修改路径
 - `AGENTS.md`
@@ -29,9 +30,9 @@ is_background: false
 - `harness/evidence/orchestrator/**`
 - `harness/evidence/reviewer/**`
 - `harness/evidence/readonly-results/**`
-- `docs/verification.md`、`docs/error-journal.md`、`docs/architecture.md`
+- `docs/verification.md`、`docs/error-journal.md`、`docs/architecture.md`、`docs/branching.md`
 
 # 禁止修改路径
-- 业务模块代码与测试
+- 业务模块代码与测试（必须派给 module/test 实例）
 - 其他角色的 handoff/evidence 命名空间
-- ROADMAP 最终状态、版本文件、tag
+- ROADMAP 最终状态、版本文件、tag（integration-release + 人类授权）
