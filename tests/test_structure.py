@@ -46,6 +46,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "protocol/references/gates.md",
             "protocol/references/dispatch.md",
             "protocol/references/branching.md",
+            "protocol/references/lifecycle.md",
             "protocol/references/roles.md",
             "protocol/references/intent.md",
             "protocol/references/session.md",
@@ -62,6 +63,8 @@ class FrameworkStructureTests(unittest.TestCase):
             "assets/templates/docs/branching.md",
             "assets/templates/skills/start.md",
             "assets/templates/skills/clarify.md",
+            "assets/templates/skills/initiative.md",
+            "assets/templates/harness/initiatives/INDEX.md",
             "assets/templates/harness/drafts/INTENT-CLARITY.md",
             "assets/templates/skills/commit.md",
             "assets/templates/harness/scripts/harness_check.py",
@@ -79,6 +82,8 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("references/intent.md", text)
         self.assertIn("Clarify before act", text)
         self.assertIn("Must-commit", text)
+        self.assertIn("references/lifecycle.md", text)
+        self.assertIn("initiative", text.lower())
         self.assertIn("references/roles.md", text)
         self.assertIn("references/branching.md", text)
         self.assertIn("Do not install it into any IDE-specific skills directory", text)
@@ -92,7 +97,7 @@ class FrameworkStructureTests(unittest.TestCase):
         ag = (ROOT / "assets/templates/AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("agents/", ag)
         self.assertIn("GitHub Flow", ag)
-        self.assertIn("clarify.md", ag)
+        self.assertIn("initiative.md", ag)
         self.assertIn("Must-commit", ag)
         self.assertIn("separate role instance", ag)
         self.assertIn("branch_check.py", ag)
@@ -153,7 +158,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.6.2")
+        self.assertEqual(ver.stdout.strip(), "0.7.0")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)
@@ -171,6 +176,8 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(version.get("cli"), "python")
             self.assertTrue((target / "docs/branching.md").exists())
             self.assertTrue((target / "skills/clarify.md").exists())
+            self.assertTrue((target / "skills/initiative.md").exists())
+            self.assertTrue((target / "harness/initiatives/INDEX.md").exists())
             self.assertTrue((target / "harness/drafts/INTENT-CLARITY.md").exists())
             self.assertTrue((target / "harness/scripts/branch_check.py").exists())
 

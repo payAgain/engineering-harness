@@ -81,11 +81,15 @@ Ask across these dimensions. Skip only with an explicit human “N/A / 以后再
 
 Intent Clarity 是 G0 的前置子阶段，不是可跳过的寒暄。
 
-## Mid-batch re-entry
+## Mid-batch / mid-product re-entry
 
 If during a batch the agent discovers conflicting or missing acceptance criteria:
 
 1. stop implementation claims
 2. set `current-task` blocker: `intent-ambiguous`
-3. re-enter Intent Clarity for the ambiguous slice only
+3. re-enter Intent Clarity for the ambiguous slice only (or scoped Initiative clarify)
 4. do not expand scope without a new human confirmation
+
+## Next feature after MVP
+
+Do **not** restart product Round 0 by default. Use **Initiative** mode (`references/lifecycle.md`, `skills/initiative.md`): scoped clarity → new branch → new packets → batches.

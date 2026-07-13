@@ -2,41 +2,29 @@
 
 These prompts are tool-agnostic. Paste them into any coding agent after attaching `PROTOCOL.md`.
 
-## Round 0 — Intent Clarity（最先执行）
+## Round 0 — Product Intent Clarity（仅首次 / 产品级转向）
 
 ```text
-Read PROTOCOL.md and references/intent.md. You are in Intent Clarity mode.
-
-The human may not yet know exactly what to build. Your job is to remove ambiguity before any Charter freeze or implementation.
+Read PROTOCOL.md and references/intent.md. You are in product Intent Clarity mode.
 
 Rules:
-1. Read-only repo inspection only. No business code. No G1 artifacts. No commit.
-2. Follow skills/clarify.md. Create/update harness/drafts/INTENT-CLARITY.md.
-3. Cover: problem, outcome/acceptance, users, in-scope, out-of-scope, constraints, interfaces, references, options, risks, harness level, git/branching.
-4. Each turn: short understanding restatement → 5–10 high-value questions → stop and wait.
-5. If the human says they are unsure, offer 2–3 options with trade-offs and a recommendation; do not silently choose.
-6. Keep an Open Questions list. Do not claim ready to build while open questions remain (unless each is explicitly deferred with revisit trigger).
-7. Exit only after human confirms clearly, e.g. 「目标已明确，可以开始」 / 「无歧义」. Then reply: Intent Clarity: PASS and wait for Round A.
-
-First reply now: understanding + first question batch. Status: G0: clarifying-intent.
+1. Read-only repo inspection. No business code. No G1 freeze. No commit.
+2. Follow skills/clarify.md. Update harness/drafts/INTENT-CLARITY.md.
+3. Cover product-wide: problem, outcome, users, scope, constraints, interfaces, options, risks, level.
+4. Each turn: short restatement → 5–10 questions → stop and wait.
+5. If unsure, offer options; do not silently choose.
+6. Exit only after human says e.g. 「目标已明确，可以开始」. Reply: Intent Clarity: PASS. Wait for Round A.
 ```
 
 ## Round A — G0 Charter draft
 
 ```text
-Intent Clarity is PASS (human confirmed). Proceed to Round A only.
+Product Intent Clarity is PASS. Round A only: health + Charter draft. No business code. No G1.
 
-Read PROTOCOL.md. Temporarily act as orchestrator for Round A: repository health + G0 Charter draft. Do not modify business code. Do not enter G1.
-
-Constraints:
-1. Read-only inspection of repo structure, docs, git status, and real build/test/CI entrypoints.
-2. Propose Light / Standard / Full with evidence.
-3. Draft harness/drafts/PROJECT_CHARTER.proposed.md from INTENT-CLARITY; if root Charter exists, provide a change diff.
-4. Record only observable facts; do not invent architecture beyond clarified intent.
-5. First reply only: health summary, proposed level, draft summary, decisions, facts/assumptions/unknowns, G0: awaiting-user-approval.
-6. Do not create agents/ or skills/ yet; do not emit G1 conclusions.
-7. Do not overwrite root PROJECT_CHARTER.md without approval.
-
+1. Propose Light/Standard/Full with evidence.
+2. Draft harness/drafts/PROJECT_CHARTER.proposed.md from INTENT-CLARITY.
+3. Facts/assumptions/unknowns; status G0: awaiting-user-approval.
+4. Do not create agents/ yet; do not overwrite root Charter without approval.
 Stop and wait.
 ```
 
@@ -46,35 +34,63 @@ Stop and wait.
 I approve the Round A Charter draft: <note>. Execute Round B.
 
 1. Write root PROJECT_CHARTER.md as SSOT.
-2. Generate module graph, responsibility matrix, ownership, Task DAG, G1 report; only now create agents/*.md.
-3. Generate current-task, harness/session, docs/verification, docs/error-journal, skills/*.md, safe_bash_guard according to selected level.
-4. Mark code/test/review/contract/integration/release and risk>=8 as role-delegation-required.
-5. Propose governance baseline commit scope/message, but do not commit without explicit authorization.
-6. Do not modify business code; stop and wait for batch approval.
+2. Land agents/, ownership, Task DAG, session/skills per level.
+3. After G1, create working branch; must-commit governance baseline on that branch (skills/commit.md).
+4. Do not implement business features; stop and wait for first Initiative / batch approval.
 ```
 
-## Round C — batch
+## Round I — Start Initiative（下一 Feature / 版本）
 
 ```text
-I approve batch <batch_id>: <task ids>.
+Read PROTOCOL.md and references/lifecycle.md. Start a new Initiative (not a re-init, not resume of an old chat).
 
-1. Spawn a **new orchestrator role instance** (Subagent/Task). The Human Gate chat must not orchestrate or implement.
-2. Orchestrator follows skills/start.md, confirms working branch (not main), restores only from disk.
-3. If acceptance is ambiguous, stop and re-enter skills/clarify.md.
-4. Dispatch separate role instances for workers; write harness/runtime/invocations/<batch_id>.yaml.
-5. G3-check owner/actual_role/from_role. Full + risk>=8 code needs reviewer before commit.
-6. After verify: run skills/commit.md and **create a real commit** on the working branch; record candidate_commit SHA.
-7. Do not push/tag/release without explicit human authorization. Finish with skills/handoff.md and exit the orchestrator instance.
+Human intent: <hotfix|feature|major> — <one-line goal>
+
+1. Follow skills/initiative.md. Human Gate chat must not implement.
+2. If a previous Initiative is still open, close or confirm abandon first.
+3. Scoped clarity only for this Initiative; write harness/initiatives/<id>/brief.md; update INDEX.md.
+4. Stop every question round for human answers.
+5. After human says 「本 Initiative 范围已明确，可以开干」:
+   - create working branch from latest main (feat|fix|chore|hotfix/*)
+   - add/update Task Packets with initiative_id
+   - update current-task.md
+6. Do not start implementation until I approve the first batch (Round C).
+```
+
+## Round C — batch（Initiative 内）
+
+```text
+I approve batch <batch_id> for initiative <id>: <task ids>.
+
+1. Spawn a **new orchestrator role instance**. Human Gate must not orchestrate or implement.
+2. Restore only from disk; confirm working branch (not main).
+3. If acceptance for this Initiative becomes ambiguous, re-enter scoped clarify (skills/initiative.md / clarify.md).
+4. Dispatch separate worker instances; write harness/runtime/invocations/<batch_id>.yaml.
+5. Full + risk>=8 code needs reviewer before commit.
+6. After verify: skills/commit.md → real commit SHA on working branch.
+7. No push/tag/release without explicit human authorization. Handoff and exit the orchestrator instance.
+```
+
+## Round Close — Archive Initiative
+
+```text
+Close initiative <id>.
+
+1. Verify acceptance criteria in harness/initiatives/<id>/brief.md.
+2. Ensure related tasks are completed or explicitly deferred.
+3. Update initiatives/INDEX.md status=completed; progress-map; current-task next steps.
+4. Handoff. If Charter/ADR should absorb outcomes, propose edits (do not silently rewrite history).
+5. Stop. Next work must use Round I, not this chat as lifelong orchestrator.
 ```
 
 ## Audit
 
 ```text
-Audit this repository against Engineering Harness. Run the audit script if available, list gaps and recommended level, and do not modify business code.
+Audit this repository against Engineering Harness. Run the audit CLI if available, list gaps, do not modify business code.
 ```
 
-## Resume
+## Resume（仅同一 Initiative）
 
 ```text
-Follow skills/start.md: restore current-task and session, output Session Briefing. If goals/acceptance look ambiguous, run skills/clarify.md before any edits. Otherwise wait for the next approved batch.
+Follow skills/start.md. Resume the **current** open Initiative only. If the human wants a new feature/version, switch to Round I (initiative mode) instead of implementing here.
 ```

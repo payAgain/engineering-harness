@@ -11,6 +11,7 @@
 Build a resumable, verifiable, auditable engineering harness around a repository so agent work can:
 
 - recover across sessions without chat memory
+- iterate by **Initiative** (next feature / major version), not one-shot delivery
 - require verification before completion
 - isolate responsibilities across roles
 - keep humans as the approval gate for **irreversible / published** actions
@@ -29,59 +30,71 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 
 ## 2. Hard rules
 
-1. **Human Gate chat ≠ worker.** The user-facing chat only clarifies, approves batches, and reviews outcomes. It must not implement, test, or act as the lifelong orchestrator.
-2. **Every role runs as a separate role instance** (subagent / worker / delegated run), **including the ephemeral orchestrator**. See `references/roles.md` and `references/dispatch.md`.
-3. **Must-commit after verified work.** On a non-protected working branch, after validation passes, the owning role instance **must** `git commit` so humans can review concrete SHAs. Leaving verified work uncommitted is a process failure.
-4. **Human gate for publish actions only:** `tag` / `push` / `release` (and protected-branch updates) require explicit human authorization. Local `commit` on `feat/*` (etc.) does **not**.
-5. Tasks of type `code|test|review|contract|integration|release`, or risk ≥ 8, must not run in the Human Gate chat.
-6. Project facts live in the target repository. This framework repo is not runtime SSOT.
-7. Read only the reference needed for the current phase.
-8. **GitHub Flow:** after G1, do not implement on `main`/`master`. Use `feat/*` / `fix/*` / … See `references/branching.md`.
-9. **Full level:** every `code` task with risk ≥ 8 needs a **reviewer** instance before the required commit.
-10. **Clarify before act:** Intent Clarity first (`references/intent.md`). Do not invent a product vision to stay busy.
+1. **Human Gate chat ≠ worker.** Clarify, approve scope, review SHAs, authorize publish — do not implement or self-orchestrate.
+2. **Every role is a separate role instance**, including ephemeral orchestrator. See `references/roles.md`.
+3. **Must-commit** verified work on working branches. **Human gate:** `tag` / `push` / `release` / protected branch only.
+4. **Initiative loop:** after init, new work is a new Initiative (`hotfix|feature|major`), not a re-init. See `references/lifecycle.md`.
+5. New Initiative → new working branch + new Human Gate chat + new orchestrator instance. Do not “顺便” start the next version in an old long chat.
+6. `resume` continues the **current** Initiative only. Starting a new goal → `initiative` mode.
+7. Project facts live in the target repository (runtime SSOT).
+8. **GitHub Flow** after G1. See `references/branching.md`.
+9. **Full:** risk≥8 `code` needs reviewer before must-commit.
+10. **Clarify before act** (product-wide or scoped to an Initiative). See `references/intent.md`.
 
 ## 3. Modes
 
 | Mode | User intent | Action |
 |---|---|---|
-| `clarify` | goal unclear / greenfield kickoff | Intent Clarity → Human Gate |
-| `init` | initialize harness / Round A/B | only after Intent Clarity PASS |
-| `audit` | audit harness | `python -m engineering_harness audit` |
-| `resume` | continue / start | Session Briefing; re-clarify if ambiguous |
-| `batch` | approve batch Bx | **spawn orchestrator instance** → workers → **commit** → handoff |
-| `upgrade` | upgrade harness | compare `.harness-version` with `VERSION` |
+| `clarify` | product goal unclear / greenfield | Intent Clarity → Human Gate |
+| `init` | first-time harness | after product Intent Clarity PASS |
+| `initiative` | next feature / major / hotfix | classify → scoped clarify → branch → plan → batches |
+| `batch` | approve batch inside an Initiative | spawn orchestrator → workers → must-commit → handoff |
+| `resume` | continue **same** Initiative | Session Briefing; then next batch |
+| `audit` | harness health | `python -m engineering_harness audit` |
+| `upgrade` | bump harness framework files | compare `.harness-version` with `VERSION` |
 
 ## 4. Workflows
 
-### 4.0 Intent Clarity（最先）
+### 4.0 Product Intent Clarity（仅首次或产品级转向）
 
-See `references/intent.md`. Exit only on human PASS.
+See `references/intent.md`.
 
-### 4.1 init
+### 4.1 init（仅一次）
 
-1. Intent Clarity PASS → propose level → `eh.cmd init <project>` if harness files are missing.
-2. Round A Charter draft; Round B land system artifacts. See `references/gates.md`.
-3. After G1, create working branch; governance baseline **must be committed** on that branch (or explicitly deferred with reason).
+1. Product Intent Clarity PASS → `eh.cmd init <project> --level …`
+2. Round A/B Charter + system artifacts. See `references/gates.md`.
+3. Working branch + governance baseline commit.
 
-### 4.2 batch
+### 4.2 initiative（此后的主循环）
+
+1. Close previous Initiative if still open.
+2. Human classifies: `hotfix` | `feature` | `major`.
+3. Scoped clarity → `harness/initiatives/<id>/brief.md` (`skills/initiative.md`).
+4. Branch from latest `main`; add Task Packets; update `current-task.md`.
+5. Run batches (4.3) until Initiative acceptance is met; archive in `initiatives/INDEX.md`.
+
+Details: `references/lifecycle.md`.
+
+### 4.3 batch
 
 1. Human Gate approves batch scope only.
-2. **Spawn a new orchestrator role instance** (not the Human Gate chat). Restore from disk. See `references/dispatch.md`.
-3. Orchestrator dispatches separate instances for workers; writes invocations.
-4. After verify + required review: **commit on working branch** (mandatory). Record real `candidate_commit` SHA.
-5. Handoff. Human reviews commits; authorizes `push` / PR / `tag` / `release` separately.
+2. Spawn **new** orchestrator instance; restore from disk.
+3. Workers as separate instances; invocations ledger; must-commit on working branch.
+4. Handoff. Human authorizes push/PR/tag/release separately.
 
-### 4.3 audit / resume
+### 4.4 audit / resume / upgrade
 
-- Audit: `python -m engineering_harness audit <project>`
-- Resume: if next work needs orchestration, spawn orchestrator instance — do not resume as implementer in Human Gate
+- Audit: CLI audit
+- Resume: same Initiative only
+- Upgrade: framework file bump — not a substitute for `initiative`
 
 ## 5. Progressive references
 
 | Need | Read |
 |---|---|
+| Lifecycle / next feature | `references/lifecycle.md` |
 | Intent Clarity | `references/intent.md` |
-| Roles catalog | `references/roles.md` |
+| Roles | `references/roles.md` |
 | Gates | `references/gates.md` |
 | Dispatch / commits | `references/dispatch.md` |
 | Branching | `references/branching.md` |
@@ -98,8 +111,10 @@ AGENTS.md
 PROJECT_CHARTER.md
 current-task.md
 agents/
-skills/
-harness/drafts/
+skills/                 # clarify, initiative, start, plan, review, commit, handoff
+harness/
+  drafts/               # INTENT-CLARITY (product)
+  initiatives/          # per-feature briefs + INDEX
 docs/
 DECISIONS/
 contracts/
@@ -108,8 +123,8 @@ contracts/
 
 ## 7. Completion bar
 
-- clarify: INTENT-CLARITY + human PASS
-- init: artifacts + committed governance baseline (or deferred record)
-- batch: separate orchestrator + worker instances + evidence + **real commit SHA**
-- never claim completion with a dirty tree of verified work left uncommitted
-- never `push` / `tag` / `release` without explicit human authorization
+- clarify: PASS (product or scoped)
+- init: once; artifacts + baseline commit
+- initiative: brief + branch + tasks closed + evidence + commit SHAs + INDEX updated
+- batch: separate instances + must-commit SHA
+- never push/tag/release without human authorization

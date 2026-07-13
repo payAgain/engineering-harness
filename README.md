@@ -153,6 +153,18 @@ eh.cmd branch-new <slug> <project>
 eh.cmd branch-check <project>
 ```
 
+### 5. 之后：用 Initiative 开下一 Feature / 版本
+
+项目 **只 init 一次**。MVP 或第一轮做完后，不要重跑整套「第一次」流程，而是：
+
+1. 人类声明类型：`hotfix` | `feature` | `major`
+2. 粘贴 `protocol/references/prompts.md` 的 **Round I**（范围化澄清）
+3. 新分支 + 新 Task Packets → 批准 batch（**Round C**）
+4. 完成后 **Round Close** 归档；下一目标再开 Round I
+
+详情：[`protocol/references/lifecycle.md`](./protocol/references/lifecycle.md)。  
+`resume` 只能续**当前** Initiative；开新目标请用 Round I。
+
 ---
 
 ## 分支策略（GitHub Flow）
@@ -210,9 +222,10 @@ engineering-harness/
 AGENTS.md                 # 任意 Agent 的项目操作入口
 current-task.md           # 当前任务 / batch 焦点
 agents/                   # 角色定义（工具无关）
-skills/                   # clarify / start / plan / review / commit / handoff
+skills/                   # clarify / initiative / start / plan / review / commit / handoff
 harness/
-  drafts/                 # INTENT-CLARITY.md（目标澄清草案）
+  drafts/                 # INTENT-CLARITY.md（产品级澄清）
+  initiatives/            # 每个 feature/版本的 brief + INDEX
   PROTOCOL.md             # 协议副本
   session/                # 可恢复会话状态
   scripts/                # harness_check / branch_check / verify / safe_bash_guard
@@ -251,10 +264,12 @@ python harness/scripts/safe_bash_guard.py -- "<command>"
 
 ## 推荐工作流（摘要）
 
-0. **clarify** → 多轮确认目标 / 验收 / 范围，直到 `Intent Clarity: PASS`  
-1. **init** → Round A Charter 草案 → 人审 → Round B 落盘系统制品  
-2. **batch** → start（含工作分支）→ 临时编排器 → 独立角色实例 → 提案 commit → handoff  
-3. **audit / resume** → 磁盘恢复；目标又模糊则先 clarify  
+0. **clarify**（产品级，通常仅首次）→ Intent Clarity PASS  
+1. **init**（仅一次）→ Round A/B  
+2. **initiative** → 范围澄清 → 分支 → Task DAG  
+3. **batch** × N → must-commit → 人授权 push  
+4. **close** → 归档；下一 feature 回到步骤 2  
+5. **audit / resume** → resume 仅限同一 Initiative  
 
 门禁与状态机详见 [`protocol/references/gates.md`](./protocol/references/gates.md) 与 [`protocol/references/intent.md`](./protocol/references/intent.md)。
 

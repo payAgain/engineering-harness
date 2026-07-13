@@ -8,27 +8,30 @@ The user-facing chat is the **Human Gate** only: clarify, approve batch scope, r
 It must **not** implement, test, or self-orchestrate. Spawn an **orchestrator** separate role instance per batch, then workers. See role catalog in framework `protocol/references/roles.md` (copied guidance lives under `agents/`).
 
 ## First action on unclear goals
-If the goal/acceptance is ambiguous — including when the human is unsure — run `skills/clarify.md` first.  
-Do not write business code or freeze G1 until `Intent Clarity: PASS`.
+- **New product / first contact:** `skills/clarify.md` → product Intent Clarity PASS  
+- **Next feature / version after init:** `skills/initiative.md` (scoped) — do **not** re-init the whole harness  
+- Do not write business code until the matching PASS phrase is given
 
 ## Reading order
 At session/batch start, follow `skills/start.md`:
 1. `current-task.md`
 2. `harness/session/session-state.json`
 3. `harness/session/session-log.md`
-4. `harness/drafts/INTENT-CLARITY.md` (if intent not yet PASS)
-5. `PROJECT_CHARTER.md` (if present)
-6. `DECISIONS/INDEX.md` and applicable ADRs
-7. `contracts/<module>.contract.md` (if present)
-8. `harness/ownership/OWNERSHIP.yaml` (if present)
-9. `harness/tasks/<task>.md` (if present)
-10. `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md`
-11. relevant `agents/<role>.md`
+4. `harness/initiatives/INDEX.md` + active `harness/initiatives/<id>/brief.md` (if any)
+5. `harness/drafts/INTENT-CLARITY.md` (if product intent not yet PASS)
+6. `PROJECT_CHARTER.md` (if present)
+7. `DECISIONS/INDEX.md` and applicable ADRs
+8. `contracts/<module>.contract.md` (if present)
+9. `harness/ownership/OWNERSHIP.yaml` (if present)
+10. `harness/tasks/<task>.md` (if present)
+11. `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md`
+12. relevant `agents/<role>.md`
 
 Output a Session Briefing before editing.
 
 ## Non-negotiables
-- **Clarify before act**
+- **Clarify before act** (product or scoped Initiative)
+- **Initiative loop** after init: next feature/version uses `skills/initiative.md`, not re-init
 - **Every role (including orchestrator) = separate role instance**; Human Gate must not do the work
 - **Must-commit** verified work on `feat/*` (etc.); humans review SHAs
 - **Human gate:** `tag` / `push` / `release` / protected branch only
@@ -39,7 +42,8 @@ Output a Session Briefing before editing.
 - Dangerous shells go through `python harness/scripts/safe_bash_guard.py -- "<command>"`
 
 ## Procedures
-- `skills/clarify.md`
+- `skills/clarify.md` — product Intent Clarity
+- `skills/initiative.md` — next feature / major / hotfix
 - `skills/start.md`
 - `skills/plan.md`
 - `skills/review.md`

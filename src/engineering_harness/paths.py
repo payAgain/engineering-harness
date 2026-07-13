@@ -30,6 +30,9 @@ STANDARD_FILES = [
     ("skills/plan.md", "skills/plan.md"),
     ("skills/review.md", "skills/review.md"),
     ("skills/commit.md", "skills/commit.md"),
+    ("skills/initiative.md", "skills/initiative.md"),
+    ("harness/initiatives/INDEX.md", "harness/initiatives/INDEX.md"),
+    ("harness/initiatives/_TEMPLATE.md", "harness/initiatives/_TEMPLATE.md"),
     ("harness/scripts/safe_bash_guard.py", "harness/scripts/safe_bash_guard.py"),
     ("harness/scripts/verify.py", "harness/scripts/verify.py"),
     ("harness/scripts/branch_check.py", "harness/scripts/branch_check.py"),
@@ -45,6 +48,7 @@ STANDARD_FILES = [
 
 STANDARD_DIRS = [
     "harness/drafts",
+    "harness/initiatives",
     "harness/runtime/invocations",
     "harness/handoffs/orchestrator",
     "harness/handoffs/readonly-results",
@@ -74,6 +78,8 @@ STANDARD_REQUIRED = [
     "skills/plan.md",
     "skills/review.md",
     "skills/commit.md",
+    "skills/initiative.md",
+    "harness/initiatives/INDEX.md",
     "harness/scripts/safe_bash_guard.py",
     "harness/scripts/verify.py",
     "harness/scripts/branch_check.py",

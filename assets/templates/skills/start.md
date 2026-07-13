@@ -5,7 +5,8 @@ Recover project context before changes.
 
 ## Rules
 - Do not edit business code during start
-- If goals/acceptance are ambiguous, switch to `skills/clarify.md` before any plan/implement
+- If the human wants a **new** feature/version, switch to `skills/initiative.md` (do not treat as simple resume)
+- If goals/acceptance are ambiguous for the **current** Initiative, switch to scoped clarify / `skills/clarify.md`
 - Read required files first
 - Confirm GitHub Flow working branch before implementation batches
 - Output a Session Briefing
@@ -16,18 +17,20 @@ Recover project context before changes.
 2. Read `current-task.md`
 3. Read `harness/session/session-state.json`
 4. Read `harness/session/session-log.md`
-5. If Charter missing or acceptance unclear → read/update `harness/drafts/INTENT-CLARITY.md` via `skills/clarify.md` and stop for human answers
-6. Read `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md` (if present)
-7. Check git branch (`git branch --show-current` or `python harness/scripts/branch_check.py`)
-8. If on `main`/`master` and the next work is implementation → create `feat/<task-or-batch>`
-9. If `current-task.md` / session shows a **new** implementation batch while this chat already executed a prior implementation batch → stop and ask human to open a new chat after handoff
-10. Output Session Briefing
+5. If Charter missing or product acceptance unclear → `skills/clarify.md`
+6. Read `harness/initiatives/INDEX.md` and active initiative `brief.md` if present
+7. Read `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md` (if present)
+8. Check git branch (`git branch --show-current` or `python harness/scripts/branch_check.py`)
+9. If on `main`/`master` and the next work is implementation → create `feat/<task-or-batch>`
+10. If human asks for a new feature/version while this chat already ran another Initiative → stop; open Round I in a new chat
+11. Output Session Briefing
 
 ## Output
 ```text
 Session Briefing
 
 Current Goal:
+Initiative ID / Type:
 Intent Clarity: PASS | clarifying-intent | re-enter-clarify
 Current Status:
 Current Phase:

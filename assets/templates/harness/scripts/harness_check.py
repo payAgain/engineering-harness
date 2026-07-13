@@ -30,6 +30,8 @@ STANDARD_REQUIRED = [
     "skills/plan.md",
     "skills/review.md",
     "skills/commit.md",
+    "skills/initiative.md",
+    "harness/initiatives/INDEX.md",
     "harness/scripts/safe_bash_guard.py",
     "harness/scripts/verify.py",
     "harness/scripts/branch_check.py",

@@ -55,3 +55,11 @@ Include `cognitive_state` (`failure_count`, `tried_approaches`, `blocked_on`). I
 ## Handoff
 
 Follow `skills/handoff.md` before ending a session or batch.
+
+When an **Initiative** completes, also:
+
+- set `harness/initiatives/INDEX.md` status to `completed`
+- point `current-task.md` at the next step or idle
+- remind the human that the next feature uses **initiative** mode (Round I), not this chat forever
+
+See `references/lifecycle.md`.

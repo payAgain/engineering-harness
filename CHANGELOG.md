@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 - 2026-07-13
+
+### Added
+- **Initiative 外环**：`protocol/references/lifecycle.md`、`skills/initiative.md`、`harness/initiatives/`
+- Modes：`initiative`；提示词 Round I / Round Close
+- 三档变更：`hotfix` | `feature` | `major`
+
+### Changed
+- 明确：项目只 init 一次；`resume` ≠ 开新 feature；下一版本走 Initiative 循环
+
 ## 0.6.2 - 2026-07-13
 
 ### Changed
