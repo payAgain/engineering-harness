@@ -1,0 +1,4 @@
+schema_version: 1
+charter_version: "0.0.0"
+updated: "{{TIMESTAMP}}"
+tasks: []

@@ -1,0 +1,20 @@
+[project]
+name = "engineering-harness"
+version = "0.4.0"
+description = "Tool-agnostic engineering harness CLI for AI coding agents (Windows-first)."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+eh = "engineering_harness.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+engineering_harness = ["py.typed"]

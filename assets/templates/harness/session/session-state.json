@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "task_id": "harness-bootstrap",
+  "batch_id": "bootstrap",
+  "status": "in_progress",
+  "current_phase": "initialization",
+  "harness_level": "{{HARNESS_LEVEL}}",
+  "last_updated": "{{TIMESTAMP}}",
+  "active_plan": [
+    "Inspect repository",
+    "Create harness files",
+    "Run harness check",
+    "Record handoff"
+  ],
+  "next_3_steps": [
+    "Run harness_check",
+    "Review generated files",
+    "Use /start in the next session"
+  ],
+  "changed_files": [],
+  "validation": {
+    "last_commands": [],
+    "last_result": "not_run",
+    "known_failures": []
+  },
+  "cognitive_state": {
+    "failure_count": 0,
+    "current_mode": "initialization",
+    "tried_approaches": [],
+    "blocked_on": null
+  },
+  "version_control_checkpoint": {
+    "decision": "awaiting-human-approval",
+    "candidate_commit": "pending-approval"
+  },
+  "handoff": {
+    "last_summary": "Harness templates initialized.",
+    "resume_from": "Run /start, then continue from current-task.md."
+  }
+}

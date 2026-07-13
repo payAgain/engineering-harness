@@ -1,0 +1,142 @@
+"""Initialize harness files into a target project."""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+from engineering_harness import read_version
+from engineering_harness.paths import (
+    LIGHT_FILES,
+    STANDARD_DIRS,
+    STANDARD_FILES,
+    protocol_path,
+    templates_root,
+)
+
+
+APPROVAL_POLICY = """# Approval Policy
+
+- commit: human approval per batch
+- tag / push / release: explicit one-time authorization
+- migrate / destructive reset: explicit one-time authorization
+- G4 without commit SHA: explicit one-time waiver only
+"""
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+
+
+def _write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8", newline="\n")
+
+
+def _render(content: str, *, project_name: str, level: str, timestamp: str) -> str:
+    return (
+        content.replace("{{PROJECT_NAME}}", project_name)
+        .replace("{{HARNESS_LEVEL}}", level)
+        .replace("{{TIMESTAMP}}", timestamp)
+        .replace("{{BUILD_CMD}}", "<fill-build-command>")
+        .replace("{{TEST_CMD}}", "<fill-test-command>")
+        .replace("{{LINT_CMD}}", "<fill-lint-command-or-NA>")
+    )
+
+
+def copy_template(
+    *,
+    source_rel: str,
+    dest_rel: str,
+    target: Path,
+    project_name: str,
+    level: str,
+    timestamp: str,
+    force: bool,
+) -> str:
+    src = templates_root() / Path(source_rel)
+    dst = target / Path(dest_rel)
+    if dst.exists() and not force:
+        return f"SKIP existing: {dest_rel}"
+    if not src.exists():
+        raise FileNotFoundError(f"template missing: {src}")
+    text = _render(src.read_text(encoding="utf-8"), project_name=project_name, level=level, timestamp=timestamp)
+    _write_text(dst, text)
+    return f"WRITE: {dest_rel}"
+
+
+def init_project(
+    target: Path,
+    *,
+    level: str = "Standard",
+    project_name: str | None = None,
+    force: bool = False,
+) -> list[str]:
+    if level not in {"Light", "Standard", "Full"}:
+        raise ValueError(f"unsupported level: {level}")
+
+    target = target.resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    name = project_name or target.name
+    timestamp = _now()
+    logs: list[str] = []
+
+    for source_rel, dest_rel in LIGHT_FILES:
+        logs.append(
+            copy_template(
+                source_rel=source_rel,
+                dest_rel=dest_rel,
+                target=target,
+                project_name=name,
+                level=level,
+                timestamp=timestamp,
+                force=force,
+            )
+        )
+
+    protocol_dst = target / "harness" / "PROTOCOL.md"
+    if protocol_dst.exists() and not force:
+        logs.append("SKIP existing: harness/PROTOCOL.md")
+    else:
+        _write_text(protocol_dst, protocol_path().read_text(encoding="utf-8"))
+        logs.append("WRITE: harness/PROTOCOL.md")
+
+    if level in {"Standard", "Full"}:
+        for source_rel, dest_rel in STANDARD_FILES:
+            logs.append(
+                copy_template(
+                    source_rel=source_rel,
+                    dest_rel=dest_rel,
+                    target=target,
+                    project_name=name,
+                    level=level,
+                    timestamp=timestamp,
+                    force=force,
+                )
+            )
+        for rel in STANDARD_DIRS:
+            path = target / rel
+            if not path.exists():
+                path.mkdir(parents=True, exist_ok=True)
+                logs.append(f"DIR: {rel}")
+
+    if level == "Full":
+        policy = target / "docs" / "approval-policy.md"
+        if policy.exists() and not force:
+            logs.append("SKIP existing: docs/approval-policy.md")
+        else:
+            _write_text(policy, APPROVAL_POLICY)
+            logs.append("WRITE: docs/approval-policy.md")
+
+    meta = {
+        "framework": "engineering-harness",
+        "version": read_version(),
+        "level": level,
+        "layout": "tool-agnostic",
+        "cli": "python",
+        "initialized_at": timestamp,
+    }
+    _write_text(target / ".harness-version", json.dumps(meta, indent=2, ensure_ascii=False) + "\n")
+    logs.append("WRITE: .harness-version")
+    return logs
