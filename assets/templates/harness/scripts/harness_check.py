@@ -18,6 +18,8 @@ LIGHT_REQUIRED = [
     "skills/start.md",
     "skills/handoff.md",
     "harness/scripts/harness_check.py",
+    "harness/scripts/verify.py",
+    "harness/verification.json",
     "harness/drafts/INTENT-CLARITY.md",
 ]
 
@@ -33,7 +35,6 @@ STANDARD_REQUIRED = [
     "skills/initiative.md",
     "harness/initiatives/INDEX.md",
     "harness/scripts/safe_bash_guard.py",
-    "harness/scripts/verify.py",
     "harness/scripts/branch_check.py",
     "agents/orchestrator.md",
     "agents/architect-contract.md",

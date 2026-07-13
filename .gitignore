@@ -12,3 +12,6 @@ venv/
 dist/
 build/
 *.log
+
+# Local Engineering Harness analysis notes (not tracked)
+.local-harness-analysis/

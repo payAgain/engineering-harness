@@ -72,6 +72,8 @@ class FrameworkStructureTests(unittest.TestCase):
             "assets/templates/harness/drafts/INTENT-CLARITY.md",
             "assets/templates/skills/commit.md",
             "assets/templates/harness/scripts/harness_check.py",
+            "assets/templates/harness/scripts/verify.py",
+            "assets/templates/harness/verification.json",
             "assets/templates/harness/scripts/branch_check.py",
             "integrations/generic/README.md",
         ]
@@ -192,6 +194,8 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertTrue((target / "harness/initiatives/INDEX.md").exists())
             self.assertTrue((target / "harness/drafts/INTENT-CLARITY.md").exists())
             self.assertTrue((target / "harness/scripts/branch_check.py").exists())
+            self.assertTrue((target / "harness/scripts/verify.py").exists())
+            self.assertTrue((target / "harness/verification.json").exists())
 
             audit = _cli("audit", str(target))
             self.assertEqual(audit.returncode, 0, audit.stdout + audit.stderr)
@@ -200,6 +204,53 @@ class PythonCliSmokeTests(unittest.TestCase):
 
             guard_bad = _cli("guard", "--", "git reset --hard")
             self.assertEqual(guard_bad.returncode, 1, guard_bad.stdout + guard_bad.stderr)
+
+    def test_verification_requires_real_project_commands(self):
+        with tempfile.TemporaryDirectory(prefix="eh-verify-") as tmp:
+            target = Path(tmp) / "demo"
+            target.mkdir()
+            init = _cli("init", str(target), "--level", "Light", "--name", "demo")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+
+            verify_script = target / "harness/scripts/verify.py"
+            evidence = target / "harness/evidence/verification-latest.json"
+            incomplete = subprocess.run(
+                [sys.executable, str(verify_script)],
+                capture_output=True,
+                text=True,
+                cwd=target,
+            )
+            self.assertEqual(incomplete.returncode, 2, incomplete.stdout + incomplete.stderr)
+            self.assertIn("VERIFY INCOMPLETE", incomplete.stdout)
+            self.assertEqual(json.loads(evidence.read_text(encoding="utf-8"))["status"], "INCOMPLETE")
+
+            config_path = target / "harness/verification.json"
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            config["checks"][0]["command"] = f'"{sys.executable}" -c "print(123)"'
+            config["checks"][1]["command"] = f'"{sys.executable}" -c "print(456)"'
+            config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+            passed = subprocess.run(
+                [sys.executable, str(verify_script)],
+                capture_output=True,
+                text=True,
+                cwd=target,
+            )
+            self.assertEqual(passed.returncode, 0, passed.stdout + passed.stderr)
+            self.assertIn("VERIFY PASS", passed.stdout)
+            self.assertEqual(json.loads(evidence.read_text(encoding="utf-8"))["status"], "PASS")
+
+            config["checks"][1]["command"] = f'"{sys.executable}" -c "raise SystemExit(7)"'
+            config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            failed = subprocess.run(
+                [sys.executable, str(verify_script)],
+                capture_output=True,
+                text=True,
+                cwd=target,
+            )
+            self.assertEqual(failed.returncode, 1, failed.stdout + failed.stderr)
+            self.assertIn("VERIFY FAIL", failed.stdout)
+            self.assertEqual(json.loads(evidence.read_text(encoding="utf-8"))["status"], "FAIL")
 
     def test_branch_check_logic_with_temp_repo(self):
         with tempfile.TemporaryDirectory(prefix="eh-branch-") as tmp:

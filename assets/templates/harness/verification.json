@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "checks": [
+    {
+      "id": "build",
+      "description": "Build the project or validate that it can be packaged",
+      "required": true,
+      "command": "{{BUILD_CMD}}"
+    },
+    {
+      "id": "test",
+      "description": "Run the project's automated test suite",
+      "required": true,
+      "command": "{{TEST_CMD}}"
+    },
+    {
+      "id": "lint",
+      "description": "Run linting or static type checks when the project provides them",
+      "required": false,
+      "command": "{{LINT_CMD}}"
+    }
+  ]
+}

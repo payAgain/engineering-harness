@@ -194,32 +194,135 @@ eh.cmd branch-check <project>
 
 ---
 
-## 架构一览
+## 仓库架构与目录职责
+
+本仓库由四个相互配合的部分组成：
+
+1. **执行协议**定义 Agent 应遵循的流程、角色、门禁和状态模型；
+2. **项目模板**定义 `eh init` 要复制到目标项目中的文件；
+3. **Python CLI**负责初始化、检查、审计和分支辅助；
+4. **工具集成与入口脚本**提供不同平台或 Agent 宿主的接入方式。
 
 ```text
 engineering-harness/
-├── PROTOCOL.md              # 任意 Agent 的总入口
-├── protocol/references/     # 渐进明细（门禁、调度、分支、会话…）
-├── assets/templates/        # init 时复制到目标项目的中性模板
-├── src/engineering_harness/ # Python CLI
-├── eh.cmd / install.cmd     # Windows 根目录入口
-├── scripts/                 # 兼容薄封装
-├── integrations/            # 可选 IDE 适配（非必需）
-└── tests/                   # 结构与冒烟测试
+├── PROTOCOL.md              # Agent 执行协议总入口
+├── protocol/references/     # 协议的渐进式详细规范
+├── assets/templates/        # 初始化到目标项目的源模板
+├── src/engineering_harness/ # Python CLI 实现
+├── tests/                   # 仓库结构与 CLI 冒烟测试
+├── integrations/            # Claude、Codex、Cursor 等可选适配说明
+├── scripts/                 # 旧路径兼容脚本及 POSIX 薄封装
+├── docs/                    # 本框架自身的设计规格与实施记录
+├── eh.cmd / eh.ps1          # 从源码仓库直接运行 CLI
+├── install.cmd / install.ps1# editable 安装入口
+├── pyproject.toml           # Python 包与 eh 控制台命令配置
+├── VERSION                  # 框架版本号
+└── CHANGELOG.md             # 版本变更记录
 ```
 
-| 层级 | 路径 | 职责 |
-|---|---|---|
-| 协议 | `PROTOCOL.md` | 通用执行契约 |
-| 参考 | `protocol/references/` | 按需阅读的细则 |
-| 资产 | `assets/templates/` | 目标项目文件模板 |
-| CLI | `src/engineering_harness/` | init / audit / check / guard / branch-* |
-| 入口 | `eh.cmd`、`install.cmd` | Windows 启动与安装 |
-| 适配 | `integrations/*` | 可选镜像，**不能**取代 `agents/` / `skills/` |
+### `protocol/`：执行协议
+
+[`PROTOCOL.md`](./PROTOCOL.md) 是交给任意 Agent 的精简总入口；`protocol/references/` 保存按需读取的详细规则，避免把所有内容都塞进主协议。
+
+| 路径 | 主要内容 |
+|---|---|
+| `references/glossary.md` | Clarify、Scope、Plan、Build、Accept 等统一术语与禁止话术 |
+| `references/lifecycle.md` | 首次初始化及后续 Initiative 的生命周期 |
+| `references/phases.md` | `I/P/B-00x` 标识、Phase 依赖和串行默认规则 |
+| `references/roles.md` | Orchestrator、Architect、Reviewer、Test 等角色边界 |
+| `references/dispatch.md` | 角色实例派发、恢复、并行组和调用记录要求 |
+| `references/gates.md` | G0–G6 门禁与关闭条件 |
+| `references/intent.md` | Intent Clarity、开放问题和延期决策规则 |
+| `references/branching.md` | GitHub Flow、工作分支和受保护分支规则 |
+| `references/session.md` | 会话状态、恢复与交接约定 |
+| `references/schemas.md` | Packet、Registry 等运行时文件的结构约定 |
+| `references/levels.md` | Light / Standard / Full 能力差异与选择依据 |
+| `references/prompts.md` | Clarify、Charter、Bootstrap、Scope 等阶段提示词 |
+| `references/layout.md` | 初始化后目标项目的目录布局 |
+| `references/anti-patterns.md` | 明确禁止的调度和执行模式 |
+
+修改流程语义时，应同时核对 `PROTOCOL.md`、对应 reference、模板和测试，避免总协议与生成物发生漂移。
+
+### `assets/templates/`：目标项目模板
+
+这里不是框架运行时产生的数据，而是 `eh init` 的**模板源目录**。CLI 会根据 Light / Standard / Full 级别选择模板，替换项目名、级别、时间戳和验证命令占位符，然后写入目标项目。
+
+| 子目录或文件 | 初始化后的作用 |
+|---|---|
+| `AGENTS.md` | 目标项目中任意 Agent 的操作入口 |
+| `current-task.md` | 当前任务或 Build 的人类可读焦点 |
+| `agents/` | Standard+ 的独立角色定义 |
+| `skills/` | clarify、initiative、plan、review、commit、handoff 等流程技能 |
+| `harness/drafts/` | 首次产品目标澄清草稿 |
+| `harness/initiatives/` | feature、hotfix、major 等 Initiative brief 与索引 |
+| `harness/tasks/` | Phase Packet 模板和任务注册表 |
+| `harness/session/` | 可恢复的会话状态、日志和进度图 |
+| `harness/scripts/` | 目标项目内执行的结构、分支、验证和命令守卫脚本 |
+| `harness/ownership/` | 模块或路径的责任边界 |
+| `docs/` | 架构、验证、分支和错误日志模板 |
+| `DECISIONS/` | 架构决策索引 |
+
+模板写入目标项目后，**目标项目中的副本才是该项目的运行时 SSOT**。不要让 `integrations/` 中的 IDE 镜像取代这些中性文件。
+
+### `src/engineering_harness/`：Python CLI
+
+该目录使用标准 `src/` 包布局，`pyproject.toml` 将 `eh` 命令映射到 `engineering_harness.cli:main`。
+
+| 模块 | 职责 |
+|---|---|
+| `cli.py` | 定义命令行参数并分派 `init`、`audit`、`check`、`guard`、`branch-*`、`doctor` |
+| `init.py` | 按级别渲染和复制模板，生成 `.harness-version` |
+| `paths.py` | 维护模板清单、必需文件清单、危险命令模式及资源路径 |
+| `check.py` | 检查目标项目结构、读取 level、执行命令模式守卫 |
+| `audit.py` | 组合结构、守卫和分支检查，审计已初始化项目 |
+| `branch.py` | 检查受保护分支并创建 GitHub Flow 工作分支 |
+| `__init__.py` | 提供框架根路径和版本读取 |
+| `__main__.py` | 支持 `python -m engineering_harness` |
+
+增加、删除或移动模板时，通常不能只修改 `assets/templates/`：还要同步检查 `paths.py` 中的复制与必需文件清单、README 布局说明以及 `tests/test_structure.py` 的结构断言。
+
+### `integrations/`：可选工具适配
+
+这里保存 Claude、Codex、Cursor 和通用 Agent 宿主的接入说明。它们用于让特定工具更容易发现仓库内的协议、角色或技能，不是运行时 SSOT，也不是必须安装的插件。
+
+```text
+integrations/
+├── claude/   # Claude Code 接入说明
+├── codex/    # Codex 接入说明
+├── cursor/   # Cursor 可选镜像说明
+└── generic/  # 其他能读取仓库文件的 Agent 的通用要求
+```
+
+即使使用某个集成，实际执行仍应以目标项目中的 `AGENTS.md`、`agents/`、`skills/` 和 `harness/PROTOCOL.md` 为准。
+
+### `scripts/` 与根目录入口
+
+根目录入口是当前推荐方式：
+
+- `eh.cmd` / `eh.ps1`：无需安装，从当前源码仓库运行 CLI；
+- `install.cmd` / `install.ps1`：执行 editable 安装，之后可直接使用 `eh`。
+
+`scripts/` 中的 `eh.cmd`、`eh.ps1`、`init.ps1`、`audit.ps1` 等主要用于兼容旧路径；`init.sh` 和 `audit.sh` 提供 POSIX 薄封装。新增文档和日常命令应优先引用根目录入口或安装后的 `eh`。
+
+### `tests/`：结构与冒烟验证
+
+当前测试集中在 `tests/test_structure.py`，覆盖：
+
+- 框架、协议、模板和入口文件是否存在；
+- 协议与 README 是否保留关键流程约束；
+- `VERSION` 与 `pyproject.toml` 是否一致；
+- 文档和脚本是否包含机器本地绝对路径；
+- CLI 的 version、doctor、init、audit、guard 和 branch 基础流程。
+
+测试使用 Python 标准库 `unittest`，不依赖 pytest。
+
+### `docs/`：框架自身的设计记录
+
+根目录 `docs/` 记录的是 **Engineering Harness 本身**的产品化规格、设计讨论和实施计划，不会由 `eh init` 复制到目标项目。不要将它与 `assets/templates/docs/` 混淆：后者是目标项目文档的模板源。
 
 ---
 
-## 目标项目落地后的典型布局
+## 目标项目初始化后的典型布局
 
 ```text
 AGENTS.md                 # 任意 Agent 的项目操作入口

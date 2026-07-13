@@ -41,7 +41,8 @@ Output a Session Briefing before editing.
 - **Ship gate:** `tag` / `push` / `release` / protected branch only
 - **GitHub Flow:** no implementation on `main`/`master`
 - Modify only ownership/Phase Packet allowed paths
-- No completion claim without verification evidence + commit SHA (when changes exist)
+- No completion claim without project verification evidence + observed affected behavior + commit SHA (when changes exist)
+- `VERIFY INCOMPLETE` and `VERIFY FAIL` block Accept; only `VERIFY PASS` satisfies the configured command gate
 - Reviewer is readonly; Full + risk≥8 code needs reviewer before commit
 - Dangerous shells go through `python harness/scripts/safe_bash_guard.py -- "<command>"`
 
@@ -57,7 +58,8 @@ Output a Session Briefing before editing.
 ## Real commands
 - Build: `{{BUILD_CMD}}`
 - Test: `{{TEST_CMD}}`
-- Full gate: `python harness/scripts/verify.py`
+- Project verification contract: `harness/verification.json`
+- Project verification: `python harness/scripts/verify.py` (`PASS` only when every required check is configured and succeeds)
 - Harness check: `python harness/scripts/harness_check.py`
 - Branch check: `python harness/scripts/branch_check.py`
 - Danger check: `python harness/scripts/safe_bash_guard.py -- "<command>"`
