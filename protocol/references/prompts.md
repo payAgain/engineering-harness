@@ -5,15 +5,16 @@ These prompts are tool-agnostic. Paste them into any coding agent after attachin
 ## Round 0 — Product Intent Clarity（仅首次 / 产品级转向）
 
 ```text
-Read PROTOCOL.md and references/intent.md. You are in product Intent Clarity mode.
+Read PROTOCOL.md and references/intent.md. You are in product Intent Clarity mode (FIRST INIT path).
 
 Rules:
 1. Read-only repo inspection. No business code. No G1 freeze. No commit.
 2. Follow skills/clarify.md. Update harness/drafts/INTENT-CLARITY.md.
-3. Cover product-wide: problem, outcome, users, scope, constraints, interfaces, options, risks, level.
+3. Cover product-wide: problem, outcome, users, scope, constraints, interfaces, options, risks, level (Light/Standard/Full).
 4. Each turn: short restatement → 5–10 questions → stop and wait.
 5. If unsure, offer options; do not silently choose.
-6. Exit only after human says e.g. 「目标已明确，可以开始」. Reply: Intent Clarity: PASS. Wait for Round A.
+6. FORBIDDEN in this mode: ask Initiative 类型 / hotfix|feature|major. That classify exists ONLY after G1 init is done (Round I / skills/initiative.md).
+7. Exit only after human says e.g. 「目标已明确，可以开始」. Reply: Intent Clarity: PASS. Wait for Round A (not Round I).
 ```
 
 ## Round A — G0 Charter draft
@@ -36,12 +37,17 @@ I approve the Round A Charter draft: <note>. Execute Round B.
 1. Write root PROJECT_CHARTER.md as SSOT.
 2. Land agents/, ownership, Task DAG, session/skills per level.
 3. After G1, create working branch; must-commit governance baseline on that branch (skills/commit.md).
-4. Do not implement business features; stop and wait for first Initiative / batch approval.
+4. Do not implement business features.
+5. Stop. Next human step is Round I (first Initiative classify: hotfix|feature|major) or an explicit first-batch approval — NOT during Round 0/A/B.
+Stop and wait.
 ```
 
-## Round I — Start Initiative（下一 Feature / 版本）
+## Round I — Start Initiative（仅 init/G1 完成之后）
 
 ```text
+Preflight: .harness-version exists AND root PROJECT_CHARTER.md exists.
+If missing → you are still on first-init path. Use Round 0 / Round A / Round B. Do NOT ask Initiative 类型.
+
 Read PROTOCOL.md and references/lifecycle.md. Start a new Initiative (not a re-init, not resume of an old chat).
 
 Human intent: <hotfix|feature|major> — <one-line goal>

@@ -133,6 +133,8 @@ eh.cmd init <project> --level Standard --name my-app
 
 把 **`<project>/harness/PROTOCOL.md`** 交给任意 Agent（也可直接用框架仓库的 `PROTOCOL.md`），并粘贴 `protocol/references/prompts.md` 里的 **Round 0** 提示词。
 
+首次澄清只问**产品目标**与驾驭架级别（Light/Standard/Full）。**不要**出现 `Initiative 类型`（hotfix/feature/major）——那是 G1 完成之后的 Round I。
+
 Agent 只做澄清，直到你明确说「目标已明确，可以开始」：
 
 - 只读仓库，多轮提问（问题 / 验收 / 范围 / 约束 / 接口 / 选项 / 风险）
@@ -156,7 +158,7 @@ eh.cmd branch-check <project>
 
 ### 5. 之后：用 Initiative 开下一 Feature / 版本
 
-项目 **只 init 一次**。MVP 或第一轮做完后，不要重跑整套「第一次」流程，而是：
+项目 **只 init 一次**。**Round B / G1 完成之后**（以及后续每一轮新交付），才问类型：
 
 1. 人类声明类型：`hotfix` | `feature` | `major`
 2. 粘贴 `protocol/references/prompts.md` 的 **Round I**（范围化澄清）

@@ -28,6 +28,9 @@ Forbidden until clarity confirmation:
 - G1 artifacts (`agents/`, ownership DAG conclusions as final)
 - irreversible git actions
 - pretending unknowns are decided
+- **asking `Initiative 类型` / `hotfix|feature|major`** — that classify is **post-G1 only** (`skills/initiative.md` / Round I)
+
+During product Intent Clarity, the only “level” question is harness **Light / Standard / Full**, not Initiative type.
 
 ## Coverage checklist（尽量全面）
 
@@ -71,11 +74,12 @@ Ask across these dimensions. Skip only with an explicit human “N/A / 以后再
 ## Relationship to G0
 
 ```text
-接触 PROTOCOL
-  → Intent Clarity（可多轮）
-  → Round A：Charter 草案（仍不写业务代码）
+接触 PROTOCOL（首次）
+  → Round 0 Intent Clarity（产品级；禁止问 Initiative 类型）
+  → Round A：Charter 草案
   → 人类批准 Charter
-  → Round B：G1 落盘
+  → Round B：G1 落盘（eh init 已执行或在此完成）
+  → Round I：此时才 classify hotfix|feature|major → 第一轮交付
   → batches…
 ```
 

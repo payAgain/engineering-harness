@@ -1,7 +1,13 @@
 # Initiative Procedure（开启下一 Feature / 版本）
 
 ## Goal
-在项目已 init 之后，启动一个新的变更单元（hotfix / feature / major），而不是把整仓当「第一次」重做。
+在项目 **已完成 init / G1**（存在 `.harness-version` 与根 `PROJECT_CHARTER.md`）之后，启动一个新的变更单元（hotfix / feature / major），而不是把整仓当「第一次」重做。
+
+## Gate（必须先过）
+若仍在首次 init 路径上（无 `.harness-version`，或 Charter 未落盘，或人类明确在做 Round 0/A/B）：
+- **停止**本 skill
+- **不要**问 Initiative 类型
+- 改走 `skills/clarify.md` → Round A → Round B
 
 ## Rules
 - 先分类，再范围化澄清，再开分支

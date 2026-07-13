@@ -28,7 +28,7 @@
 
 ```text
 1. Close     关闭上一 Initiative（任务状态、progress-map、handoff）
-2. Classify  人类声明：hotfix | feature | major + 一句话目标
+2. Classify  人类声明：hotfix | feature | major + 一句话目标（**仅 init/G1 之后**；首次 Round 0 禁止问）
 3. Clarify   范围化澄清（只问本 Initiative；不是重做整个产品）
 4. Branch    从最新 main 拉 feat|fix|chore|hotfix/*
 5. Plan      写入 harness/initiatives/<id>/；Plan 中每个 Task = Phase → Packets / REGISTRY

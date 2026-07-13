@@ -58,15 +58,17 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 
 ### 4.0 Product Intent Clarity（仅首次或产品级转向）
 
-See `references/intent.md`.
+See `references/intent.md`.  
+**Do not** ask `hotfix|feature|major` here — that is §4.2 only.
 
 ### 4.1 init（仅一次）
 
 1. Product Intent Clarity PASS → `eh.cmd init <project> --level …`
 2. Round A/B Charter + system artifacts. See `references/gates.md`.
 3. Working branch + governance baseline commit.
+4. Stop. Initiative classify starts only in §4.2 after this completes.
 
-### 4.2 initiative（此后的主循环）
+### 4.2 initiative（init/G1 完成之后的主循环）
 
 1. Close previous Initiative if still open.
 2. Human classifies: `hotfix` | `feature` | `major`.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2 - 2026-07-13
+
+### Fixed
+- 首次 init / Round 0 不得询问 `Initiative 类型`（hotfix|feature|major）；该分类仅在 G1 完成后的 Round I
+- `skills/initiative.md` 增加门禁；`clarify` / Round 0 / intent / PROTOCOL 同步禁止混用
+
 ## 0.8.1 - 2026-07-13
 
 ### Clarified

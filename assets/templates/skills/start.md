@@ -17,8 +17,8 @@ Recover project context before changes.
 2. Read `current-task.md`
 3. Read `harness/session/session-state.json`
 4. Read `harness/session/session-log.md`
-5. If Charter missing or product acceptance unclear → `skills/clarify.md`
-6. Read `harness/initiatives/INDEX.md` and active initiative `brief.md` if present
+5. If Charter / `.harness-version` missing → first-init path: `skills/clarify.md` only (never `skills/initiative.md`)
+6. Read `harness/initiatives/INDEX.md` and active initiative `brief.md` **only if G1 already landed**
 7. Read `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md` (if present)
 8. Check git branch (`git branch --show-current` or `python harness/scripts/branch_check.py`)
 9. If on `main`/`master` and the next work is implementation → create `feat/<task-or-batch>`
@@ -30,7 +30,7 @@ Recover project context before changes.
 Session Briefing
 
 Current Goal:
-Initiative ID / Type:
+Initiative ID / Type: N/A until after G1; then current open Initiative
 Intent Clarity: PASS | clarifying-intent | re-enter-clarify
 Current Status:
 Current Phase:

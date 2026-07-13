@@ -30,6 +30,7 @@ At session/batch start, follow `skills/start.md`:
 Output a Session Briefing before editing.
 
 ## Non-negotiables
+- **First init ≠ Initiative classify.** Round 0/A/B never ask hotfix|feature|major; Round I only after G1.
 - **Task = phase (progress); execute via role_pipeline.** Track phases in REGISTRY; never spawn anonymous “implement Task N” workers; close phases with acceptance_doc.
 - **Clarify before act** (product or scoped Initiative)
 - **Initiative loop** after init: next feature/version uses `skills/initiative.md`, not re-init
