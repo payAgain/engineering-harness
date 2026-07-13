@@ -7,7 +7,6 @@ from pathlib import Path
 
 from engineering_harness.branch import current_branch, evaluate_branch
 from engineering_harness.check import guard_command, harness_check, load_level
-from engineering_harness.migrate import detect_legacy_layout
 
 
 def audit_project(target: Path) -> tuple[int, list[str]]:
@@ -15,18 +14,12 @@ def audit_project(target: Path) -> tuple[int, list[str]]:
     lines: list[str] = []
     version_path = target / ".harness-version"
     if not version_path.exists():
-        legacy = detect_legacy_layout(target)
-        msgs = ["AUDIT FAIL: .harness-version missing. Run: eh init <path> 或 eh migrate <path>"]
-        msgs.extend(legacy)
-        return 1, msgs
+        return 1, ["AUDIT FAIL: .harness-version missing. Run: eh init <path>"]
 
     meta = json.loads(version_path.read_text(encoding="utf-8"))
     lines.append(f"Framework version in project: {meta.get('version')}")
     lines.append(f"Harness level: {meta.get('level')}")
     lines.append(f"CLI runtime: {meta.get('cli', 'unknown')}")
-
-    for warning in detect_legacy_layout(target):
-        lines.append(warning)
 
     problems = harness_check(target)
     if problems:
@@ -35,7 +28,6 @@ def audit_project(target: Path) -> tuple[int, list[str]]:
         return 1, lines
     lines.append(f"HARNESS_CHECK PASS (level={load_level(target)}, layout=tool-agnostic)")
 
-    # Guard smoke tests (logic lives in Python; no PowerShell required)
     lines.append("=== SAFE_BASH_GUARD smoke ===")
     ok, msg = guard_command("echo ok")
     lines.append(msg)

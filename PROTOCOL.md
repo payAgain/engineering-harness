@@ -59,7 +59,7 @@ See `references/intent.md`. Exit only on human PASS.
 
 ### 4.1 init
 
-1. Intent Clarity PASS → propose level → `eh.cmd init` / `migrate` if needed.
+1. Intent Clarity PASS → propose level → `eh.cmd init <project>` if harness files are missing.
 2. Round A Charter draft; Round B land system artifacts. See `references/gates.md`.
 3. After G1, create working branch; governance baseline **must be committed** on that branch (or explicitly deferred with reason).
 

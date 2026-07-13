@@ -153,7 +153,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.6.0")
+        self.assertEqual(ver.stdout.strip(), "0.6.1")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)
@@ -201,30 +201,6 @@ class PythonCliSmokeTests(unittest.TestCase):
             ok = _cli("branch-check", str(root))
             self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
             self.assertIn("feat/demo-feature", ok.stdout)
-
-    def test_migrate_from_legacy_cursor_layout(self):
-        with tempfile.TemporaryDirectory(prefix="eh-migrate-") as tmp:
-            target = Path(tmp) / "legacy"
-            (target / ".cursor" / "agents").mkdir(parents=True)
-            (target / ".cursor" / "skills").mkdir(parents=True)
-            (target / ".cursor" / "agents" / "orchestrator.md").write_text("# orch\n", encoding="utf-8")
-            (target / ".cursor" / "skills" / "start.md").write_text("# start\n", encoding="utf-8")
-            (target / "AGENTS.md").write_text("see .cursor/agents/\n", encoding="utf-8")
-
-            proc = _cli("migrate", str(target), "--level", "Standard")
-            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-            self.assertTrue((target / "agents" / "orchestrator.md").exists())
-            self.assertTrue((target / "skills" / "start.md").exists())
-            self.assertTrue((target / ".harness-version").exists())
-            self.assertTrue((target / "docs" / "branching.md").exists())
-            self.assertTrue((target / "harness" / "scripts" / "branch_check.py").exists())
-
-            meta = json.loads((target / ".harness-version").read_text(encoding="utf-8"))
-            self.assertEqual(meta.get("migrated_from"), "legacy-cursor-template")
-
-            # Still missing Standard required files beyond migrate subset → audit may fail harness_check.
-            # detect path: migrate note about AGENTS.md should appear in stdout
-            self.assertIn("AGENTS.md", proc.stdout)
 
 
 if __name__ == "__main__":

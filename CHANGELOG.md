@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.1 - 2026-07-13
+
+### Removed
+- `eh migrate` 及旧 Cursor 模板迁移路径（不再维护）
+
+### Changed
+- README 五分钟上手：init → Intent Clarity（含交协议）→ audit → branch，去掉重复步骤
+
 ## 0.6.0 - 2026-07-13
 
 ### Changed
