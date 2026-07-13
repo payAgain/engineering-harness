@@ -1,93 +1,53 @@
 # Anti-Patterns（明确禁止）
 
-> 这些做法看起来像「在用多 Agent」，但**不是**本框架的预期推进方式。  
-> **Task / 阶段本身是需要的**（进度追踪）；错的是「一阶段 = 一个匿名实现 Agent（+ 自动配一个 Review）」。  
-> 正确模型见 `references/phases.md`。
+> 正确模型：`references/glossary.md`、`phases.md`。  
+> Phase 必须有（进度）；错的是匿名工人、乱命名、把并行甩给人类。
 
-## AP-1: 匿名 Todo 工人（最常见）
+## AP-1: 匿名 Todo 工人
 
-**错误形态：**
-
-```text
-Plan.md / Todo
-  Task 0 → SubAgent「实现 Task 0」          # 无角色
-  Task 0 → SubAgent「Review Task 0」        # 每个 todo 自动双人组
-  Task 1 → SubAgent「实现 Task 1」
-  …
-```
-
-**为什么错：**
-
-- 阶段被当成单工人单工单，而不是 **多角色流水线 + 验收收尾**
-- 稳定 `agents/<role>.md` 被绕过，角色退化成「Task N 实现者 / 评审者」
-- 每个 todo 都配 reviewer → 成本爆炸，且违反「仅 Full / risk≥8 code 强制 reviewer」
-- Orchestrator 变成 for-loop，不再按 `role_pipeline` / ownership 编排
-
-**正确形态：**
-
-```text
-Initiative
-  → Plan 拆出 Phase Tasks（可叫 Task 0/1…，必须进 REGISTRY）
-  → 每个 Phase Packet 带 role_pipeline + acceptance_doc
-  → Batch 批准要推进的阶段
-  → Orchestrator 按阶段内角色流水线派工
-       researcher → module-* → test →（条件）reviewer
-  → 阶段收尾：验收文档 + must-commit + status=accepted
-```
-
-计划里的 `### Task N` **要保留并物化为 Phase Packet**；禁止的是不经角色、不写验收就「勾完」。
+**错误：** `Task 0 →「实现 Task 0」` + 自动配 Review。  
+**正确：** `P-001` + `role_pipeline` 多角色 → Accept。
 
 ## AP-2: 「You are implementing Task N」开场
 
-Worker 提示词若不以角色开头，一律视为不合格派发。
+必须以 `You are role: <role>` 开头。见 `dispatch.md` 骨架。
 
-禁用开场：
+## AP-3: 聊天勾选当进度 / 计划花名当 SSOT
 
-- `You are implementing Task 0`
-- `Execute the next todo`
-- `Continue the checklist`
+进度 SSOT = `REGISTRY` + `P-00x` Packet + `acceptance_doc`。  
+新计划禁止标题：`Task N`、`WP-*`、`Round C`、`Batch-1`（对外用 **Build B-001**）。
 
-必须开场：
+## AP-4: Human Gate 自己 for-each 派工
 
-- `You are role <role>. Read agents/<role>.md …`
-- 附 **Phase Packet** 路径、本步在 `role_pipeline` 中的 purpose、允许写入路径、handoff、禁止事项
+批准 Build 后必须先有 orchestrator 实例。
 
-完整骨架见 `references/dispatch.md` § Worker prompt skeleton。
+## AP-5: 环境预备当成「实现」
 
-## AP-3: 只用聊天勾选当进度
+应走 pipeline 的 `researcher` / `governance` Step。
 
-| 制品 | 地位 |
-|---|---|
-| 聊天 todo 勾选 | 辅助记忆，**不是**进度 SSOT |
-| `docs/**/plans/*.md` | 设计草稿；阶段需落入 REGISTRY |
-| `harness/tasks/REGISTRY.yaml` + Phase Packet | **进度与派发 SSOT** |
-| Phase `acceptance_doc` | **阶段完成证明** |
-| `harness/runtime/invocations/<batch>.yaml` | 本 batch 执行台账 |
+## AP-6: 跳过角色流水线
 
-没有 Phase Packet 就派 SubAgent = `packet-missing`。  
-没有验收文档就标完成 = `acceptance-missing`。
+「一个万能实现 Agent 打完整个 Phase」= 失败。
 
-## AP-4: Human Gate / 主会话自己 for-each todo
+## AP-7: 向人类询问阶段并行（流程混乱源）
 
-主会话批准 batch 后，必须先有 **orchestrator 角色实例**；由它按阶段的 `role_pipeline` 派 worker。  
-主会话直接 `Task` 出一串「实现 Task N」= 编排塌缩。
+**错误：**
 
-## AP-5: 环境预备也当成「实现」
+```text
+WP-1.0 和 WP-1.1 要不要同步进行？请批准一起做还是分开。
+```
 
-`git` / 本地 m2 / 依赖安装等属于 pipeline 里的 `researcher` 或 `governance` 步，  
-不是匿名 “Task 0 implementer”。
+**为什么错：** 并行是依赖/写权问题，属 orchestrator 规划职责；甩给人类 = 未规划。  
+**正确：** 默认串行；提出 `Build B-001 → P-001`（或按依赖列出本轮范围）；并行仅 orchestrator 静默判定并记 `parallel_group`。
 
-## AP-6: 有 Task 却跳过角色流水线
+## AP-8: 阶段命名不统一
 
-「为了快，这个阶段只开一个万能实现 Agent」——仍算失败。  
-阶段再小，也至少按 Packet 声明的角色执行；可压缩 pipeline，不可取消角色绑定。
+同一 Initiative 内混用 Task/WP/Phase/Round。必须统一 `I-00x` / `P-00x` / `B-00x` + glossary 阶段名。
 
-## Quick self-check before spawning a SubAgent
+## Quick self-check
 
-1. 是否存在 Phase Packet，且已登记 REGISTRY？  
-2. 提示词第一行是否是角色，而不是 Task 编号？  
-3. 本步是否对应 `role_pipeline` 中的一项？  
-4. 阶段结束是否规划了 `acceptance_doc`？  
-5. reviewer 是否仅在规则要求时出现（而非每个阶段自动双人组）？
-
-任一为否 → 不要派发，先修 Packet / 提示词。
+1. ID 是否为 `P-00x` / `I-00x` / `B-00x`？  
+2. 提示词是否角色开头？  
+3. 是否问了人类并行？  
+4. 是否规划了 `acceptance_doc`？  
+5. reviewer 是否仅按规则出现？

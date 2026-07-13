@@ -28,7 +28,8 @@ Forbidden until clarity confirmation:
 - G1 artifacts (`agents/`, ownership DAG conclusions as final)
 - irreversible git actions
 - pretending unknowns are decided
-- **asking `Initiative 类型` / `hotfix|feature|major`** — that classify is **post-G1 only** (`skills/initiative.md` / Round I)
+- **asking `Initiative 类型` / `hotfix|feature|major`** — **Scope only** after Bootstrap/G1
+- **asking whether Phases should run in parallel / 同步** — orchestrator-owned; never Human Gate
 
 During product Intent Clarity, the only “level” question is harness **Light / Standard / Full**, not Initiative type.
 
@@ -75,12 +76,10 @@ Ask across these dimensions. Skip only with an explicit human “N/A / 以后再
 
 ```text
 接触 PROTOCOL（首次）
-  → Round 0 Intent Clarity（产品级；禁止问 Initiative 类型）
-  → Round A：Charter 草案
-  → 人类批准 Charter
-  → Round B：G1 落盘（eh init 已执行或在此完成）
-  → Round I：此时才 classify hotfix|feature|major → 第一轮交付
-  → batches…
+  → Clarify（产品级；禁止问 Initiative 类型 / 并行）
+  → Charter
+  → Bootstrap（G1 / eh init）
+  → Scope（此时才 hotfix|feature|major）→ Plan（P-00x）→ Build → Accept → …
 ```
 
 Intent Clarity 是 G0 的前置子阶段，不是可跳过的寒暄。

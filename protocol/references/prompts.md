@@ -1,26 +1,28 @@
 # Copyable Prompts
 
-These prompts are tool-agnostic. Paste them into any coding agent after attaching `PROTOCOL.md`.
+Tool-agnostic. Attach `PROTOCOL.md` + `references/glossary.md`.  
+**对外只用 glossary 阶段名**；括号内 legacy 仅兼容旧会话。
 
-## Round 0 — Product Intent Clarity（仅首次 / 产品级转向）
+## Clarify — 产品级澄清（仅首次 / 产品转向）（legacy: Round 0）
 
 ```text
-Read PROTOCOL.md and references/intent.md. You are in product Intent Clarity mode (FIRST INIT path).
+Read PROTOCOL.md, references/glossary.md, references/intent.md. Mode: Clarify (FIRST INIT).
 
 Rules:
-1. Read-only repo inspection. No business code. No G1 freeze. No commit.
+1. Read-only. No business code. No Bootstrap/G1 freeze. No commit.
 2. Follow skills/clarify.md. Update harness/drafts/INTENT-CLARITY.md.
-3. Cover product-wide: problem, outcome, users, scope, constraints, interfaces, options, risks, level (Light/Standard/Full).
+3. Cover product-wide: problem, outcome, users, scope, constraints, interfaces, options, risks, harness level (Light/Standard/Full).
 4. Each turn: short restatement → 5–10 questions → stop and wait.
 5. If unsure, offer options; do not silently choose.
-6. FORBIDDEN in this mode: ask Initiative 类型 / hotfix|feature|major. That classify exists ONLY after G1 init is done (Round I / skills/initiative.md).
-7. Exit only after human says e.g. 「目标已明确，可以开始」. Reply: Intent Clarity: PASS. Wait for Round A (not Round I).
+6. FORBIDDEN: ask Initiative 类型 / hotfix|feature|major (that is Scope, only after Bootstrap/G1).
+7. FORBIDDEN: ask whether phases should run in parallel / 同步进行.
+8. Exit after human 「目标已明确，可以开始」. Reply: Intent Clarity: PASS. Wait for Charter (not Scope).
 ```
 
-## Round A — G0 Charter draft
+## Charter — Charter 草案（legacy: Round A）
 
 ```text
-Product Intent Clarity is PASS. Round A only: health + Charter draft. No business code. No G1.
+Product Intent Clarity is PASS. Stage: Charter only. No business code. No Bootstrap/G1.
 
 1. Propose Light/Standard/Full with evidence.
 2. Draft harness/drafts/PROJECT_CHARTER.proposed.md from INTENT-CLARITY.
@@ -29,63 +31,79 @@ Product Intent Clarity is PASS. Round A only: health + Charter draft. No busines
 Stop and wait.
 ```
 
-## Round B — G1 initialize
+## Bootstrap — G1 落盘（legacy: Round B）
 
 ```text
-I approve the Round A Charter draft: <note>. Execute Round B.
+I approve the Charter draft: <note>. Execute Bootstrap (G1).
 
 1. Write root PROJECT_CHARTER.md as SSOT.
-2. Land agents/, ownership, Task DAG, session/skills per level.
-3. After G1, create working branch; must-commit governance baseline on that branch (skills/commit.md).
+2. Land agents/, ownership, REGISTRY, session/skills per level.
+3. After G1, create working branch; must-commit governance baseline (skills/commit.md).
 4. Do not implement business features.
-5. Stop. Next human step is Round I (first Initiative classify: hotfix|feature|major) or an explicit first-batch approval — NOT during Round 0/A/B.
-Stop and wait.
+5. Stop. Next human step is Scope (first Initiative classify) — NOT during Clarify/Charter/Bootstrap.
 ```
 
-## Round I — Start Initiative（仅 init/G1 完成之后）
+## Scope — 开启 Initiative（仅 Bootstrap/G1 之后）（legacy: Round I）
 
 ```text
-Preflight: .harness-version exists AND root PROJECT_CHARTER.md exists.
-If missing → you are still on first-init path. Use Round 0 / Round A / Round B. Do NOT ask Initiative 类型.
+Preflight: .harness-version AND root PROJECT_CHARTER.md exist.
+If missing → still first-init: use Clarify → Charter → Bootstrap. Do NOT ask Initiative 类型.
 
-Read PROTOCOL.md and references/lifecycle.md. Start a new Initiative (not a re-init, not resume of an old chat).
+Read PROTOCOL.md, glossary.md, lifecycle.md. Stage: Scope.
 
 Human intent: <hotfix|feature|major> — <one-line goal>
+Initiative ID: I-00x
 
-1. Follow skills/initiative.md. Human Gate chat must not implement.
-2. If a previous Initiative is still open, close or confirm abandon first.
-3. Scoped clarity only for this Initiative; write harness/initiatives/<id>/brief.md; update INDEX.md.
-4. Stop every question round for human answers.
-5. After human says 「本 Initiative 范围已明确，可以开干」:
-   - create working branch from latest main (feat|fix|chore|hotfix/*)
-   - add/update Task Packets with initiative_id
+1. Follow skills/initiative.md. Human Gate must not implement.
+2. Close or abandon previous open Initiative first if any.
+3. Scoped clarity → harness/initiatives/<id>/brief.md; update INDEX.md.
+4. Stop each question round for human answers.
+5. After 「本 Initiative 范围已明确，可以开干」:
+   - working branch from latest main
+   - materialize Phase Packets as P-001, P-002, … (glossary IDs)
    - update current-task.md
-6. Do not start implementation until I approve the first batch (Round C).
+6. Run Plan output with glossary template. Do NOT ask human about parallel phases.
+7. Wait for Build approval (not ad-hoc implementation).
 ```
 
-## Round C — batch（Initiative 内）
+## Plan — 阶段清单（在 Scope 通过后 / Build 前）
 
 ```text
-I approve batch <batch_id> for initiative <id>: phase tasks <WP-… / Task N, …>.
+Stage: Plan for Initiative I-00x.
 
-1. Spawn a **new orchestrator** role instance. Human Gate must not orchestrate or implement.
-2. Progress SSOT = REGISTRY + Phase Packets. Plan Task numbers must already be materialized; if missing → stop (packet-missing).
-3. Each Task is a **phase**: advance via role_pipeline (multi-role). FORBIDDEN: one anonymous "implementing Task N" agent; FORBIDDEN: auto pair every phase with a reviewer.
-4. Worker prompts MUST use references/dispatch.md skeleton (role + agents/<role>.md + phase packet + pipeline step).
-5. Spawn reviewer only if Full / risk>=8 code / human requested.
-6. Phase close: write acceptance_doc → must-commit → status=accepted → update REGISTRY. No push/tag/release without human auth.
+1. Read references/glossary.md and references/phases.md.
+2. Output ONLY glossary titles: Initiative / Phases P-00x / Next Build B-00x.
+3. Each Phase = role_pipeline + acceptance_doc path. No WP-* / Task N titles.
+4. Phases are serial by default (P-001 → P-002 → …).
+5. FORBIDDEN: ask human whether two phases should run together / in parallel.
+6. Materialize Packets + REGISTRY. Stop and propose Next Build scope (usually the earliest ready Phase only).
 ```
 
-## Round Close — Archive Initiative
+## Build — 批准执行轮（legacy: Round C / Batch）
 
 ```text
-Close initiative <id>.
+I approve Build B-00x for Initiative I-00x: Phases <P-00x, …>.
 
-1. Verify acceptance criteria in harness/initiatives/<id>/brief.md.
-2. Ensure related tasks are completed or explicitly deferred.
-3. Update initiatives/INDEX.md status=completed; progress-map; current-task next steps.
-4. Handoff. If Charter/ADR should absorb outcomes, propose edits (do not silently rewrite history).
-5. Stop. Next work must use Round I, not this chat as lifelong orchestrator.
+1. Spawn a **new orchestrator** instance. Human Gate must not orchestrate or implement.
+2. Progress SSOT = REGISTRY + Phase Packets (P-00x). Missing → packet-missing.
+3. Human approved SCOPE only. Orchestrator decides serial vs parallel from dependencies/conflict_score/write domains. NEVER ask human about 并行/同步.
+4. Default: advance Phases serially. Multi-Phase in one Build ≠ parallel.
+5. Inside each Phase: role_pipeline (multi-role). FORBIDDEN: anonymous "implementing Task N"; FORBIDDEN: auto reviewer every Phase.
+6. Worker prompts: references/dispatch.md skeleton.
+7. Reviewer only if Full / risk>=8 code / human requested.
+8. Accept: acceptance_doc → must-commit → status=accepted → REGISTRY. No Ship without human auth.
+```
+
+## Archive — 关闭 Initiative（legacy: Round Close）
+
+```text
+Archive Initiative I-00x.
+
+1. Verify brief.md acceptance.
+2. All Phases accepted or explicitly deferred.
+3. Update initiatives/INDEX.md; progress-map; current-task.
+4. Handoff; propose Charter/ADR updates if needed.
+5. Stop. Next work = new Scope in a new chat.
 ```
 
 ## Audit
@@ -97,5 +115,7 @@ Audit this repository against Engineering Harness. Run the audit CLI if availabl
 ## Resume（仅同一 Initiative）
 
 ```text
-Follow skills/start.md. Resume the **current** open Initiative only. If the human wants a new feature/version, switch to Round I (initiative mode) instead of implementing here.
+Follow skills/start.md. Resume the **current** open Initiative only.
+If the human wants a new feature/version, switch to Scope (initiative mode).
+Do not ask about parallelizing Phases.
 ```

@@ -4,8 +4,8 @@
 This file is the project operating guide for **any** coding agent. Role files live in `agents/`. Procedures live in `skills/`. Do not require IDE-specific skill installation.
 
 ## Human Gate vs workers
-The user-facing chat is the **Human Gate** only: clarify, approve batch scope, review commit SHAs, authorize push/tag/release.  
-It must **not** implement, test, or self-orchestrate. Spawn an **orchestrator** separate role instance per batch, then workers. See role catalog in framework `protocol/references/roles.md` (copied guidance lives under `agents/`).
+The user-facing chat is the **Human Gate** only: Clarify/Scope Q&A, approve **Build scope** (which Phases), review SHAs, authorize Ship.  
+It must **not** implement, decide Phase parallel/同步, or self-orchestrate. Spawn an **orchestrator** per Build, then workers. Naming: framework `protocol/references/glossary.md`.
 
 ## First action on unclear goals
 - **New product / first contact:** `skills/clarify.md` → product Intent Clarity PASS  
@@ -30,16 +30,18 @@ At session/batch start, follow `skills/start.md`:
 Output a Session Briefing before editing.
 
 ## Non-negotiables
-- **First init ≠ Initiative classify.** Round 0/A/B never ask hotfix|feature|major; Round I only after G1.
-- **Task = phase (progress); execute via role_pipeline.** Track phases in REGISTRY; never spawn anonymous “implement Task N” workers; close phases with acceptance_doc.
-- **Clarify before act** (product or scoped Initiative)
-- **Initiative loop** after init: next feature/version uses `skills/initiative.md`, not re-init
-- **Every role (including orchestrator) = separate role instance**; Human Gate must not do the work
-- **Must-commit** verified work on `feat/*` (etc.); humans review SHAs
-- **Human gate:** `tag` / `push` / `release` / protected branch only
+- **Naming:** Clarify → Charter → Bootstrap → Scope → Plan → Build → Accept → Ship → Archive; IDs `I/P/B-00x` (`glossary.md`)
+- **First init ≠ Scope.** Clarify/Charter/Bootstrap never ask hotfix|feature|major
+- **Phases serial by default.** Never ask human about 并行/同步; orchestrator decides from dependencies
+- **Phase + role_pipeline + acceptance_doc.** No anonymous “implement Task N” workers
+- **Clarify before act** (product Clarify or scoped Scope)
+- **Initiative loop** after Bootstrap: `skills/initiative.md`, not re-init
+- **Every role (including orchestrator) = separate role instance**
+- **Must-commit** on working branches; humans review SHAs
+- **Ship gate:** `tag` / `push` / `release` / protected branch only
 - **GitHub Flow:** no implementation on `main`/`master`
-- Modify only ownership/Task Packet allowed paths
-- No completion claim without real verification evidence + commit SHA (when changes exist)
+- Modify only ownership/Phase Packet allowed paths
+- No completion claim without verification evidence + commit SHA (when changes exist)
 - Reviewer is readonly; Full + risk≥8 code needs reviewer before commit
 - Dangerous shells go through `python harness/scripts/safe_bash_guard.py -- "<command>"`
 

@@ -31,13 +31,13 @@
 
 ## 核心原则（请先读）
 
-1. **先澄清目标，再行动**：多轮提问消除二义性后，才能 Round A / 写代码。
-2. **Human Gate ≠ 干活线程**：用户聊天只负责澄清、批准范围、审查 SHA、授权发布；编排与实现必须由**独立角色实例**（含 orchestrator）执行。
-3. **Task = 阶段（要追踪）；阶段内按角色流水线执行**：Plan 里的 Task 必须进 `REGISTRY`。每个阶段由多个角色协作，收尾生成验收文档。禁止「一阶段 = 一个匿名实现 Agent + 自动配一个 Review」（见 `protocol/references/phases.md`）。
+1. **先澄清目标，再行动**：多轮提问消除二义性后，才能 Charter / Bootstrap / 写代码。
+2. **Human Gate ≠ 干活线程**：用户聊天只负责澄清、批准 Build 范围、审查 SHA、授权 Ship；编排与实现必须由**独立角色实例**（含 orchestrator）执行。
+3. **统一命名 + Phase 串行默认**：对外用 glossary（Clarify/…/Build/Accept）；进度 ID 为 `I/P/B-00x`。人只批 Build 范围；禁止问「两阶段能否并行」。见 `protocol/references/glossary.md`。
 4. **验证后必须 commit**：工作分支上留下可验收的 commit SHA；未提交的「已完成」视为流程失败。
-5. **人类把控发布面**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
+5. **人类把控发布面（Ship）**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
 6. **运行时 SSOT 永远是目标项目仓库**。
-7. **GitHub Flow**：G1 之后不要在 `main`/`master` 上做实现类开发。
+7. **GitHub Flow**：Bootstrap/G1 之后不要在 `main`/`master` 上做实现类开发。
 
 角色目录与主流框架对照见 [`protocol/references/roles.md`](./protocol/references/roles.md)。
 
@@ -131,9 +131,9 @@ eh.cmd init <project> --level Standard --name my-app
 
 ### 2. 启动 Agent：澄清目标（Intent Clarity）
 
-把 **`<project>/harness/PROTOCOL.md`** 交给任意 Agent（也可直接用框架仓库的 `PROTOCOL.md`），并粘贴 `protocol/references/prompts.md` 里的 **Round 0** 提示词。
+把 **`<project>/harness/PROTOCOL.md`** 交给任意 Agent（也可直接用框架仓库的 `PROTOCOL.md`），并粘贴 `protocol/references/prompts.md` 里的 **Clarify** 提示词。
 
-首次澄清只问**产品目标**与驾驭架级别（Light/Standard/Full）。**不要**出现 `Initiative 类型`（hotfix/feature/major）——那是 G1 完成之后的 Round I。
+首次澄清只问**产品目标**与驾驭架级别（Light/Standard/Full）。**不要**出现 Initiative 类型，也**不要**问阶段能否并行。
 
 Agent 只做澄清，直到你明确说「目标已明确，可以开始」：
 
@@ -141,7 +141,7 @@ Agent 只做澄清，直到你明确说「目标已明确，可以开始」：
 - 维护 `harness/drafts/INTENT-CLARITY.md` 与 Open Questions
 - **不写业务代码、不冻结 G1**
 
-通过后再按同文件中的 Round A / Round B 提示词继续。按需阅读 `protocol/references/*`（门禁、调度、分支、角色等）。
+通过后再按同文件中的 **Charter** / **Bootstrap** 提示词继续。命名见 [`protocol/references/glossary.md`](./protocol/references/glossary.md)。
 
 ### 3. 审计（可选但推荐）
 
@@ -156,17 +156,17 @@ eh.cmd branch-new <slug> <project>
 eh.cmd branch-check <project>
 ```
 
-### 5. 之后：用 Initiative 开下一 Feature / 版本
+### 5. 之后：Scope → Plan → Build
 
-项目 **只 init 一次**。**Round B / G1 完成之后**（以及后续每一轮新交付），才问类型：
+项目 **只 init 一次**。**Bootstrap/G1 完成之后**（以及后续每一轮新交付）：
 
 1. 人类声明类型：`hotfix` | `feature` | `major`
-2. 粘贴 `protocol/references/prompts.md` 的 **Round I**（范围化澄清）
-3. 新分支 + 新 Task Packets → 批准 batch（**Round C**）
-4. 完成后 **Round Close** 归档；下一目标再开 Round I
+2. 粘贴 prompts 的 **Scope**（范围化澄清）
+3. **Plan** 产出 `P-00x`（默认串行；不要问人类能否并行）→ 批准 **Build B-00x** 范围
+4. Orchestrator 按依赖推进 → **Accept**；完成后 **Archive**；下一目标再开 Scope
 
-详情：[`protocol/references/lifecycle.md`](./protocol/references/lifecycle.md)。  
-`resume` 只能续**当前** Initiative；开新目标请用 Round I。
+详情：[`lifecycle.md`](./protocol/references/lifecycle.md) · [`glossary.md`](./protocol/references/glossary.md)。  
+`resume` 只能续**当前** Initiative；开新目标请用 Scope。
 
 ---
 
@@ -267,11 +267,11 @@ python harness/scripts/safe_bash_guard.py -- "<command>"
 
 ## 推荐工作流（摘要）
 
-0. **clarify**（产品级，通常仅首次）→ Intent Clarity PASS  
-1. **init**（仅一次）→ Round A/B  
-2. **initiative** → 范围澄清 → 分支 → Task DAG  
-3. **batch** × N → must-commit → 人授权 push  
-4. **close** → 归档；下一 feature 回到步骤 2  
+0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS  
+1. **Charter → Bootstrap**（init 仅一次）  
+2. **Scope → Plan**（`P-00x`，默认串行）  
+3. **Build** × N → Accept → must-commit → 人授权 **Ship**  
+4. **Archive**；下一 feature 回到 Scope  
 5. **audit / resume** → resume 仅限同一 Initiative  
 
 门禁与状态机详见 [`protocol/references/gates.md`](./protocol/references/gates.md) 与 [`protocol/references/intent.md`](./protocol/references/intent.md)。

@@ -1,85 +1,52 @@
-# Lifecycle — Initiative Loop（续作 / 下一 Feature）
+# Lifecycle — Initiative Loop
 
-> 项目只 **init 一次**。之后的开发按 **Initiative（变更单元）** 循环推进。  
-> `resume` = 续同一任务；`initiative` = 开下一个小 feature 或大版本。二者不要混用。
-
-对照主流：Spec Kit 每个新 feature 新建 `specs/<id>-name/`；GitHub Flow 每次变更新分支；Supervisor 每轮新编排实例。
+> 项目只 **Bootstrap/init 一次**。之后按 **Initiative** 循环。  
+> 对外命名：`references/glossary.md`（Clarify → … → Scope → Plan → Build → Accept → Ship → Archive）。
 
 ## Concepts
 
-| 概念 | 含义 |
-|---|---|
-| Project | 仓库 + Charter + 角色/ownership（长期 SSOT） |
-| Initiative | 一次有边界的交付：MVP 切片 / 小 feature / 大版本 / 重大重构 |
-| Batch | Initiative 内的一轮执行（可多个 batch） |
-| Session | 一次聊天窗口；禁止跨 Initiative 复用同一长会话当编排器 |
-
-## Classify（人类先选型）
-
-| 类型 | 何时 | 澄清强度 | 典型路径 |
-|---|---|---|---|
-| `hotfix` | 线上/阻塞小修 | 极低（确认复现与验收） | `fix/*` → 通常 1 batch → commit → 人授权 push |
-| `feature` | 新能力、可独立验收 | **范围化** Intent Clarity | 新分支 → Task Packets → N batch |
-| `major` | 大版本、协议/数据模型/多模块重构 | 近似小 Round A（可能改 Charter/ADR） | 澄清 → ADR/Charter 增量 → DAG → N batch → 集成屏障 →（人）tag/release |
-
-拿不准时：按 `feature` 走，不要按 `hotfix` 偷懒。
-
-## Outer loop（每个 Initiative）
-
-```text
-1. Close     关闭上一 Initiative（任务状态、progress-map、handoff）
-2. Classify  人类声明：hotfix | feature | major + 一句话目标（**仅 init/G1 之后**；首次 Round 0 禁止问）
-3. Clarify   范围化澄清（只问本 Initiative；不是重做整个产品）
-4. Branch    从最新 main 拉 feat|fix|chore|hotfix/*
-5. Plan      写入 harness/initiatives/<id>/；Plan 中每个 Task = Phase → Packets / REGISTRY
-6. Batches   每批新 orchestrator → 按阶段 role_pipeline 派角色 → 验收文档 → must-commit
-7. Gate      人审 SHA；授权 push/PR/merge；（major）再授权 tag/release
-8. Archive   handoff；Initiative 标 completed；可选把结论回写 Charter/ADR
-```
-
-## Scoped Clarity（范围化澄清）
-
-与首次全产品 Intent Clarity 的区别：
-
-| | 首次（Round 0） | Initiative（Round I） |
+| 概念 | 含义 | ID |
 |---|---|---|
-| 范围 | 整个产品 | 仅本 Initiative |
-| 产物 | `harness/drafts/INTENT-CLARITY.md` | `harness/initiatives/<id>/brief.md` |
-| Charter | 可能从零起草 | 默认沿用；仅 major 才提案修改 |
-| 退出语 | 「目标已明确，可以开始」 | 「本 Initiative 范围已明确，可以开干」 |
+| Initiative | 一次有边界的交付 | `I-001` |
+| Phase | 可追踪阶段 | `P-001` |
+| Build | 人类批准的执行轮（范围） | `B-001` |
+| Session | 聊天窗口；禁止跨 Initiative 复用当编排器 | — |
 
-仍禁止：在开放问题未关闭时写业务代码、在 Human Gate 主会话里实现。
+## Classify（仅 Bootstrap 之后）
 
-## Artifacts
+| 类型 | 何时 | 澄清 | 典型路径 |
+|---|---|---|---|
+| `hotfix` | 阻塞小修 | 极低 | `fix/*` → 常 1 Build |
+| `feature` | 可独立验收能力 | Scope 澄清 | 新分支 → Phases → N Build |
+| `major` | 大版本/多模块 | 近似小 Charter | ADR 增量 → N Build → Integrate → Ship |
+
+## Outer loop
 
 ```text
-harness/initiatives/
-  INDEX.md                 # 列表与状态
-  <id>-<slug>/
-    brief.md               # 目标/非目标/验收/风险
-    notes.md               # 可选过程笔记
+1. Archive   关闭上一 Initiative
+2. Scope     classify + 范围澄清（禁止在首次 Clarify 问类型）
+3. Branch    feat|fix|chore|hotfix/*
+4. Plan      Phases P-00x → REGISTRY（默认串行；禁止问人类并行）
+5. Build×N   人批范围 → orchestrator 判定顺序/并行 → Accept → must-commit
+6. Ship      人授权 push/PR/tag/release
+7. Archive   INDEX completed
 ```
-
-`<id>` 建议：`I-001`、`I-002`… 或日期+短名：`20260713-proxy-smoke`。
-
-Task Packets 通过 frontmatter / 正文引用 `initiative_id`。
 
 ## Hard rules
 
-1. 新 Initiative **必须**新工作分支（除非 hotfix 且有明确例外记录）。
-2. 新 Initiative **必须**新 Human Gate 会话 + 新 orchestrator 实例；禁止在旧长会话「顺便开下一版本」。
-3. `resume` 只能续**当前** Initiative 的未完成 batch；若人类要开新目标 → 切 `initiative` 模式。
-4. Initiative 完成的定义：各 Phase Task `accepted`（含 `acceptance_doc`）+ 验证证据 + **commit SHA**（有代码变更时）+ handoff。
-5. 合入 `main` / `tag` / `release` 仍需人类授权。
+1. 新 Initiative → 新工作分支（hotfix 例外须记录）。
+2. 新 Initiative → 新 Human Gate 会话 + 新 orchestrator。
+3. `resume` 仅续当前 Initiative。
+4. 完成 = 各 Phase `accepted`（含 acceptance_doc）+ 证据 + commit SHA + handoff。
+5. Ship 须人类授权。
+6. Phase 默认串行；并行仅 orchestrator 依据依赖/写权判定。
 
-## Relationship to other modes
+## Relationship to modes
 
 ```text
-clarify (product) → init → …
+Clarify (product) → Charter → Bootstrap → …
 forever:
-  initiative (classify → scoped clarify → branch → plan)
-    → batch × N
-    → archive
-  resume          # only inside an open initiative
-  audit / upgrade # harness health / framework bump
+  Scope → Plan → Build×N → Archive
+  resume          # same Initiative
+  audit / upgrade
 ```

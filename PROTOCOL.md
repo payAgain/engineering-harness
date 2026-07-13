@@ -30,77 +30,73 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 
 ## 2. Hard rules
 
-1. **Human Gate chat ≠ worker.** Clarify, approve scope, review SHAs, authorize publish — do not implement or self-orchestrate.
+1. **Human Gate chat ≠ worker.** Clarify / approve **Build scope** / review SHAs / authorize Ship — do not implement, self-orchestrate, or decide Phase parallel.
 2. **Every role is a separate role instance**, including ephemeral orchestrator. See `references/roles.md`.
-3. **Must-commit** verified work on working branches. **Human gate:** `tag` / `push` / `release` / protected branch only.
-4. **Initiative loop:** after init, new work is a new Initiative (`hotfix|feature|major`), not a re-init. See `references/lifecycle.md`.
-5. New Initiative → new working branch + new Human Gate chat + new orchestrator instance. Do not “顺便” start the next version in an old long chat.
-6. `resume` continues the **current** Initiative only. Starting a new goal → `initiative` mode.
+3. **Must-commit** verified work on working branches. **Human gate (Ship):** `tag` / `push` / `release` / protected branch only.
+4. **Initiative loop:** after Bootstrap/G1, new work is a new Initiative (`hotfix|feature|major`). See `references/lifecycle.md`.
+5. New Initiative → new working branch + new Human Gate chat + new orchestrator instance.
+6. `resume` continues the **current** Initiative only. New goal → `initiative` / Scope.
 7. Project facts live in the target repository (runtime SSOT).
-8. **GitHub Flow** after G1. See `references/branching.md`.
+8. **GitHub Flow** after Bootstrap/G1. See `references/branching.md`.
 9. **Full:** risk≥8 `code` needs reviewer before must-commit.
-10. **Clarify before act** (product-wide or scoped to an Initiative). See `references/intent.md`.
-11. **Task = Phase（进度单位）；执行按角色流水线。** 计划中的 Task 必须进入 REGISTRY。每个阶段由 `role_pipeline` 多角色协作，收尾写验收文档后才可 `accepted`。禁止「一阶段 = 一个匿名实现 Agent（+ 自动配 Review）」。见 `references/phases.md`、`anti-patterns.md`、`dispatch.md`。
+10. **Clarify before act** (product Clarify or scoped Scope). See `references/intent.md`.
+11. **Phase = progress unit; execute via role_pipeline.** IDs `I-00x`/`P-00x`/`B-00x`. See `references/glossary.md` + `phases.md`.
+12. **Phases serial by default.** Human never asked about 并行/同步；orchestrator owns parallel from dependencies. See `glossary.md` §4.
 
 ## 3. Modes
 
-| Mode | User intent | Action |
+| Mode | User intent | Outward stage |
 |---|---|---|
-| `clarify` | product goal unclear / greenfield | Intent Clarity → Human Gate |
-| `init` | first-time harness | after product Intent Clarity PASS |
-| `initiative` | next feature / major / hotfix | classify → scoped clarify → branch → plan → batches |
-| `batch` | approve batch inside an Initiative | spawn orchestrator → workers → must-commit → handoff |
-| `resume` | continue **same** Initiative | Session Briefing; then next batch |
-| `audit` | harness health | `python -m engineering_harness audit` |
-| `upgrade` | bump harness framework files | compare `.harness-version` with `VERSION` |
+| `clarify` | product goal unclear | **Clarify** |
+| `init` | first-time harness | **Charter** → **Bootstrap** |
+| `initiative` | next feature / major / hotfix | **Scope** → **Plan** |
+| `batch` | approve Build inside Initiative | **Build** → **Accept** (… Ship) |
+| `resume` | continue same Initiative | next **Build** |
+| `audit` | harness health | CLI audit |
+| `upgrade` | bump harness files | framework bump |
 
 ## 4. Workflows
 
-### 4.0 Product Intent Clarity（仅首次或产品级转向）
+### 4.0 Clarify（仅首次或产品级转向）
 
-See `references/intent.md`.  
-**Do not** ask `hotfix|feature|major` here — that is §4.2 only.
+See `references/intent.md` + `glossary.md`.  
+**Do not** ask `hotfix|feature|major` or Phase parallel here.
 
-### 4.1 init（仅一次）
+### 4.1 Bootstrap / init（仅一次）
 
-1. Product Intent Clarity PASS → `eh.cmd init <project> --level …`
-2. Round A/B Charter + system artifacts. See `references/gates.md`.
+1. Clarify PASS → `eh.cmd init <project> --level …`
+2. Charter → Bootstrap (G1). See `references/gates.md`.
 3. Working branch + governance baseline commit.
-4. Stop. Initiative classify starts only in §4.2 after this completes.
+4. Stop. Scope starts only in §4.2.
 
-### 4.2 initiative（init/G1 完成之后的主循环）
+### 4.2 Scope → Plan → Build（G1 之后主循环）
 
-1. Close previous Initiative if still open.
-2. Human classifies: `hotfix` | `feature` | `major`.
-3. Scoped clarity → `harness/initiatives/<id>/brief.md` (`skills/initiative.md`).
-4. Branch from latest `main`; add Task Packets; update `current-task.md`.
-5. Run batches (4.3) until Initiative acceptance is met; archive in `initiatives/INDEX.md`.
+1. Close previous Initiative if open.
+2. Human classifies: `hotfix` | `feature` | `major` (**Scope**).
+3. Scoped clarity → `harness/initiatives/<id>/brief.md`.
+4. **Plan**: Phases `P-00x` + REGISTRY（默认串行；禁止问人类并行）.
+5. Human approves **Build B-00x** scope → orchestrator → Accept → … Ship.
+6. **Archive** when Initiative done.
 
-Details: `references/lifecycle.md`.
+Details: `references/lifecycle.md` · naming: `references/glossary.md`.
 
-### 4.3 batch
-
-1. Human Gate approves batch scope only.
-2. Spawn **new** orchestrator instance; restore from disk.
-3. Workers as separate instances; invocations ledger; must-commit on working branch.
-4. Handoff. Human authorizes push/PR/tag/release separately.
-
-### 4.4 audit / resume / upgrade
+### 4.3 audit / resume / upgrade
 
 - Audit: CLI audit
-- Resume: same Initiative only
-- Upgrade: framework file bump — not a substitute for `initiative`
+- Resume: same Initiative only（下一 Build）
+- Upgrade: framework bump — not a substitute for Scope
 
 ## 5. Progressive references
 
 | Need | Read |
 |---|---|
+| **Naming glossary (SSOT)** | `references/glossary.md` |
 | Lifecycle / next feature | `references/lifecycle.md` |
-| Phase Tasks / 进度追踪 | `references/phases.md` |
-| Anti-patterns (匿名 Todo 工人) | `references/anti-patterns.md` |
+| Phase / 进度追踪 | `references/phases.md` |
+| Anti-patterns | `references/anti-patterns.md` |
 | Intent Clarity | `references/intent.md` |
 | Roles | `references/roles.md` |
-| Gates | `references/gates.md` |
+| Gates (internal G*) | `references/gates.md` |
 | Dispatch / commits | `references/dispatch.md` |
 | Branching | `references/branching.md` |
 | Session | `references/session.md` |

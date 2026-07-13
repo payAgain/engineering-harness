@@ -4,48 +4,59 @@
 
 | Surface | Allowed | Forbidden |
 |---|---|---|
-| Human Gate chat | clarify Q&A, approve batch/phase scope, review SHAs, authorize push/tag/release | implement, test, review-as-worker, for-each 匿名 Task 派工 |
-| Orchestrator role instance | 推进 Phase Tasks、按 `role_pipeline` 派角色实例、验收收尾、session/handoff、require commits | 写业务模块代码；假装 reviewer；“实现 Task N” 匿名工人 |
+| Human Gate chat | Clarify/Scope Q&A；批准 **Build 范围**（哪些 Phase）；审 SHA；授权 Ship | implement；询问「能否并行/同步」；匿名 Task 派工 |
+| Orchestrator role instance | 按依赖推进 Phase；**自行判定**串行/并行；按 `role_pipeline` 派角色；Accept 收尾；must-commit | 写业务模块代码；假装 reviewer；把并行决策甩给人类 |
+
 
 **The Human Gate chat must spawn the orchestrator as a separate role instance.**  
 If the host tool has no subagent mechanism, stop with `delegation-unavailable`.
 
-概念与阶段模型：`references/phases.md`。禁止形态：`references/anti-patterns.md`。
+概念：`references/glossary.md`、`phases.md`。禁止：`anti-patterns.md`。
 
 ## Dispatch SSOT（关键）
 
 | 来源 | 可否直接派 SubAgent |
 |---|---|
-| `harness/tasks/<id>.md` Phase Packet（含 `role_pipeline` / 角色字段） | **可以** — 进度与派发 SSOT |
+| `harness/tasks/P-00x.md` Phase Packet | **可以** — 进度与派发 SSOT |
 | `harness/tasks/REGISTRY.yaml` | 进度索引，不代替 Packet |
-| `docs/**/plans/*.md` 里的 `### Task N` | **先物化为 Phase Packet** 再派；不可跳过 REGISTRY |
-| 聊天里的 todo 勾选 | **不可以** 当派发或进度 SSOT |
+| 计划里的 Phase 列表 | 须先落成 `P-00x` Packet；新计划禁止 `Task N`/`WP-*` 标题 |
+| 聊天 todo 勾选 | **不可以** |
 
-无 Packet 就派工 → `packet-missing`。阶段无验收文档就关闭 → `acceptance-missing`。
+无 Packet → `packet-missing`。无验收文档关闭 → `acceptance-missing`。
+
+## Serial vs parallel（强制）
+
+1. Phase **默认串行**（`P-001 → P-002 → …`）。  
+2. Human 批准的是 Build **范围**，不是并行策略。  
+3. **禁止**向人类提问：「这两个阶段要不要一起做 / 同步进行？」  
+4. Orchestrator 仅在同时满足时静默并行，并写 `parallel_group`：  
+   - 无相互依赖  
+   - `conflict_score` 允许  
+   - 写权路径无交集  
+5. Build 含多 Phase ≠ 并行；拿不准 → 串行。  
+6. Phase **内部** role steps：写权不冲突时可并行不同角色；否则串行 pipeline。
 
 ## Temporary orchestrator
 
-Each approved batch creates a **new** orchestrator role instance that restores from:
+Each approved **Build** creates a **new** orchestrator role instance that restores from:
 
 - Charter / ADR / contracts
 - ownership / **Task Registry + Phase Packets**
 - active Initiative brief
 - `current-task.md` / `harness/session/*`
 - git status / HEAD / current branch
-- approval reference (batch / phase scope)
+- approval reference (Build B-00x scope)
 
 Missing required restore inputs → `context-incomplete`.
 
-## How to advance a Phase Task（不是 1 Task = 1 匿名 Agent）
+## How to advance Phases（不是 1 Phase = 1 匿名 Agent）
 
-1. 从 REGISTRY 选出本 batch 批准的 Phase Tasks（依赖已满足）  
-2. 读 Packet 的 `role_pipeline`（若缺失：至少用 `primary_owner` + `test_owner` 推导最小流水线并写回 Packet）  
-3. **按角色步骤**派实例：每步绑定 `agents/<role>.md` + 同一 `task_id`  
-4. 同角色多步可合并；不同角色 = 不同实例（可串行；写权不冲突时可并行）  
-5. `reviewer` 仅当 Full 或本阶段 code `risk_score ≥ 8`（或人类点名）时插入  
-6. **收尾**：写/更新 `acceptance_doc` → must-commit → `status: accepted` → 更新 REGISTRY  
-
-一个 Phase Task **通常对应多个角色实例**；进度单位是阶段，执行单位是角色。
+1. 从 REGISTRY 选出本 Build 批准且依赖已满足的 Phases（默认按 ID/依赖串行）  
+2. 读 `role_pipeline`（缺失则用 primary_owner + test_owner 推导并写回）  
+3. **按角色步骤**派实例：绑定 `agents/<role>.md` + 同一 `task_id`（`P-00x`）  
+4. 同角色可合并；不同角色写权不冲突时可并行 steps  
+5. `reviewer` 仅 Full 或 risk≥8（或人类点名）  
+6. **Accept**：`acceptance_doc` → must-commit → `accepted` → REGISTRY  
 
 ## Forced role delegation
 
@@ -64,9 +75,9 @@ Must create a **separate role instance** when any is true:
 ```text
 You are role: <role>
 Read and obey: agents/<role>.md
-Phase Task (progress SSOT): harness/tasks/<task_id>.md
-Initiative: <initiative_id>
-Batch: <batch_id>
+Phase Task (progress SSOT): harness/tasks/<P-00x>.md
+Initiative: <I-00x>
+Build: <B-00x>
 Pipeline step: <purpose>   # explore|implement|verify|review|…
 
 task_type: <task_type for this step>
@@ -126,6 +137,7 @@ Fail G3 if:
 - forced role step missing invocation record
 - pipeline role ≠ actual_role ≠ handoff `from_role`
 - phase marked accepted without `acceptance_doc`
+- human was asked to decide Phase parallel/同步
 - every phase auto-spawned a paired reviewer without risk/Full rule
 - verified work left uncommitted without `deferred_reason`
 

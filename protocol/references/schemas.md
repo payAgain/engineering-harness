@@ -5,19 +5,19 @@
 Task = **phase**（进度单位）。详见 `references/phases.md`。
 
 ```yaml
-task_id: <id>                         # progress id; may map to plan Task N
-initiative_id: <I-…>
-batch_id: <batch>
+task_id: <P-00x>                      # progress id (glossary)
+initiative_id: <I-00x>
+build_id: <B-00x>
 kind: phase                           # default
 task_type: code|test|research|review|doc|contract|integration|release|governance
 primary_owner: <role>                 # phase lead; MUST exist as agents/<role>.md
 code_owner: <role|null>
 test_owner: <role|null>
-acceptance_doc: harness/evidence/<lead>/<task_id>/ACCEPTANCE.md
+acceptance_doc: harness/evidence/<lead>/<P-00x>/ACCEPTANCE.md
 role_pipeline:                        # ordered role steps inside this phase
   - role: <role>
     purpose: explore|implement|verify|review|…
-    when: null|full_or_risk_ge_8      # optional gate for the step
+    when: null|full_or_risk_ge_8
 evidence_writers:
   <role>: harness/evidence/<role>/<task>/**
 handoff_writers:
@@ -26,7 +26,7 @@ handoff_writers:
     path: harness/handoffs/...
     file_writer: <role|orchestrator>
 status: ready|in_progress|accepted|blocked
-dependencies: []
+dependencies: []                      # other P-00x; empty + serial default across initiative
 risk_score: 0
 conflict_score: 0
 execution: serial|multitask|optional-worktree
@@ -34,8 +34,9 @@ execution_mode: subagent-required|direct-exception
 direct_exception_reason: null
 ```
 
-Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner` (minimal pipeline).  
-Phase cannot be `accepted` without `acceptance_doc`. See `anti-patterns.md`.
+Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner`.  
+Phase cannot be `accepted` without `acceptance_doc`.  
+New plans must not use `Task N` / `WP-*` titles — see `glossary.md`.
 
 ## Handoff payload
 

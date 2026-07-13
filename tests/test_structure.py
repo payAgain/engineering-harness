@@ -46,6 +46,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "protocol/references/gates.md",
             "protocol/references/dispatch.md",
             "protocol/references/branching.md",
+            "protocol/references/glossary.md",
             "protocol/references/phases.md",
             "protocol/references/anti-patterns.md",
             "protocol/references/lifecycle.md",
@@ -85,11 +86,14 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("references/intent.md", text)
         self.assertIn("Clarify before act", text)
         self.assertIn("Must-commit", text)
+        self.assertIn("references/glossary.md", text)
+        self.assertIn("Phases serial by default", text)
         self.assertIn("references/phases.md", text)
-        self.assertIn("Task = Phase", text)
-        self.assertIn("hotfix|feature|major", text)
-        self.assertIn("§4.2 only", text)
         self.assertIn("references/anti-patterns.md", text)
+        self.assertIn("I-00x", text)
+        gloss = (ROOT / "protocol/references/glossary.md").read_text(encoding="utf-8")
+        self.assertIn("禁止话术", gloss)
+        self.assertIn("parallel_group", gloss)
         self.assertIn("references/lifecycle.md", text)
         self.assertIn("references/roles.md", text)
         self.assertIn("references/branching.md", text)
@@ -166,7 +170,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.8.2")
+        self.assertEqual(ver.stdout.strip(), "0.9.0")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)

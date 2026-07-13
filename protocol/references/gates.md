@@ -1,5 +1,8 @@
 # Gates and State Machine
 
+> 对外阶段名见 `references/glossary.md`（Clarify / Charter / Bootstrap / …）。  
+> 本文件的 **G0–G6** 是内部审计锚点，不要当计划标题。
+
 ## Completion states
 
 - `module-complete`：G3
@@ -38,11 +41,11 @@ Code written ≠ releasable. States advance one gate at a time.
 11. **S10 Release single-writer**
 12. **S11 Retrospective + handoff** — error-journal, session update
 
-## G0 split
+## G0 split（对外：Clarify → Charter → Bootstrap）
 
-- **Clarity**: ask until no material ambiguity（见 `references/intent.md`）
-- Round A: Charter draft only; no agents/skills/DAG/G1 conclusions
-- Round B: after Charter approval, write root Charter and system artifacts
+- **Clarify**: ask until no material ambiguity（见 `references/intent.md`）
+- **Charter** (legacy Round A): Charter draft only; no agents/skills/DAG/G1 conclusions
+- **Bootstrap** (legacy Round B): after Charter approval, write root Charter and system artifacts
 
 Clarity PASS ≠ Charter approved. Both human gates are required.
 

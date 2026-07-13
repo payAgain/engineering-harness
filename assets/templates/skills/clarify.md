@@ -9,7 +9,8 @@
 - 用户模糊表述必须追问到可执行定义
 - 用户不确定时提供选项与影响，而不是自行拍板
 - 未收到明确「目标已明确 / 无歧义」类确认前，不得进入 Round A 定稿或实现 batch
-- **禁止**在本流程询问 `Initiative 类型` / `hotfix|feature|major`（那是 **G1 init 完成之后** 的 Round I；见 `skills/initiative.md`）
+- **禁止**在本流程询问 `Initiative 类型` / `hotfix|feature|major`（那是 **Bootstrap 之后** 的 Scope）
+- **禁止**询问阶段能否并行/同步
 - 可问的档位只有驾驭架级别：`Light` / `Standard` / `Full`
 
 ## Steps

@@ -1,46 +1,39 @@
 # Plan Procedure
 
 ## Goal
-把请求落成可追踪的 **Phase Tasks（阶段）** 设计，再进入派发。  
-Plan 是设计草稿；**REGISTRY 里的 Phase Task 才是进度 SSOT**。
+产出可追踪的 **Phase 清单**（进度 SSOT 的草稿 → 物化）。  
+命名必须遵守 `protocol/references/glossary.md`。
 
 ## Rules
 - Inspect relevant files first; keep scope tight
 - Include validation commands
-- Update `current-task.md` / session as needed
 - **Do not implement inside plan**
-- Plan 里的 `Task 0 / Task 1…` **要保留**——每个 Task = 一个阶段
-- **Do not** 把每个 Task 派成「一个实现 Agent + 一个 Review Agent」
-- 计划被接受后：为每个阶段写 Phase Packet（见 `_PACKET.template.md`），登记 `REGISTRY.yaml`，并写明 `role_pipeline` + `acceptance_doc`
+- 使用对外名：Plan / Phase / Build；ID：`I-00x` / `P-00x` / `B-00x`
+- **禁止** `Task N` / `WP-*` 作为新计划标题
+- **禁止**询问人类「两阶段能否并行/同步」；默认串行；并行留给 orchestrator
+- 物化：`harness/tasks/P-00x.md` + `REGISTRY.yaml`（`role_pipeline` + `acceptance_doc`）
 
-## Plan → Phase Task
+## Output（强制模板）
 
-| Plan 条目 | 物化后 |
-|---|---|
-| `### Task N` 标题与目标 | `task_id` + Goal；`kind: phase` |
-| 本阶段要动谁 | `role_pipeline`（多角色，不是单工人） |
-| 怎么算做完 | `acceptance_doc` + Validation |
-| 依赖顺序 | Packet `dependencies` + REGISTRY |
-
-详见 `protocol/references/phases.md`。
-
-## Output
 ```text
-Plan (phases)
+Plan
 
-Goal:
-Scope / Non-Scope:
+Initiative I-00x (<feature|hotfix|major>): <一句话目标>
 
-Phases:   # 即 Task 0/1/… — 进度单位
-  - Task 0 / WP-…: <阶段目标>
+Phases:
+  P-001 <动词短语>
       roles: researcher → <module> → test → (reviewer?)
-      acceptance: <path>
-  - Task 1 / WP-…: …
+      acceptance: harness/evidence/.../P-001/ACCEPTANCE.md
+      dependencies: []
+  P-002 <动词短语>
+      dependencies: [P-001]
+
+Next Build: B-001 → P-001
+  (default: earliest ready Phase only; multi-Phase in one Build still serial unless orchestrator parallel_group)
 
 Files Likely Affected:
 Validation:
 Risks:
 
-Next: write Phase Packets + REGISTRY, then await batch approval
-      (advance by role_pipeline inside each phase — track progress via tasks)
+Next: await human Build approval (scope only — not parallel strategy)
 ```

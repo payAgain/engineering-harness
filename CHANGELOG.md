@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 - 2026-07-13
+
+### Added
+- `protocol/references/glossary.md`：对外阶段名 SSOT（Clarify→…→Archive）+ `I/P/B-00x` ID
+- 并行规则：Phase 默认串行；Human 只批 Build 范围；并行仅 orchestrator 判定（AP-7）
+
+### Changed
+- 提示词章节改用对外名（legacy Round* 仅作别名）
+- Plan/Packet/REGISTRY/PROTOCOL/README 对齐统一命名
+- 新计划禁止 `Task N` / `WP-*` 标题
+
 ## 0.8.2 - 2026-07-13
 
 ### Fixed

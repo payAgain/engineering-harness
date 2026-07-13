@@ -16,13 +16,12 @@
 - 产物写入 `harness/initiatives/<id>/brief.md` 并更新 `INDEX.md`
 
 ## Steps
-1. 读 `current-task.md` / session：若上一 Initiative 未关闭，先 handoff/关闭或请人类确认放弃
-2. 请人类确认类型：`hotfix` | `feature` | `major` + 一句话目标
-3. 范围化提问（5–10 个高价值问题）；更新 `brief.md`
+1. 读 `current-task.md` / session：若上一 Initiative 未关闭，先 Archive 或请人类确认放弃
+2. 请人类确认类型：`hotfix` | `feature` | `major` + 一句话目标 → 分配 `I-00x`
+3. 范围化提问；更新 `brief.md`
 4. 人类确认「本 Initiative 范围已明确，可以开干」
-5. 从最新 `main` 创建工作分支（`eh.cmd branch-new` 或等价）
-6. 增量更新 Task Registry / Packets；`current-task.md` 指向本 Initiative
-7. 停止并等待人类批准第一个 batch（进入 Round C）
+5. 工作分支；**Plan**：`P-001…` Packets（默认串行；**禁止**问人类并行）
+6. 提出 Next Build（通常仅最早 ready 的 Phase）；等待人类批准 **Build 范围**
 
 ## Output
 ```text
@@ -30,11 +29,9 @@ Initiative Briefing
 
 Initiative ID:
 Type: hotfix | feature | major
-Goal:
-In-scope / Out-of-scope:
-Acceptance:
-Working Branch:
+Phases planned: P-001 …
+Next Build: B-001 → P-001
 Open Questions:
-Status: clarifying | ready-for-batch
-Next: await batch approval
+Status: clarifying | ready-for-build
+Next: await Build scope approval (not parallel strategy)
 ```
