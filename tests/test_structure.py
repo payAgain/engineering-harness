@@ -153,7 +153,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.6.1")
+        self.assertEqual(ver.stdout.strip(), "0.6.2")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)

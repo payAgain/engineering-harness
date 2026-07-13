@@ -110,11 +110,23 @@ eh.cmd init <project> --level Standard --name my-app
 
 会把模板复制进目标项目（含 `AGENTS.md`、`skills/`、`harness/PROTOCOL.md`、`.harness-version` 等）。
 
-| Level | 适用 |
+### 怎么选 Light / Standard / Full
+
+拿不准就选 **Standard**（默认）。
+
+| 若你的情况是… | 选 |
 |---|---|
-| **Light** | 演示、短实验 |
-| **Standard**（默认） | 常规长期软件仓 |
-| **Full** | 生产 / 多角色 / 迁移发版风险高 |
+| 几天就扔的实验、演示、几乎不改代码 | **Light** |
+| 要长期维护的软件仓；需要角色分工、任务包、分支策略 | **Standard** |
+| 生产 / 发版 / 迁移 / 多模块集成；要强制评审与 G0–G6 门禁 | **Full** |
+
+| 差异（摘要） | Light | Standard | Full |
+|---|---|---|---|
+| 目标澄清 + 会话续作 | ✓ | ✓ | ✓ |
+| 多角色 + Task DAG + 调度台账 | ✗ | ✓ | ✓ |
+| Reviewer / 集成屏障 / 发版纪律 | ✗ | 按需 | **强制** |
+
+更细的对比与升级路径见 [`protocol/references/levels.md`](./protocol/references/levels.md)。
 
 ### 2. 启动 Agent：澄清目标（Intent Clarity）
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2 - 2026-07-13
+
+### Changed
+- 重写 `protocol/references/levels.md`：用选型问题、能力对照表、场景举例说明 Light/Standard/Full
+- README 上手步骤补充「怎么选」决策表，避免只有三行口号
+
 ## 0.6.1 - 2026-07-13
 
 ### Removed

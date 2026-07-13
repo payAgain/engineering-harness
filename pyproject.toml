@@ -1,6 +1,6 @@
 [project]
 name = "engineering-harness"
-version = "0.6.1"
+version = "0.6.2"
 description = "Tool-agnostic engineering harness CLI for AI coding agents (Windows-first)."
 readme = "README.md"
 requires-python = ">=3.10"
