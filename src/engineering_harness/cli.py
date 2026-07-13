@@ -11,6 +11,7 @@ from engineering_harness.audit import audit_project
 from engineering_harness.branch import current_branch, ensure_working_branch, evaluate_branch
 from engineering_harness.check import guard_command, harness_check, load_level
 from engineering_harness.init import init_project
+from engineering_harness.migrate import migrate_project
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,6 +33,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     init_p.add_argument("--name", default="", help="Project name override")
     init_p.add_argument("--force", action="store_true", help="Overwrite existing generated files")
+
+    migrate_p = sub.add_parser(
+        "migrate",
+        help="Migrate legacy .cursor agents/skills layout into tool-agnostic agents/ + skills/",
+    )
+    migrate_p.add_argument("target", type=Path, help="Target project directory")
+    migrate_p.add_argument(
+        "--level",
+        choices=["Light", "Standard", "Full"],
+        default="Standard",
+        help="Harness depth after migrate (default: Standard)",
+    )
+    migrate_p.add_argument("--force", action="store_true", help="Overwrite existing migrated files")
 
     audit_p = sub.add_parser("audit", help="Audit an initialized project")
     audit_p.add_argument("target", type=Path, help="Target project directory")
@@ -99,6 +113,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Framework: {read_version()}")
         print("Give any agent: PROTOCOL.md or <project>/harness/PROTOCOL.md")
         print("Branching: GitHub Flow — do not develop on main; use feat/* etc.")
+        print(f"Next: python -m engineering_harness audit {args.target.resolve()}")
+        return 0
+
+    if args.action == "migrate":
+        logs = migrate_project(args.target, level=args.level, force=args.force)
+        for line in logs:
+            print(line)
+        print(f"Framework: {read_version()}")
         print(f"Next: python -m engineering_harness audit {args.target.resolve()}")
         return 0
 

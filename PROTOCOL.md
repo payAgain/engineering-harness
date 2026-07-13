@@ -31,63 +31,70 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 
 1. Human chat is the approval gate, not a lifelong orchestrator brain.
 2. Never `commit` / `tag` / `push` / `release` without explicit user authorization.
-3. Tasks of type `code|test|review|contract|integration|release`, or risk ≥ 8, must run as a **separate role instance** (subagent/worker/delegated run). Do not silently do them in the main chat.
+3. Tasks of type `code|test|review|contract|integration|release`, or risk ≥ 8, must run as a **separate role instance**. Do not silently do them in the main chat.
 4. Project facts live in the target repository. This framework repo is not runtime SSOT.
 5. Read only the reference needed for the current phase.
-6. **GitHub Flow**: after G1, do not implement on `main`/`master`. Use `feat/*` / `fix/*` / `chore/*` / `docs/*` / `hotfix/*`, merge via PR. See `references/branching.md`.
+6. **GitHub Flow**: after G1, do not implement on `main`/`master`. Use `feat/*` / `fix/*` / … See `references/branching.md`.
+7. **Full level**: every `code` task with risk ≥ 8 needs a **reviewer** role instance in the batch ledger before commit proposal.
+8. **Ephemeral orchestrator**: do not run a new implementation batch in the same long chat that already finished a previous one. Prefer handoff → new chat.
+9. **Clarify before act**: on first contact (and whenever goals are ambiguous), run Intent Clarity (`references/intent.md` / `skills/clarify.md`). Multi-round questions until the human confirms no material ambiguity. Do not invent a product vision to stay busy.
 
 ## 3. Modes
 
 | Mode | User intent | Action |
 |---|---|---|
-| `init` | initialize harness / Round A/B | choose level → draft/land files → stop at Human Gate |
-| `audit` | audit harness | run `python -m engineering_harness audit` and report gaps |
-| `resume` | continue / start | read current-task + session → Session Briefing |
-| `batch` | approve batch Bx | ephemeral orchestrator → delegated workers → checkpoint → handoff |
-| `upgrade` | upgrade harness | compare `.harness-version` with framework `VERSION` |
+| `clarify` | goal unclear / greenfield kickoff | Intent Clarity loops → stop at Human Gate |
+| `init` | initialize harness / Round A/B | only after Intent Clarity PASS |
+| `audit` | audit harness | run `python -m engineering_harness audit` |
+| `resume` | continue / start | Session Briefing; re-enter clarify if ambiguous |
+| `batch` | approve batch Bx | ephemeral orchestrator → workers → checkpoint → handoff |
+| `upgrade` | upgrade harness | compare `.harness-version` with `VERSION` |
 
 ## 4. Workflows
 
+### 4.0 Intent Clarity（最先）
+
+1. Read-only recon. Do **not** write business code.
+2. Follow `references/intent.md`: cover problem, outcome, scope, constraints, interfaces, options, risks.
+3. Ask in rounds (5–10 high-value questions). Update `harness/drafts/INTENT-CLARITY.md`.
+4. Stop every round for human answers. Treat “我也不确定” as a signal to offer options, not to guess.
+5. Exit only when Open Questions are empty or explicitly deferred, **and** the human confirms e.g. 「目标已明确，可以开始」.
+6. Then proceed to Round A (Charter draft).
+
 ### 4.1 init
 
-1. Recon repository; propose Light / Standard / Full. See `references/levels.md`.
-2. If harness files are missing, run (Python CLI, Windows-first):
-
-```text
-eh.cmd init <project> --level Standard
-```
-
-Or: `python -m engineering_harness init <project> --level Standard` (after `install.cmd` or `PYTHONPATH=src`).
-
-3. Round A: health + Charter draft + decisions only. See `references/prompts.md`.
+1. Confirm Intent Clarity PASS. Propose Light / Standard / Full. See `references/levels.md`.
+2. If harness files are missing: `eh.cmd init <project> --level Standard` (or `eh.cmd migrate` for legacy `.cursor/*`).
+3. Round A: Charter draft + decisions only. See `references/prompts.md`.
 4. After approval, Round B: land Charter, `agents/`, ownership, Task DAG, session/skills. See `references/gates.md`.
 5. Stop and wait for first batch approval.
 
 ### 4.2 batch
 
-1. Run start procedure (`skills/start.md`) → Session Briefing. Confirm working branch (not `main`). See `references/session.md` and `references/branching.md`.
-2. Start a temporary orchestrator restored only from disk artifacts. See `references/dispatch.md`.
-3. Delegate worker roles; write `harness/runtime/invocations/<batch>.yaml`.
-4. G3 check: packet owner / actual role / handoff `from_role`.
-5. Propose commit on the working branch (do not execute); update session; run handoff (`skills/handoff.md`).
+1. `skills/start.md` → Session Briefing; confirm working branch. If acceptance becomes ambiguous → re-enter Intent Clarity.
+2. Temporary orchestrator from disk only. See `references/dispatch.md`.
+3. Delegate workers; write `harness/runtime/invocations/<batch>.yaml`.
+4. G3 authenticity checks.
+5. Propose commit on working branch; handoff.
 
 ### 4.3 audit / resume
 
 - Audit: `python -m engineering_harness audit <project>`
-- Resume: reading order and briefing in `references/session.md`
+- Resume: `references/session.md`; if goals fuzzy, `skills/clarify.md` first
 
 ## 5. Progressive references
 
 | Need | Read |
 |---|---|
+| Intent Clarity | `references/intent.md` |
 | Gates / state machine | `references/gates.md` |
-| Dispatch / invocations / git checkpoints | `references/dispatch.md` |
-| Branching (GitHub Flow) | `references/branching.md` |
-| Session start/handoff | `references/session.md` |
+| Dispatch / git checkpoints | `references/dispatch.md` |
+| Branching | `references/branching.md` |
+| Session | `references/session.md` |
 | Schemas | `references/schemas.md` |
 | Levels | `references/levels.md` |
-| Copyable prompts | `references/prompts.md` |
-| Neutral project layout | `references/layout.md` |
+| Prompts | `references/prompts.md` |
+| Layout | `references/layout.md` |
 
 ## 6. Target project layout (tool-agnostic)
 
@@ -95,20 +102,18 @@ Or: `python -m engineering_harness init <project> --level Standard` (after `inst
 AGENTS.md
 PROJECT_CHARTER.md
 current-task.md
-agents/                 # role definitions (not IDE-specific)
-skills/                 # reusable procedures: start/plan/review/commit/handoff
-harness/
-docs/                   # includes docs/branching.md at Standard+
+agents/
+skills/                 # clarify/start/plan/review/commit/handoff
+harness/drafts/         # INTENT-CLARITY.md before Charter freeze
+docs/
 DECISIONS/
 contracts/
 .harness-version
 ```
 
-IDE-specific directories such as `.cursor/` or `.claude/` are optional adapters only.
-
 ## 7. Completion bar
 
+- clarify: INTENT-CLARITY draft + human PASS; no silent guesses
 - init: artifacts match gates; no unauthorized business edits
-- batch: working branch + invocation ledger + handoff + evidence + version_control_checkpoint
-- audit: script exit 0 or complete gap list
+- batch: working branch + invocations + handoff + evidence + checkpoint
 - never claim completion without verification evidence, or an explicit “could not verify” risk record

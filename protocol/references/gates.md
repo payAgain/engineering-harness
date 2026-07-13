@@ -13,6 +13,7 @@ Code written ≠ releasable. States advance one gate at a time.
 
 | Gate | Required | Declares |
 |---|---|---|
+| G0-Clarity | Intent Clarity multi-round + human PASS | intent-clear |
 | G0 Intent | Charter draft + human approval | intent-approved |
 | G1 System | health, roles, ownership, DAG, session/skills | system-ready |
 | G2 Contract/Red | contracts, probes, baseline | implementation-ready |
@@ -23,6 +24,7 @@ Code written ≠ releasable. States advance one gate at a time.
 
 ## State machine (S0–S11)
 
+0. **S0a Intent Clarity** — multi-round Q&A; `harness/drafts/INTENT-CLARITY.md`; no business code
 1. **S0 Recon** — read-only; no invented architecture; propose harness level
 2. **S1 Intent freeze** — draft Charter → approve → root Charter becomes SSOT
 3. **S2 Module graph** — from real boundaries only
@@ -38,12 +40,16 @@ Code written ≠ releasable. States advance one gate at a time.
 
 ## G0 split
 
-- Round A: draft only; no agents/skills/DAG/G1 conclusions
-- Round B: after approval, write root Charter and system artifacts
+- **Clarity**: ask until no material ambiguity（见 `references/intent.md`）
+- Round A: Charter draft only; no agents/skills/DAG/G1 conclusions
+- Round B: after Charter approval, write root Charter and system artifacts
+
+Clarity PASS ≠ Charter approved. Both human gates are required.
 
 ## Non-negotiables
 
-- No business code before G0/G1 approval path
+- No business code before Intent Clarity PASS and G0/G1 approval path
+- Do not invent scope when the human is uncertain; offer options
 - Reviewer is readonly
 - Implementation and final acceptance must not share an unbarriered round
 - Missing real commands fail the corresponding gate; never fake green

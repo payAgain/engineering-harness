@@ -46,6 +46,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "protocol/references/gates.md",
             "protocol/references/dispatch.md",
             "protocol/references/branching.md",
+            "protocol/references/intent.md",
             "protocol/references/session.md",
             "protocol/references/schemas.md",
             "protocol/references/levels.md",
@@ -59,6 +60,8 @@ class FrameworkStructureTests(unittest.TestCase):
             "assets/templates/AGENTS.md",
             "assets/templates/docs/branching.md",
             "assets/templates/skills/start.md",
+            "assets/templates/skills/clarify.md",
+            "assets/templates/harness/drafts/INTENT-CLARITY.md",
             "assets/templates/skills/commit.md",
             "assets/templates/harness/scripts/harness_check.py",
             "assets/templates/harness/scripts/branch_check.py",
@@ -71,6 +74,9 @@ class FrameworkStructureTests(unittest.TestCase):
         text = (ROOT / "PROTOCOL.md").read_text(encoding="utf-8")
         self.assertLessEqual(len(text.splitlines()), 220)
         self.assertIn("GitHub Flow", text)
+        self.assertIn("Intent Clarity", text)
+        self.assertIn("references/intent.md", text)
+        self.assertIn("Clarify before act", text)
         self.assertIn("references/branching.md", text)
         self.assertIn("Do not install it into any IDE-specific skills directory", text)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -82,9 +88,53 @@ class FrameworkStructureTests(unittest.TestCase):
         ag = (ROOT / "assets/templates/AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("agents/", ag)
         self.assertIn("GitHub Flow", ag)
+        self.assertIn("clarify.md", ag)
         self.assertIn("branch_check.py", ag)
         self.assertNotIn(".cursor/agents", ag)
         self.assertNotIn(".cursor/skills", ag)
+
+    def test_no_machine_local_absolute_paths(self):
+        """Docs/scripts must stay portable after clone on another machine."""
+        # Construct tokens without embedding full machine paths as raw literals in one piece.
+        banned = [
+            "E:" + "\\Work",
+            "E:/Work",
+            "C:" + "\\Users\\admin",
+            "C:/Users/admin",
+            "/Users/" + "admin/",
+        ]
+        roots = [
+            ROOT / "README.md",
+            ROOT / "PROTOCOL.md",
+            ROOT / "CHANGELOG.md",
+            ROOT / "protocol",
+            ROOT / "assets",
+            ROOT / "scripts",
+            ROOT / "src",
+            ROOT / "integrations",
+            ROOT / "docs",
+            ROOT / "eh.cmd",
+            ROOT / "eh.ps1",
+            ROOT / "install.cmd",
+            ROOT / "install.ps1",
+        ]
+        allowed_suffixes = {".md", ".py", ".ps1", ".cmd", ".sh", ".toml", ".yaml", ".yml", ".txt"}
+        offenders: list[str] = []
+        for root in roots:
+            paths = [root] if root.is_file() else list(root.rglob("*"))
+            for path in paths:
+                if not path.is_file():
+                    continue
+                if path.suffix.lower() not in allowed_suffixes and path.name not in {"eh.cmd", "install.cmd"}:
+                    continue
+                try:
+                    text = path.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    continue
+                for token in banned:
+                    if token in text:
+                        offenders.append(f"{path.relative_to(ROOT).as_posix()} contains {token!r}")
+        self.assertEqual(offenders, [], "machine-local paths found:\n" + "\n".join(offenders))
 
     def test_version_matches_pyproject(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
@@ -97,7 +147,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.4.0")
+        self.assertEqual(ver.stdout.strip(), "0.5.0")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)
@@ -114,6 +164,8 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(version["level"], "Standard")
             self.assertEqual(version.get("cli"), "python")
             self.assertTrue((target / "docs/branching.md").exists())
+            self.assertTrue((target / "skills/clarify.md").exists())
+            self.assertTrue((target / "harness/drafts/INTENT-CLARITY.md").exists())
             self.assertTrue((target / "harness/scripts/branch_check.py").exists())
 
             audit = _cli("audit", str(target))
@@ -143,6 +195,30 @@ class PythonCliSmokeTests(unittest.TestCase):
             ok = _cli("branch-check", str(root))
             self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
             self.assertIn("feat/demo-feature", ok.stdout)
+
+    def test_migrate_from_legacy_cursor_layout(self):
+        with tempfile.TemporaryDirectory(prefix="eh-migrate-") as tmp:
+            target = Path(tmp) / "legacy"
+            (target / ".cursor" / "agents").mkdir(parents=True)
+            (target / ".cursor" / "skills").mkdir(parents=True)
+            (target / ".cursor" / "agents" / "orchestrator.md").write_text("# orch\n", encoding="utf-8")
+            (target / ".cursor" / "skills" / "start.md").write_text("# start\n", encoding="utf-8")
+            (target / "AGENTS.md").write_text("see .cursor/agents/\n", encoding="utf-8")
+
+            proc = _cli("migrate", str(target), "--level", "Standard")
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertTrue((target / "agents" / "orchestrator.md").exists())
+            self.assertTrue((target / "skills" / "start.md").exists())
+            self.assertTrue((target / ".harness-version").exists())
+            self.assertTrue((target / "docs" / "branching.md").exists())
+            self.assertTrue((target / "harness" / "scripts" / "branch_check.py").exists())
+
+            meta = json.loads((target / ".harness-version").read_text(encoding="utf-8"))
+            self.assertEqual(meta.get("migrated_from"), "legacy-cursor-template")
+
+            # Still missing Standard required files beyond migrate subset → audit may fail harness_check.
+            # detect path: migrate note about AGENTS.md should appear in stdout
+            self.assertIn("AGENTS.md", proc.stdout)
 
 
 if __name__ == "__main__":

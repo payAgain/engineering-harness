@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from engineering_harness.branch import current_branch, evaluate_branch
 from engineering_harness.check import guard_command, harness_check, load_level
+from engineering_harness.migrate import detect_legacy_layout
 
 
 def audit_project(target: Path) -> tuple[int, list[str]]:
@@ -13,12 +15,18 @@ def audit_project(target: Path) -> tuple[int, list[str]]:
     lines: list[str] = []
     version_path = target / ".harness-version"
     if not version_path.exists():
-        return 1, ["AUDIT FAIL: .harness-version missing. Run: eh init <path>"]
+        legacy = detect_legacy_layout(target)
+        msgs = ["AUDIT FAIL: .harness-version missing. Run: eh init <path> 或 eh migrate <path>"]
+        msgs.extend(legacy)
+        return 1, msgs
 
     meta = json.loads(version_path.read_text(encoding="utf-8"))
     lines.append(f"Framework version in project: {meta.get('version')}")
     lines.append(f"Harness level: {meta.get('level')}")
     lines.append(f"CLI runtime: {meta.get('cli', 'unknown')}")
+
+    for warning in detect_legacy_layout(target):
+        lines.append(warning)
 
     problems = harness_check(target)
     if problems:
@@ -49,6 +57,14 @@ def audit_project(target: Path) -> tuple[int, list[str]]:
             lines.append("AUDIT FAIL: docs/branching.md missing (GitHub Flow policy)")
             return 1, lines
         lines.append("Branching policy present: docs/branching.md (GitHub Flow)")
+
+        branch = current_branch(target)
+        code, branch_msg = evaluate_branch(branch, allow_protected=False)
+        lines.append(branch_msg)
+        if code != 0:
+            lines.append(
+                "AUDIT WARN: currently on protected branch — create feat/<slug> before implementation batches"
+            )
 
     lines.append("AUDIT PASS")
     return 0, lines
