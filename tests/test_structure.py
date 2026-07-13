@@ -46,6 +46,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "protocol/references/gates.md",
             "protocol/references/dispatch.md",
             "protocol/references/branching.md",
+            "protocol/references/intent.md",
             "protocol/references/session.md",
             "protocol/references/schemas.md",
             "protocol/references/levels.md",
@@ -59,6 +60,8 @@ class FrameworkStructureTests(unittest.TestCase):
             "assets/templates/AGENTS.md",
             "assets/templates/docs/branching.md",
             "assets/templates/skills/start.md",
+            "assets/templates/skills/clarify.md",
+            "assets/templates/harness/drafts/INTENT-CLARITY.md",
             "assets/templates/skills/commit.md",
             "assets/templates/harness/scripts/harness_check.py",
             "assets/templates/harness/scripts/branch_check.py",
@@ -71,6 +74,9 @@ class FrameworkStructureTests(unittest.TestCase):
         text = (ROOT / "PROTOCOL.md").read_text(encoding="utf-8")
         self.assertLessEqual(len(text.splitlines()), 220)
         self.assertIn("GitHub Flow", text)
+        self.assertIn("Intent Clarity", text)
+        self.assertIn("references/intent.md", text)
+        self.assertIn("Clarify before act", text)
         self.assertIn("references/branching.md", text)
         self.assertIn("Do not install it into any IDE-specific skills directory", text)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -82,6 +88,7 @@ class FrameworkStructureTests(unittest.TestCase):
         ag = (ROOT / "assets/templates/AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("agents/", ag)
         self.assertIn("GitHub Flow", ag)
+        self.assertIn("clarify.md", ag)
         self.assertIn("branch_check.py", ag)
         self.assertNotIn(".cursor/agents", ag)
         self.assertNotIn(".cursor/skills", ag)
@@ -97,7 +104,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.4.1")
+        self.assertEqual(ver.stdout.strip(), "0.5.0")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)
@@ -114,6 +121,8 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(version["level"], "Standard")
             self.assertEqual(version.get("cli"), "python")
             self.assertTrue((target / "docs/branching.md").exists())
+            self.assertTrue((target / "skills/clarify.md").exists())
+            self.assertTrue((target / "harness/drafts/INTENT-CLARITY.md").exists())
             self.assertTrue((target / "harness/scripts/branch_check.py").exists())
 
             audit = _cli("audit", str(target))

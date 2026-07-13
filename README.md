@@ -13,6 +13,7 @@
 用 AI Agent 做长期工程时，常见痛点是：
 
 - 会话一关，上下文就丢，无法可靠续作
+- 目标不清就动手，返工成本高
 - 容易在 `main` 上堆代码，分支与审查缺失
 - 「做完了」缺少可核对的验证证据
 - 角色混写（同一会话既写实现又做评审），责任边界模糊
@@ -30,11 +31,12 @@
 
 ## 核心原则（请先读）
 
-1. **人类聊天 = 审批闸门**，不是终身编排大脑；编排器按 batch 临时恢复。
-2. **未经明确授权**，不得 `commit` / `tag` / `push` / `release`。
-3. `code|test|review|contract|integration|release` 或风险 ≥ 8 的任务，必须作为**独立角色实例**执行，禁止主会话静默代劳。
-4. **运行时 SSOT 永远是目标项目仓库**，不是本框架仓库，也不是 IDE skills 目录。
-5. **GitHub Flow**：G1 之后不要在 `main`/`master` 上做实现类开发；使用 `feat/*` 等短生命周期分支，经 PR 合入。
+1. **先澄清目标，再行动**：用户也可能说不清要做成什么样；Agent 必须多轮提问、覆盖清单、消除二义性后，才能 Round A / 写代码。
+2. **人类聊天 = 审批闸门**，不是终身编排大脑；编排器按 batch 临时恢复。
+3. **未经明确授权**，不得 `commit` / `tag` / `push` / `release`。
+4. `code|test|review|contract|integration|release` 或风险 ≥ 8 的任务，必须作为**独立角色实例**执行。
+5. **运行时 SSOT 永远是目标项目仓库**。
+6. **GitHub Flow**：G1 之后不要在 `main`/`master` 上做实现类开发。
 
 完整执行协议：根目录 [`PROTOCOL.md`](./PROTOCOL.md)。
 
@@ -113,6 +115,16 @@ python -m pip install -e .
 ---
 
 ## 五分钟上手
+
+### 0. 先澄清目标（Intent Clarity）
+
+把 `PROTOCOL.md` 交给任意 Agent，并粘贴 `protocol/references/prompts.md` 中的 **Round 0** 提示词。
+
+Agent 应：
+
+- 只读仓库、多轮提问（问题/验收/范围/约束/接口/选项/风险等）
+- 维护 `harness/drafts/INTENT-CLARITY.md` 与 Open Questions
+- 在你明确说「目标已明确，可以开始」之前，**不写业务代码、不冻结 G1**
 
 ### 1. 初始化目标仓库
 
@@ -217,8 +229,9 @@ engineering-harness/
 AGENTS.md                 # 任意 Agent 的项目操作入口
 current-task.md           # 当前任务 / batch 焦点
 agents/                   # 角色定义（工具无关）
-skills/                   # 可复用流程：start / plan / review / commit / handoff
+skills/                   # clarify / start / plan / review / commit / handoff
 harness/
+  drafts/                 # INTENT-CLARITY.md（目标澄清草案）
   PROTOCOL.md             # 协议副本
   session/                # 可恢复会话状态
   scripts/                # harness_check / branch_check / verify / safe_bash_guard
@@ -258,11 +271,12 @@ python harness/scripts/safe_bash_guard.py -- "<command>"
 
 ## 推荐工作流（摘要）
 
-1. **init** → 选 Light / Standard / Full → Round A 草案 → 人审 → Round B 落地系统制品  
-2. **batch** → `skills/start.md`（含工作分支）→ 临时编排器 → 委派独立角色实例 → 写 invocation → 提案 commit（不执行）→ handoff  
-3. **audit / resume** → 用磁盘制品恢复，不依赖聊天记忆  
+0. **clarify** → 多轮确认目标 / 验收 / 范围，直到 `Intent Clarity: PASS`  
+1. **init** → Round A Charter 草案 → 人审 → Round B 落盘系统制品  
+2. **batch** → start（含工作分支）→ 临时编排器 → 独立角色实例 → 提案 commit → handoff  
+3. **audit / resume** → 磁盘恢复；目标又模糊则先 clarify  
 
-门禁与状态机详见 [`protocol/references/gates.md`](./protocol/references/gates.md)。
+门禁与状态机详见 [`protocol/references/gates.md`](./protocol/references/gates.md) 与 [`protocol/references/intent.md`](./protocol/references/intent.md)。
 
 ---
 

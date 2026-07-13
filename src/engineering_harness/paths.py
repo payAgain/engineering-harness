@@ -14,9 +14,11 @@ LIGHT_FILES = [
     ("docs/verification.md", "docs/verification.md"),
     ("harness/session/session-state.json", "harness/session/session-state.json"),
     ("harness/session/session-log.md", "harness/session/session-log.md"),
+    ("skills/clarify.md", "skills/clarify.md"),
     ("skills/start.md", "skills/start.md"),
     ("skills/handoff.md", "skills/handoff.md"),
     ("harness/scripts/harness_check.py", "harness/scripts/harness_check.py"),
+    ("harness/drafts/INTENT-CLARITY.md", "harness/drafts/INTENT-CLARITY.md"),
 ]
 
 STANDARD_FILES = [
@@ -56,9 +58,11 @@ LIGHT_REQUIRED = [
     "docs/verification.md",
     "harness/session/session-state.json",
     "harness/session/session-log.md",
+    "skills/clarify.md",
     "skills/start.md",
     "skills/handoff.md",
     "harness/scripts/harness_check.py",
+    "harness/drafts/INTENT-CLARITY.md",
 ]
 
 STANDARD_REQUIRED = [

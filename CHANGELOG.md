@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.0 - 2026-07-13
+
+### Added
+- **Intent Clarity（目标澄清）** 前置门禁：`protocol/references/intent.md`、`skills/clarify.md`、`harness/drafts/INTENT-CLARITY.md`
+- `clarify` mode：多轮提问覆盖问题/验收/范围/约束/接口/选项/风险，直到人类确认无二义性
+- Round 0 可复制提示词（先于 Round A）
+
+### Changed
+- G0 拆为 Clarity → Round A Charter → Round B G1
+- PROTOCOL / AGENTS / start：禁止在目标不清时「为了推进而猜」
+- 吸收 shardingsphere-xugu 会话教训：**需求不明时先问清楚，而不是先干活**
+
+## 0.5.0 - 2026-07-13
+
+### Added
+- **Intent Clarity** 前置阶段：`protocol/references/intent.md`、`skills/clarify.md`、`harness/drafts/INTENT-CLARITY.md`
+- G0-Clarity 门禁：多轮提问、覆盖清单、人类明确「无歧义」后才进入 Round A
+- 可复制提示词 Round 0
+
+### Changed
+- PROTOCOL 硬规则：Clarify before act；modes 增加 `clarify`
+- 实战教训回灌：需求不明时禁止 Agent 自行脑补目标
+
 ## 0.4.1 - 2026-07-13
 
 ### Added

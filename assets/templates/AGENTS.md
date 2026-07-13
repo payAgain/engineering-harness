@@ -3,22 +3,28 @@
 ## Tool-agnostic note
 This file is the project operating guide for **any** coding agent. Role files live in `agents/`. Procedures live in `skills/`. Do not require IDE-specific skill installation.
 
+## First action on unclear goals
+If the goal/acceptance is ambiguous — including when the human is unsure — run `skills/clarify.md` first.  
+Do not write business code or freeze G1 until `Intent Clarity: PASS` (see `harness/drafts/INTENT-CLARITY.md`).
+
 ## Reading order
 At session/batch start, follow `skills/start.md`:
 1. `current-task.md`
 2. `harness/session/session-state.json`
 3. `harness/session/session-log.md`
-4. `PROJECT_CHARTER.md` (if present)
-5. `DECISIONS/INDEX.md` and applicable ADRs
-6. `contracts/<module>.contract.md` (if present)
-7. `harness/ownership/OWNERSHIP.yaml` (if present)
-8. `harness/tasks/<task>.md` (if present)
-9. `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md`
-10. relevant `agents/<role>.md`
+4. `harness/drafts/INTENT-CLARITY.md` (if intent not yet PASS)
+5. `PROJECT_CHARTER.md` (if present)
+6. `DECISIONS/INDEX.md` and applicable ADRs
+7. `contracts/<module>.contract.md` (if present)
+8. `harness/ownership/OWNERSHIP.yaml` (if present)
+9. `harness/tasks/<task>.md` (if present)
+10. `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md`
+11. relevant `agents/<role>.md`
 
 Output a Session Briefing before editing.
 
 ## Non-negotiables
+- **Clarify before act**: no implementation while Open Questions remain without deferred records + human PASS
 - No business code before G0/G1 approval path
 - **GitHub Flow**: do not implement on `main`/`master`; use `feat/*` / `fix/*` / `chore/*` / `docs/*` / `hotfix/*`
 - Modify only ownership/Task Packet allowed paths
@@ -30,6 +36,7 @@ Output a Session Briefing before editing.
 - End sessions with `skills/handoff.md`
 
 ## Procedures
+- `skills/clarify.md` — Intent Clarity（目标澄清，优先）
 - `skills/start.md`
 - `skills/plan.md`
 - `skills/review.md`
