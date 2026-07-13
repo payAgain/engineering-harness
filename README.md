@@ -65,6 +65,22 @@
 
 `scripts/` 下的 `init.ps1` / `audit.ps1` / `eh.cmd` 等仅为**兼容旧路径**的薄封装，新文档与日常使用请走根目录。
 
+### 可选：从旧 Cursor 模板迁移
+
+若目标仓只有 `.cursor/agents` / `.cursor/skills`（2026-07-09 旧模板产物），不要手工复制，直接：
+
+```text
+eh.cmd migrate <目标项目路径> --level Full
+```
+
+会生成/补齐：
+
+- `agents/`、`skills/`（从 `.cursor/*` 拷贝）
+- `.harness-version`、`docs/branching.md`、`harness/scripts/branch_check.py` 等
+- `harness/PROTOCOL.md`
+
+然后请人工更新 `AGENTS.md` 中的读取路径，并在下一实现 batch 前执行 `eh.cmd branch-new <slug> <path>`。
+
 ### 免安装（推荐）
 
 在框架仓库根目录执行：
@@ -222,6 +238,7 @@ contracts/
 | `eh.cmd --version` | 打印框架版本 |
 | `eh.cmd doctor` | 打印框架路径与 Python |
 | `eh.cmd init <path> [--level] [--name] [--force]` | 初始化驾驭架文件 |
+| `eh.cmd migrate <path> [--level] [--force]` | 从旧 `.cursor/*` 布局迁移 |
 | `eh.cmd audit <path>` | 审计已初始化项目 |
 | `eh.cmd check <path>` | 仅做结构检查 |
 | `eh.cmd guard -- "<cmd>"` | 危险命令模式拦截 |

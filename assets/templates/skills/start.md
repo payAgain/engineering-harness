@@ -18,7 +18,8 @@ Recover project context before changes.
 5. Read `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md` (if present)
 6. Check git branch (`git branch --show-current` or `python harness/scripts/branch_check.py`)
 7. If on `main`/`master` and the next work is implementation → create `feat/<task-or-batch>` (do not continue on protected branch)
-8. Output Session Briefing
+8. If `current-task.md` / session shows a **new** implementation batch while this chat already executed a prior implementation batch → stop and ask human to open a new chat after handoff
+9. Output Session Briefing
 
 ## Output
 ```text

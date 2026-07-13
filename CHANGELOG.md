@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1 - 2026-07-13
+
+### Added
+- `eh migrate`：将旧 Cursor 模板布局（`.cursor/agents|skills`）迁移为工具无关 `agents/` + `skills/`
+- audit 检测遗留布局，并在受保护分支上给出 WARN
+- PROTOCOL：Full/risk≥8 强制 reviewer；禁止同会话连续实现 batch
+
+### Changed
+- 对照 shardingsphere-xugu 会话证据审计后的协议加固
+
 ## 0.4.0 - 2026-07-13
 
 ### Added

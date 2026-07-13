@@ -11,10 +11,12 @@ Each approved batch creates a new orchestrator role instance that restores from:
 - `current-task.md`
 - `harness/session/*`
 - previous batch summary
-- git status / HEAD
+- git status / HEAD / **current branch**
 - approval reference
 
 Missing required restore inputs → stop with `context-incomplete`.
+
+**Isolation rule:** if the same chat transcript already ran a prior implementation batch (G3 code/test), do not continue the next implementation batch in that chat. Run `skills/handoff.md`, then open a **new** chat and restore only from disk. Record `transcript_ref` when the host provides a stable chat UUID; only write `unavailable` when the platform truly cannot provide one.
 
 ## Forced role delegation
 
@@ -27,6 +29,14 @@ Must create a **separate role instance** (subagent / worker / delegated run) whe
 - `primary_owner` is not orchestrator
 
 How the host tool names this mechanism does not matter. What matters is isolation of context and write authority.
+
+## Reviewer gate (Full / high risk)
+
+At **Full** level, or whenever `risk_score ≥ 8` on a `code` task:
+
+- a **reviewer** separate role instance is mandatory before proposing the batch commit
+- record it in `harness/runtime/invocations/<batch>.yaml`
+- missing reviewer invocation → fail G3 authenticity (unless human grants a one-time waiver recorded in the ledger)
 
 ## Direct exception
 

@@ -35,6 +35,8 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 4. Project facts live in the target repository. This framework repo is not runtime SSOT.
 5. Read only the reference needed for the current phase.
 6. **GitHub Flow**: after G1, do not implement on `main`/`master`. Use `feat/*` / `fix/*` / `chore/*` / `docs/*` / `hotfix/*`, merge via PR. See `references/branching.md`.
+7. **Full level**: every `code` task with risk ≥ 8 must have a **reviewer** separate role instance recorded in the batch invocation ledger before commit proposal.
+8. **Ephemeral orchestrator**: do not run a new implementation batch in the same long chat that already executed a previous implementation batch. Prefer `/handoff` then a new chat/session restored only from disk.
 
 ## 3. Modes
 
@@ -58,6 +60,12 @@ eh.cmd init <project> --level Standard
 ```
 
 Or: `python -m engineering_harness init <project> --level Standard` (after `install.cmd` or `PYTHONPATH=src`).
+
+Legacy Cursor-template projects (`.cursor/agents` only):
+
+```text
+eh.cmd migrate <project> --level Full
+```
 
 3. Round A: health + Charter draft + decisions only. See `references/prompts.md`.
 4. After approval, Round B: land Charter, `agents/`, ownership, Task DAG, session/skills. See `references/gates.md`.
