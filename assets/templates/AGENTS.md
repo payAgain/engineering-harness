@@ -3,9 +3,13 @@
 ## Tool-agnostic note
 This file is the project operating guide for **any** coding agent. Role files live in `agents/`. Procedures live in `skills/`. Do not require IDE-specific skill installation.
 
+## Human Gate vs workers
+The user-facing chat is the **Human Gate** only: clarify, approve batch scope, review commit SHAs, authorize push/tag/release.  
+It must **not** implement, test, or self-orchestrate. Spawn an **orchestrator** separate role instance per batch, then workers. See role catalog in framework `protocol/references/roles.md` (copied guidance lives under `agents/`).
+
 ## First action on unclear goals
 If the goal/acceptance is ambiguous — including when the human is unsure — run `skills/clarify.md` first.  
-Do not write business code or freeze G1 until `Intent Clarity: PASS` (see `harness/drafts/INTENT-CLARITY.md`).
+Do not write business code or freeze G1 until `Intent Clarity: PASS`.
 
 ## Reading order
 At session/batch start, follow `skills/start.md`:
@@ -24,23 +28,22 @@ At session/batch start, follow `skills/start.md`:
 Output a Session Briefing before editing.
 
 ## Non-negotiables
-- **Clarify before act**: no implementation while Open Questions remain without deferred records + human PASS
-- No business code before G0/G1 approval path
-- **GitHub Flow**: do not implement on `main`/`master`; use `feat/*` / `fix/*` / `chore/*` / `docs/*` / `hotfix/*`
+- **Clarify before act**
+- **Every role (including orchestrator) = separate role instance**; Human Gate must not do the work
+- **Must-commit** verified work on `feat/*` (etc.); humans review SHAs
+- **Human gate:** `tag` / `push` / `release` / protected branch only
+- **GitHub Flow:** no implementation on `main`/`master`
 - Modify only ownership/Task Packet allowed paths
-- No completion claim without real verification evidence
-- Reviewer is readonly; implementation and final acceptance need an integration barrier
-- `code/test/review/contract/integration/release` and risk ≥ 8 require a separate role instance
+- No completion claim without real verification evidence + commit SHA (when changes exist)
+- Reviewer is readonly; Full + risk≥8 code needs reviewer before commit
 - Dangerous shells go through `python harness/scripts/safe_bash_guard.py -- "<command>"`
-- No commit/tag/push/release without explicit authorization
-- End sessions with `skills/handoff.md`
 
 ## Procedures
-- `skills/clarify.md` — Intent Clarity（目标澄清，优先）
+- `skills/clarify.md`
 - `skills/start.md`
 - `skills/plan.md`
 - `skills/review.md`
-- `skills/commit.md`
+- `skills/commit.md` — create commit after verify
 - `skills/handoff.md`
 
 ## Real commands

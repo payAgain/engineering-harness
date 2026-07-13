@@ -58,13 +58,13 @@ I approve the Round A Charter draft: <note>. Execute Round B.
 ```text
 I approve batch <batch_id>: <task ids>.
 
-1. Follow skills/start.md and output Session Briefing (include Working Branch). If on main/master for implementation work, create feat/<slug> first. Then start a new temporary orchestrator restored only from disk artifacts.
-2. If acceptance criteria become ambiguous, stop and re-enter skills/clarify.md for that slice.
-3. Forced-delegation tasks must run as separate role instances; main chat/orchestrator must not impersonate workers.
-4. Write harness/runtime/invocations/<batch_id>.yaml; run dangerous shells through safe_bash_guard first.
-5. G3-check owner, actual_role, from_role, namespaces. Full + risk>=8 code needs reviewer invocation.
-6. Update current-task and session; provide version_control_checkpoint (branch, base_branch, pr_required) and proposed commit message.
-7. Do not commit/tag/push/release without explicit authorization. Do not push to main. Finish with skills/handoff.md and exit the batch orchestrator.
+1. Spawn a **new orchestrator role instance** (Subagent/Task). The Human Gate chat must not orchestrate or implement.
+2. Orchestrator follows skills/start.md, confirms working branch (not main), restores only from disk.
+3. If acceptance is ambiguous, stop and re-enter skills/clarify.md.
+4. Dispatch separate role instances for workers; write harness/runtime/invocations/<batch_id>.yaml.
+5. G3-check owner/actual_role/from_role. Full + risk>=8 code needs reviewer before commit.
+6. After verify: run skills/commit.md and **create a real commit** on the working branch; record candidate_commit SHA.
+7. Do not push/tag/release without explicit human authorization. Finish with skills/handoff.md and exit the orchestrator instance.
 ```
 
 ## Audit

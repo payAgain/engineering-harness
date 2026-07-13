@@ -46,6 +46,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "protocol/references/gates.md",
             "protocol/references/dispatch.md",
             "protocol/references/branching.md",
+            "protocol/references/roles.md",
             "protocol/references/intent.md",
             "protocol/references/session.md",
             "protocol/references/schemas.md",
@@ -77,18 +78,23 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("Intent Clarity", text)
         self.assertIn("references/intent.md", text)
         self.assertIn("Clarify before act", text)
+        self.assertIn("Must-commit", text)
+        self.assertIn("references/roles.md", text)
         self.assertIn("references/branching.md", text)
         self.assertIn("Do not install it into any IDE-specific skills directory", text)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("eh.cmd", readme)
         self.assertIn("install.cmd", readme)
         self.assertIn("GitHub Flow", readme)
+        self.assertIn("必须 commit", readme)
 
     def test_no_cursor_runtime_ssot_in_templates(self):
         ag = (ROOT / "assets/templates/AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("agents/", ag)
         self.assertIn("GitHub Flow", ag)
         self.assertIn("clarify.md", ag)
+        self.assertIn("Must-commit", ag)
+        self.assertIn("separate role instance", ag)
         self.assertIn("branch_check.py", ag)
         self.assertNotIn(".cursor/agents", ag)
         self.assertNotIn(".cursor/skills", ag)
@@ -147,7 +153,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.5.0")
+        self.assertEqual(ver.stdout.strip(), "0.6.0")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)

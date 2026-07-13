@@ -31,12 +31,14 @@
 
 ## 核心原则（请先读）
 
-1. **先澄清目标，再行动**：用户也可能说不清要做成什么样；Agent 必须多轮提问、覆盖清单、消除二义性后，才能 Round A / 写代码。
-2. **人类聊天 = 审批闸门**，不是终身编排大脑；编排器按 batch 临时恢复。
-3. **未经明确授权**，不得 `commit` / `tag` / `push` / `release`。
-4. `code|test|review|contract|integration|release` 或风险 ≥ 8 的任务，必须作为**独立角色实例**执行。
+1. **先澄清目标，再行动**：多轮提问消除二义性后，才能 Round A / 写代码。
+2. **Human Gate ≠ 干活线程**：用户聊天只负责澄清、批准范围、审查 SHA、授权发布；编排与实现必须由**独立角色实例**（含 orchestrator）执行。
+3. **验证后必须 commit**：工作分支上留下可验收的 commit SHA；未提交的「已完成」视为流程失败。
+4. **人类把控发布面**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
 5. **运行时 SSOT 永远是目标项目仓库**。
 6. **GitHub Flow**：G1 之后不要在 `main`/`master` 上做实现类开发。
+
+角色目录与主流框架对照见 [`protocol/references/roles.md`](./protocol/references/roles.md)。
 
 完整执行协议：根目录 [`PROTOCOL.md`](./PROTOCOL.md)。
 
