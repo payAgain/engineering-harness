@@ -93,6 +93,49 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertNotIn(".cursor/agents", ag)
         self.assertNotIn(".cursor/skills", ag)
 
+    def test_no_machine_local_absolute_paths(self):
+        """Docs/scripts must stay portable after clone on another machine."""
+        # Construct tokens without embedding full machine paths as raw literals in one piece.
+        banned = [
+            "E:" + "\\Work",
+            "E:/Work",
+            "C:" + "\\Users\\admin",
+            "C:/Users/admin",
+            "/Users/" + "admin/",
+        ]
+        roots = [
+            ROOT / "README.md",
+            ROOT / "PROTOCOL.md",
+            ROOT / "CHANGELOG.md",
+            ROOT / "protocol",
+            ROOT / "assets",
+            ROOT / "scripts",
+            ROOT / "src",
+            ROOT / "integrations",
+            ROOT / "docs",
+            ROOT / "eh.cmd",
+            ROOT / "eh.ps1",
+            ROOT / "install.cmd",
+            ROOT / "install.ps1",
+        ]
+        allowed_suffixes = {".md", ".py", ".ps1", ".cmd", ".sh", ".toml", ".yaml", ".yml", ".txt"}
+        offenders: list[str] = []
+        for root in roots:
+            paths = [root] if root.is_file() else list(root.rglob("*"))
+            for path in paths:
+                if not path.is_file():
+                    continue
+                if path.suffix.lower() not in allowed_suffixes and path.name not in {"eh.cmd", "install.cmd"}:
+                    continue
+                try:
+                    text = path.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    continue
+                for token in banned:
+                    if token in text:
+                        offenders.append(f"{path.relative_to(ROOT).as_posix()} contains {token!r}")
+        self.assertEqual(offenders, [], "machine-local paths found:\n" + "\n".join(offenders))
+
     def test_version_matches_pyproject(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertRegex(version, r"^\d+\.\d+\.\d+")

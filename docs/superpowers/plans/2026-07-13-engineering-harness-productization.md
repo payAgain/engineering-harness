@@ -56,7 +56,6 @@
 ### Task 6: 回链 worksummary
 
 **Files:**
-- Modify: `E:\Work\worksummary\README.md`
-- Modify: 用户指南中的递交说明
+- Modify: team worksummary index / user guide (outside this repo, if applicable)
 
 - [x] 说明正式模板进入框架仓库迁移，旧文件保留为兼容入口
