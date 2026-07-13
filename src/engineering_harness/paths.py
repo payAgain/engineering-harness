@@ -42,6 +42,7 @@ STANDARD_FILES = [
     ("agents/integration-release.md", "agents/integration-release.md"),
     ("agents/test.md", "agents/test.md"),
     ("harness/tasks/REGISTRY.yaml", "harness/tasks/REGISTRY.yaml"),
+    ("harness/tasks/_PACKET.template.md", "harness/tasks/_PACKET.template.md"),
     ("harness/ownership/OWNERSHIP.yaml", "harness/ownership/OWNERSHIP.yaml"),
     ("DECISIONS/INDEX.md", "DECISIONS/INDEX.md"),
 ]

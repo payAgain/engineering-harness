@@ -33,10 +33,11 @@
 
 1. **先澄清目标，再行动**：多轮提问消除二义性后，才能 Round A / 写代码。
 2. **Human Gate ≠ 干活线程**：用户聊天只负责澄清、批准范围、审查 SHA、授权发布；编排与实现必须由**独立角色实例**（含 orchestrator）执行。
-3. **验证后必须 commit**：工作分支上留下可验收的 commit SHA；未提交的「已完成」视为流程失败。
-4. **人类把控发布面**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
-5. **运行时 SSOT 永远是目标项目仓库**。
-6. **GitHub Flow**：G1 之后不要在 `main`/`master` 上做实现类开发。
+3. **按角色 Packet 派发，不是 TodoList 工厂**：禁止「每个 checklist 一条 → 一个实现 Agent + 一个 Review Agent」。计划只是草稿，`REGISTRY`/Task Packet 才是派发 SSOT（见 `protocol/references/anti-patterns.md`）。
+4. **验证后必须 commit**：工作分支上留下可验收的 commit SHA；未提交的「已完成」视为流程失败。
+5. **人类把控发布面**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
+6. **运行时 SSOT 永远是目标项目仓库**。
+7. **GitHub Flow**：G1 之后不要在 `main`/`master` 上做实现类开发。
 
 角色目录与主流框架对照见 [`protocol/references/roles.md`](./protocol/references/roles.md)。
 

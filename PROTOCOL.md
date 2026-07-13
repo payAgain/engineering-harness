@@ -40,6 +40,7 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 8. **GitHub Flow** after G1. See `references/branching.md`.
 9. **Full:** risk≥8 `code` needs reviewer before must-commit.
 10. **Clarify before act** (product-wide or scoped to an Initiative). See `references/intent.md`.
+11. **Packets dispatch roles — not todolists.** Plan checklists (`### Task N`) are drafts only. SubAgents must be bound to `agents/<role>.md` via Task Packets. Forbidden: one todo → one implementer (+ one reviewer each). See `references/anti-patterns.md` and `references/dispatch.md`.
 
 ## 3. Modes
 
@@ -93,6 +94,7 @@ Details: `references/lifecycle.md`.
 | Need | Read |
 |---|---|
 | Lifecycle / next feature | `references/lifecycle.md` |
+| Anti-patterns (todo dispatch) | `references/anti-patterns.md` |
 | Intent Clarity | `references/intent.md` |
 | Roles | `references/roles.md` |
 | Gates | `references/gates.md` |

@@ -60,15 +60,14 @@ Human intent: <hotfix|feature|major> — <one-line goal>
 ## Round C — batch（Initiative 内）
 
 ```text
-I approve batch <batch_id> for initiative <id>: <task ids>.
+I approve batch <batch_id> for initiative <id>: packets <WP-…, …> (NOT plan Task 0/1/2 alone).
 
-1. Spawn a **new orchestrator role instance**. Human Gate must not orchestrate or implement.
-2. Restore only from disk; confirm working branch (not main).
-3. If acceptance for this Initiative becomes ambiguous, re-enter scoped clarify (skills/initiative.md / clarify.md).
-4. Dispatch separate worker instances; write harness/runtime/invocations/<batch_id>.yaml.
-5. Full + risk>=8 code needs reviewer before commit.
-6. After verify: skills/commit.md → real commit SHA on working branch.
-7. No push/tag/release without explicit human authorization. Handoff and exit the orchestrator instance.
+1. Spawn a **new orchestrator** role instance. Human Gate must not orchestrate or implement.
+2. Orchestrator may dispatch ONLY from harness/tasks Packets + REGISTRY. If Packets missing → stop (dispatch-blocked).
+3. FORBIDDEN: one SubAgent per checklist row titled "implementing Task N"; FORBIDDEN: auto pair every todo with a reviewer.
+4. Merge same primary_owner packets into one worker invocation when safe. Worker prompts MUST use the skeleton in references/dispatch.md (role + agents/<role>.md + packet paths).
+5. Spawn reviewer only if Full / risk>=8 code / human requested.
+6. After verify: must-commit on working branch; record SHA; handoff; no push/tag/release without human auth.
 ```
 
 ## Round Close — Archive Initiative

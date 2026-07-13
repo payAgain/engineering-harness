@@ -30,6 +30,7 @@ At session/batch start, follow `skills/start.md`:
 Output a Session Briefing before editing.
 
 ## Non-negotiables
+- **Packets dispatch roles — not todolists.** Never spawn “implement Task N” workers from plan checklists; no per-todo implementer+reviewer factory.
 - **Clarify before act** (product or scoped Initiative)
 - **Initiative loop** after init: next feature/version uses `skills/initiative.md`, not re-init
 - **Every role (including orchestrator) = separate role instance**; Human Gate must not do the work

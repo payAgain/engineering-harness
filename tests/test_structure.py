@@ -46,6 +46,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "protocol/references/gates.md",
             "protocol/references/dispatch.md",
             "protocol/references/branching.md",
+            "protocol/references/anti-patterns.md",
             "protocol/references/lifecycle.md",
             "protocol/references/roles.md",
             "protocol/references/intent.md",
@@ -63,6 +64,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "assets/templates/docs/branching.md",
             "assets/templates/skills/start.md",
             "assets/templates/skills/clarify.md",
+            "assets/templates/harness/tasks/_PACKET.template.md",
             "assets/templates/skills/initiative.md",
             "assets/templates/harness/initiatives/INDEX.md",
             "assets/templates/harness/drafts/INTENT-CLARITY.md",
@@ -82,8 +84,9 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("references/intent.md", text)
         self.assertIn("Clarify before act", text)
         self.assertIn("Must-commit", text)
+        self.assertIn("references/anti-patterns.md", text)
+        self.assertIn("Packets dispatch", text)
         self.assertIn("references/lifecycle.md", text)
-        self.assertIn("initiative", text.lower())
         self.assertIn("references/roles.md", text)
         self.assertIn("references/branching.md", text)
         self.assertIn("Do not install it into any IDE-specific skills directory", text)
@@ -97,6 +100,7 @@ class FrameworkStructureTests(unittest.TestCase):
         ag = (ROOT / "assets/templates/AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("agents/", ag)
         self.assertIn("GitHub Flow", ag)
+        self.assertIn("todolists", ag.lower())
         self.assertIn("initiative.md", ag)
         self.assertIn("Must-commit", ag)
         self.assertIn("separate role instance", ag)
@@ -158,7 +162,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.7.0")
+        self.assertEqual(ver.stdout.strip(), "0.8.0")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)

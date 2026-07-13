@@ -4,9 +4,11 @@
 
 ```yaml
 task_id: <id>
+initiative_id: <I-…>
 batch_id: <batch>
-task_type: code|test|research|review|doc|contract|integration|release
-primary_owner: <role>
+task_type: code|test|research|review|doc|contract|integration|release|governance
+primary_owner: <role>                 # MUST exist as agents/<role>.md
+required_role: <role>                 # normally == primary_owner
 code_owner: <role|null>
 test_owner: <role|null>
 evidence_writers:
@@ -24,6 +26,9 @@ execution: serial|multitask|optional-worktree
 execution_mode: subagent-required|direct-exception
 direct_exception_reason: null
 ```
+
+Dispatch is illegal without `task_id`, `task_type`, `primary_owner`, and registry entry.  
+Plan markdown checklists are drafts only — see `anti-patterns.md` AP-1.
 
 ## Handoff payload
 

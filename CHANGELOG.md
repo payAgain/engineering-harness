@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 - 2026-07-13
+
+### Added
+- `protocol/references/anti-patterns.md`：明确禁止 TodoList→实现/Review 双 Agent 工厂
+- Worker 提示词强制骨架（角色开头，禁止 “implementing Task N”）
+- `harness/tasks/_PACKET.template.md`
+
+### Changed
+- 派发 SSOT = Task Packet；计划清单仅为草稿
+- Batch 按 `primary_owner` 合并；reviewer 按规则每 batch 至多一次（非每 todo 一次）
+- PROTOCOL 硬规则 #11；Round C / plan skill 同步
+
 ## 0.7.0 - 2026-07-13
 
 ### Added
