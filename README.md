@@ -38,6 +38,40 @@
 5. **人类把控发布面（Ship）**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
 6. **运行时 SSOT 永远是目标项目仓库**。
 7. **GitHub Flow**：Bootstrap/G1 之后不要在 `main`/`master` 上做实现类开发。
+8. **完成必须可证明**：必需项目检查未配置时是 `INCOMPLETE`，检查失败时是 `FAIL`；只有 Phase 绑定的验证、真实流程观察、生产就绪证据和独立角色记录完整后才能 Accept。
+
+### 当前生产质量闭环
+
+框架当前把一次交付组织成以下可恢复、可核对的链路：
+
+```text
+Clarify
+→ Charter / Bootstrap
+→ Scope
+→ Plan（可观察的验收标准 + 影响分析）
+→ Human 批准 Build 范围
+→ 独立 Role Pipeline
+→ 项目命令验证 + 真实流程观察
+→ Production Readiness 证据
+→ Phase-bound Accept
+→ must-commit
+→ Archive / 下一轮维护
+```
+
+关键质量机制：
+
+| 机制 | 作用 | 目标项目中的 SSOT |
+|---|---|---|
+| Production Readiness Profile | 定义功能、可靠性、数据、安全、性能、可观测性、部署、回滚、兼容性和可维护性要求 | `docs/production-readiness.md` |
+| Verification Contract | 配置真实 build/test/lint/type 等项目命令 | `harness/verification.json` |
+| Build Approval Manifest | 固化人类批准的 Plan revision 与 Phase 范围 | `harness/builds/B-00x.json` |
+| Phase Packet | 记录影响面、验收标准、角色步骤、验证 ID 和真实流程 | `harness/tasks/P-00x.md` |
+| Invocation Ledger | 证明 Implement/Test/Reviewer 等角色由独立实例执行，并保留失败与重试 | `harness/runtime/invocations/B-00x.yaml` |
+| Phase Verification Evidence | 保存与具体 Phase 绑定的命令、退出码和检查结果 | Packet 的 `verification_evidence` |
+| Acceptance Evidence | 汇总批准范围、验收标准、角色、运行观察、生产就绪、风险和 commit SHA | Packet 的 `acceptance_doc` |
+| Blocker Record | 保存阻塞原因、负责人、等待对象、恢复触发条件和下一动作 | Packet 的 `blocker` |
+
+这套机制不能替代项目自身的工程判断。模板负责阻止“没有证据就宣称完成”，具体项目仍需在 Bootstrap 时填写真实命令、生产约束和关键用户流程。
 
 角色目录与主流框架对照见 [`protocol/references/roles.md`](./protocol/references/roles.md)。
 
@@ -330,15 +364,20 @@ current-task.md           # 当前任务 / batch 焦点
 agents/                   # 角色定义（工具无关）
 skills/                   # clarify / initiative / start / plan / review / commit / handoff
 harness/
+  builds/                 # B-00x 人类批准范围与 Plan revision
   drafts/                 # INTENT-CLARITY.md（产品级澄清）
   initiatives/            # 每个 feature/版本的 brief + INDEX
   PROTOCOL.md             # 协议副本
   session/                # 可恢复会话状态
   scripts/                # harness_check / branch_check / verify / safe_bash_guard
-  tasks/  ownership/ …
-docs/                     # verification、branching、error-journal…
-DECISIONS/
-contracts/
+  tasks/                  # P-00x Phase Packet、影响分析和验收契约
+  runtime/invocations/    # 独立角色实例、状态、失败与重试记录
+  evidence/               # Phase 验证、Acceptance 和生产就绪证据
+  ownership/              # 模块与路径责任边界
+  verification.json       # 真实项目 build/test/lint 等命令契约
+docs/                     # verification、production-readiness、branching、error-journal…
+DECISIONS/                # 长期架构决策索引
+contracts/                # 模块、接口和数据契约
 .harness-version
 ```
 
@@ -370,12 +409,31 @@ python harness/scripts/safe_bash_guard.py -- "<command>"
 
 ## 推荐工作流（摘要）
 
-0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS  
-1. **Charter → Bootstrap**（init 仅一次）  
-2. **Scope → Plan**（`P-00x`，默认串行）  
-3. **Build** × N → Accept → must-commit → 人授权 **Ship**  
-4. **Archive**；下一 feature 回到 Scope  
-5. **audit / resume** → resume 仅限同一 Initiative  
+0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS
+1. **Charter → Bootstrap**（init 仅一次）→ 填写验证命令与 Production Readiness
+2. **Scope → Plan**（`P-00x`，默认串行）→ 可观察验收标准、影响分析、required checks / flows
+3. 人类批准 **Build B-00x 范围** → 写入 Build Manifest → 新 Orchestrator 按依赖推进
+4. Phase 内按有状态 `role_pipeline` 派独立角色 → 保留 Invocation Ledger
+5. 执行 Phase-bound 项目验证与真实流程观察 → 汇总 Production Readiness 证据
+6. **Accept** → Acceptance Evidence → must-commit → 记录真实 SHA
+7. **Archive**；下一 feature/fix/hotfix 回到 Scope，无需重新 init
+8. **audit / resume** → resume 仅限同一 Initiative；blocked 工作按 blocker trigger 恢复
+
+验证命令示例：
+
+```text
+python harness/scripts/verify.py \
+  --phase P-001 \
+  --evidence harness/evidence/<lead>/P-001/verification.json
+```
+
+结果语义：
+
+| 结果 | 退出码 | 是否可 Accept |
+|---|---:|---|
+| `VERIFY PASS` | 0 | 仅在其他 Phase/Readiness/角色证据也完整时可以 |
+| `VERIFY FAIL` | 1 | 不可以 |
+| `VERIFY INCOMPLETE` | 2 | 不可以；说明 required 命令或配置缺失 |
 
 门禁与状态机详见 [`protocol/references/gates.md`](./protocol/references/gates.md) 与 [`protocol/references/intent.md`](./protocol/references/intent.md)。
 
