@@ -12,12 +12,15 @@ LIGHT_FILES = [
     ("AGENTS.md", "AGENTS.md"),
     ("current-task.md", "current-task.md"),
     ("docs/verification.md", "docs/verification.md"),
+    ("docs/production-readiness.md", "docs/production-readiness.md"),
     ("harness/session/session-state.json", "harness/session/session-state.json"),
     ("harness/session/session-log.md", "harness/session/session-log.md"),
     ("skills/clarify.md", "skills/clarify.md"),
     ("skills/start.md", "skills/start.md"),
     ("skills/handoff.md", "skills/handoff.md"),
     ("harness/scripts/harness_check.py", "harness/scripts/harness_check.py"),
+    ("harness/scripts/verify.py", "harness/scripts/verify.py"),
+    ("harness/verification.json", "harness/verification.json"),
     ("harness/drafts/INTENT-CLARITY.md", "harness/drafts/INTENT-CLARITY.md"),
 ]
 
@@ -34,7 +37,6 @@ STANDARD_FILES = [
     ("harness/initiatives/INDEX.md", "harness/initiatives/INDEX.md"),
     ("harness/initiatives/_TEMPLATE.md", "harness/initiatives/_TEMPLATE.md"),
     ("harness/scripts/safe_bash_guard.py", "harness/scripts/safe_bash_guard.py"),
-    ("harness/scripts/verify.py", "harness/scripts/verify.py"),
     ("harness/scripts/branch_check.py", "harness/scripts/branch_check.py"),
     ("agents/orchestrator.md", "agents/orchestrator.md"),
     ("agents/architect-contract.md", "agents/architect-contract.md"),
@@ -44,6 +46,9 @@ STANDARD_FILES = [
     ("harness/tasks/REGISTRY.yaml", "harness/tasks/REGISTRY.yaml"),
     ("harness/tasks/_PACKET.template.md", "harness/tasks/_PACKET.template.md"),
     ("harness/ownership/OWNERSHIP.yaml", "harness/ownership/OWNERSHIP.yaml"),
+    ("harness/runtime/_INVOCATIONS.template.yaml", "harness/runtime/_INVOCATIONS.template.yaml"),
+    ("harness/builds/_BUILD.template.json", "harness/builds/_BUILD.template.json"),
+    ("harness/evidence/_ACCEPTANCE.template.md", "harness/evidence/_ACCEPTANCE.template.md"),
     ("DECISIONS/INDEX.md", "DECISIONS/INDEX.md"),
 ]
 
@@ -61,12 +66,15 @@ LIGHT_REQUIRED = [
     "AGENTS.md",
     "current-task.md",
     "docs/verification.md",
+    "docs/production-readiness.md",
     "harness/session/session-state.json",
     "harness/session/session-log.md",
     "skills/clarify.md",
     "skills/start.md",
     "skills/handoff.md",
     "harness/scripts/harness_check.py",
+    "harness/scripts/verify.py",
+    "harness/verification.json",
     "harness/drafts/INTENT-CLARITY.md",
 ]
 
@@ -82,7 +90,6 @@ STANDARD_REQUIRED = [
     "skills/initiative.md",
     "harness/initiatives/INDEX.md",
     "harness/scripts/safe_bash_guard.py",
-    "harness/scripts/verify.py",
     "harness/scripts/branch_check.py",
     "agents/orchestrator.md",
     "agents/architect-contract.md",
@@ -90,6 +97,9 @@ STANDARD_REQUIRED = [
     "agents/integration-release.md",
     "harness/tasks/REGISTRY.yaml",
     "harness/ownership/OWNERSHIP.yaml",
+    "harness/runtime/_INVOCATIONS.template.yaml",
+    "harness/builds/_BUILD.template.json",
+    "harness/evidence/_ACCEPTANCE.template.md",
 ]
 
 DANGEROUS_PATTERNS = [

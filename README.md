@@ -38,6 +38,40 @@
 5. **人类把控发布面（Ship）**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
 6. **运行时 SSOT 永远是目标项目仓库**。
 7. **GitHub Flow**：Bootstrap/G1 之后不要在 `main`/`master` 上做实现类开发。
+8. **完成必须可证明**：必需项目检查未配置时是 `INCOMPLETE`，检查失败时是 `FAIL`；只有 Phase 绑定的验证、真实流程观察、生产就绪证据和独立角色记录完整后才能 Accept。
+
+### 当前生产质量闭环
+
+框架当前把一次交付组织成以下可恢复、可核对的链路：
+
+```text
+Clarify
+→ Charter / Bootstrap
+→ Scope
+→ Plan（可观察的验收标准 + 影响分析）
+→ Human 批准 Build 范围
+→ 独立 Role Pipeline
+→ 项目命令验证 + 真实流程观察
+→ Production Readiness 证据
+→ Phase-bound Accept
+→ must-commit
+→ Archive / 下一轮维护
+```
+
+关键质量机制：
+
+| 机制 | 作用 | 目标项目中的 SSOT |
+|---|---|---|
+| Production Readiness Profile | 定义功能、可靠性、数据、安全、性能、可观测性、部署、回滚、兼容性和可维护性要求 | `docs/production-readiness.md` |
+| Verification Contract | 配置真实 build/test/lint/type 等项目命令 | `harness/verification.json` |
+| Build Approval Manifest | 固化人类批准的 Plan revision 与 Phase 范围 | `harness/builds/B-00x.json` |
+| Phase Packet | 记录影响面、验收标准、角色步骤、验证 ID 和真实流程 | `harness/tasks/P-00x.md` |
+| Invocation Ledger | 证明 Implement/Test/Reviewer 等角色由独立实例执行，并保留失败与重试 | `harness/runtime/invocations/B-00x.yaml` |
+| Phase Verification Evidence | 保存与具体 Phase 绑定的命令、退出码和检查结果 | Packet 的 `verification_evidence` |
+| Acceptance Evidence | 汇总批准范围、验收标准、角色、运行观察、生产就绪、风险和 commit SHA | Packet 的 `acceptance_doc` |
+| Blocker Record | 保存阻塞原因、负责人、等待对象、恢复触发条件和下一动作 | Packet 的 `blocker` |
+
+这套机制不能替代项目自身的工程判断。模板负责阻止“没有证据就宣称完成”，具体项目仍需在 Bootstrap 时填写真实命令、生产约束和关键用户流程。
 
 角色目录与主流框架对照见 [`protocol/references/roles.md`](./protocol/references/roles.md)。
 
@@ -194,32 +228,135 @@ eh.cmd branch-check <project>
 
 ---
 
-## 架构一览
+## 仓库架构与目录职责
+
+本仓库由四个相互配合的部分组成：
+
+1. **执行协议**定义 Agent 应遵循的流程、角色、门禁和状态模型；
+2. **项目模板**定义 `eh init` 要复制到目标项目中的文件；
+3. **Python CLI**负责初始化、检查、审计和分支辅助；
+4. **工具集成与入口脚本**提供不同平台或 Agent 宿主的接入方式。
 
 ```text
 engineering-harness/
-├── PROTOCOL.md              # 任意 Agent 的总入口
-├── protocol/references/     # 渐进明细（门禁、调度、分支、会话…）
-├── assets/templates/        # init 时复制到目标项目的中性模板
-├── src/engineering_harness/ # Python CLI
-├── eh.cmd / install.cmd     # Windows 根目录入口
-├── scripts/                 # 兼容薄封装
-├── integrations/            # 可选 IDE 适配（非必需）
-└── tests/                   # 结构与冒烟测试
+├── PROTOCOL.md              # Agent 执行协议总入口
+├── protocol/references/     # 协议的渐进式详细规范
+├── assets/templates/        # 初始化到目标项目的源模板
+├── src/engineering_harness/ # Python CLI 实现
+├── tests/                   # 仓库结构与 CLI 冒烟测试
+├── integrations/            # Claude、Codex、Cursor 等可选适配说明
+├── scripts/                 # 旧路径兼容脚本及 POSIX 薄封装
+├── docs/                    # 本框架自身的设计规格与实施记录
+├── eh.cmd / eh.ps1          # 从源码仓库直接运行 CLI
+├── install.cmd / install.ps1# editable 安装入口
+├── pyproject.toml           # Python 包与 eh 控制台命令配置
+├── VERSION                  # 框架版本号
+└── CHANGELOG.md             # 版本变更记录
 ```
 
-| 层级 | 路径 | 职责 |
-|---|---|---|
-| 协议 | `PROTOCOL.md` | 通用执行契约 |
-| 参考 | `protocol/references/` | 按需阅读的细则 |
-| 资产 | `assets/templates/` | 目标项目文件模板 |
-| CLI | `src/engineering_harness/` | init / audit / check / guard / branch-* |
-| 入口 | `eh.cmd`、`install.cmd` | Windows 启动与安装 |
-| 适配 | `integrations/*` | 可选镜像，**不能**取代 `agents/` / `skills/` |
+### `protocol/`：执行协议
+
+[`PROTOCOL.md`](./PROTOCOL.md) 是交给任意 Agent 的精简总入口；`protocol/references/` 保存按需读取的详细规则，避免把所有内容都塞进主协议。
+
+| 路径 | 主要内容 |
+|---|---|
+| `references/glossary.md` | Clarify、Scope、Plan、Build、Accept 等统一术语与禁止话术 |
+| `references/lifecycle.md` | 首次初始化及后续 Initiative 的生命周期 |
+| `references/phases.md` | `I/P/B-00x` 标识、Phase 依赖和串行默认规则 |
+| `references/roles.md` | Orchestrator、Architect、Reviewer、Test 等角色边界 |
+| `references/dispatch.md` | 角色实例派发、恢复、并行组和调用记录要求 |
+| `references/gates.md` | G0–G6 门禁与关闭条件 |
+| `references/intent.md` | Intent Clarity、开放问题和延期决策规则 |
+| `references/branching.md` | GitHub Flow、工作分支和受保护分支规则 |
+| `references/session.md` | 会话状态、恢复与交接约定 |
+| `references/schemas.md` | Packet、Registry 等运行时文件的结构约定 |
+| `references/levels.md` | Light / Standard / Full 能力差异与选择依据 |
+| `references/prompts.md` | Clarify、Charter、Bootstrap、Scope 等阶段提示词 |
+| `references/layout.md` | 初始化后目标项目的目录布局 |
+| `references/anti-patterns.md` | 明确禁止的调度和执行模式 |
+
+修改流程语义时，应同时核对 `PROTOCOL.md`、对应 reference、模板和测试，避免总协议与生成物发生漂移。
+
+### `assets/templates/`：目标项目模板
+
+这里不是框架运行时产生的数据，而是 `eh init` 的**模板源目录**。CLI 会根据 Light / Standard / Full 级别选择模板，替换项目名、级别、时间戳和验证命令占位符，然后写入目标项目。
+
+| 子目录或文件 | 初始化后的作用 |
+|---|---|
+| `AGENTS.md` | 目标项目中任意 Agent 的操作入口 |
+| `current-task.md` | 当前任务或 Build 的人类可读焦点 |
+| `agents/` | Standard+ 的独立角色定义 |
+| `skills/` | clarify、initiative、plan、review、commit、handoff 等流程技能 |
+| `harness/drafts/` | 首次产品目标澄清草稿 |
+| `harness/initiatives/` | feature、hotfix、major 等 Initiative brief 与索引 |
+| `harness/tasks/` | Phase Packet 模板和任务注册表 |
+| `harness/session/` | 可恢复的会话状态、日志和进度图 |
+| `harness/scripts/` | 目标项目内执行的结构、分支、验证和命令守卫脚本 |
+| `harness/ownership/` | 模块或路径的责任边界 |
+| `docs/` | 架构、验证、分支和错误日志模板 |
+| `DECISIONS/` | 架构决策索引 |
+
+模板写入目标项目后，**目标项目中的副本才是该项目的运行时 SSOT**。不要让 `integrations/` 中的 IDE 镜像取代这些中性文件。
+
+### `src/engineering_harness/`：Python CLI
+
+该目录使用标准 `src/` 包布局，`pyproject.toml` 将 `eh` 命令映射到 `engineering_harness.cli:main`。
+
+| 模块 | 职责 |
+|---|---|
+| `cli.py` | 定义命令行参数并分派 `init`、`audit`、`check`、`guard`、`branch-*`、`doctor` |
+| `init.py` | 按级别渲染和复制模板，生成 `.harness-version` |
+| `paths.py` | 维护模板清单、必需文件清单、危险命令模式及资源路径 |
+| `check.py` | 检查目标项目结构、读取 level、执行命令模式守卫 |
+| `audit.py` | 组合结构、守卫和分支检查，审计已初始化项目 |
+| `branch.py` | 检查受保护分支并创建 GitHub Flow 工作分支 |
+| `__init__.py` | 提供框架根路径和版本读取 |
+| `__main__.py` | 支持 `python -m engineering_harness` |
+
+增加、删除或移动模板时，通常不能只修改 `assets/templates/`：还要同步检查 `paths.py` 中的复制与必需文件清单、README 布局说明以及 `tests/test_structure.py` 的结构断言。
+
+### `integrations/`：可选工具适配
+
+这里保存 Claude、Codex、Cursor 和通用 Agent 宿主的接入说明。它们用于让特定工具更容易发现仓库内的协议、角色或技能，不是运行时 SSOT，也不是必须安装的插件。
+
+```text
+integrations/
+├── claude/   # Claude Code 接入说明
+├── codex/    # Codex 接入说明
+├── cursor/   # Cursor 可选镜像说明
+└── generic/  # 其他能读取仓库文件的 Agent 的通用要求
+```
+
+即使使用某个集成，实际执行仍应以目标项目中的 `AGENTS.md`、`agents/`、`skills/` 和 `harness/PROTOCOL.md` 为准。
+
+### `scripts/` 与根目录入口
+
+根目录入口是当前推荐方式：
+
+- `eh.cmd` / `eh.ps1`：无需安装，从当前源码仓库运行 CLI；
+- `install.cmd` / `install.ps1`：执行 editable 安装，之后可直接使用 `eh`。
+
+`scripts/` 中的 `eh.cmd`、`eh.ps1`、`init.ps1`、`audit.ps1` 等主要用于兼容旧路径；`init.sh` 和 `audit.sh` 提供 POSIX 薄封装。新增文档和日常命令应优先引用根目录入口或安装后的 `eh`。
+
+### `tests/`：结构与冒烟验证
+
+当前测试集中在 `tests/test_structure.py`，覆盖：
+
+- 框架、协议、模板和入口文件是否存在；
+- 协议与 README 是否保留关键流程约束；
+- `VERSION` 与 `pyproject.toml` 是否一致；
+- 文档和脚本是否包含机器本地绝对路径；
+- CLI 的 version、doctor、init、audit、guard 和 branch 基础流程。
+
+测试使用 Python 标准库 `unittest`，不依赖 pytest。
+
+### `docs/`：框架自身的设计记录
+
+根目录 `docs/` 记录的是 **Engineering Harness 本身**的产品化规格、设计讨论和实施计划，不会由 `eh init` 复制到目标项目。不要将它与 `assets/templates/docs/` 混淆：后者是目标项目文档的模板源。
 
 ---
 
-## 目标项目落地后的典型布局
+## 目标项目初始化后的典型布局
 
 ```text
 AGENTS.md                 # 任意 Agent 的项目操作入口
@@ -227,15 +364,20 @@ current-task.md           # 当前任务 / batch 焦点
 agents/                   # 角色定义（工具无关）
 skills/                   # clarify / initiative / start / plan / review / commit / handoff
 harness/
+  builds/                 # B-00x 人类批准范围与 Plan revision
   drafts/                 # INTENT-CLARITY.md（产品级澄清）
   initiatives/            # 每个 feature/版本的 brief + INDEX
   PROTOCOL.md             # 协议副本
   session/                # 可恢复会话状态
   scripts/                # harness_check / branch_check / verify / safe_bash_guard
-  tasks/  ownership/ …
-docs/                     # verification、branching、error-journal…
-DECISIONS/
-contracts/
+  tasks/                  # P-00x Phase Packet、影响分析和验收契约
+  runtime/invocations/    # 独立角色实例、状态、失败与重试记录
+  evidence/               # Phase 验证、Acceptance 和生产就绪证据
+  ownership/              # 模块与路径责任边界
+  verification.json       # 真实项目 build/test/lint 等命令契约
+docs/                     # verification、production-readiness、branching、error-journal…
+DECISIONS/                # 长期架构决策索引
+contracts/                # 模块、接口和数据契约
 .harness-version
 ```
 
@@ -267,12 +409,31 @@ python harness/scripts/safe_bash_guard.py -- "<command>"
 
 ## 推荐工作流（摘要）
 
-0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS  
-1. **Charter → Bootstrap**（init 仅一次）  
-2. **Scope → Plan**（`P-00x`，默认串行）  
-3. **Build** × N → Accept → must-commit → 人授权 **Ship**  
-4. **Archive**；下一 feature 回到 Scope  
-5. **audit / resume** → resume 仅限同一 Initiative  
+0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS
+1. **Charter → Bootstrap**（init 仅一次）→ 填写验证命令与 Production Readiness
+2. **Scope → Plan**（`P-00x`，默认串行）→ 可观察验收标准、影响分析、required checks / flows
+3. 人类批准 **Build B-00x 范围** → 写入 Build Manifest → 新 Orchestrator 按依赖推进
+4. Phase 内按有状态 `role_pipeline` 派独立角色 → 保留 Invocation Ledger
+5. 执行 Phase-bound 项目验证与真实流程观察 → 汇总 Production Readiness 证据
+6. **Accept** → Acceptance Evidence → must-commit → 记录真实 SHA
+7. **Archive**；下一 feature/fix/hotfix 回到 Scope，无需重新 init
+8. **audit / resume** → resume 仅限同一 Initiative；blocked 工作按 blocker trigger 恢复
+
+验证命令示例：
+
+```text
+python harness/scripts/verify.py \
+  --phase P-001 \
+  --evidence harness/evidence/<lead>/P-001/verification.json
+```
+
+结果语义：
+
+| 结果 | 退出码 | 是否可 Accept |
+|---|---:|---|
+| `VERIFY PASS` | 0 | 仅在其他 Phase/Readiness/角色证据也完整时可以 |
+| `VERIFY FAIL` | 1 | 不可以 |
+| `VERIFY INCOMPLETE` | 2 | 不可以；说明 required 命令或配置缺失 |
 
 门禁与状态机详见 [`protocol/references/gates.md`](./protocol/references/gates.md) 与 [`protocol/references/intent.md`](./protocol/references/intent.md)。
 

@@ -13,18 +13,57 @@ execution: serial
 execution_mode: subagent-required
 direct_exception_reason: null
 status: ready
+blocker: null
+# When blocked, replace null with:
+#   id: BLOCK-001
+#   kind: dependency|human_input|external|intent_ambiguous
+#   reason: <why progress cannot continue>
+#   owner: <role|human>
+#   waiting_for: <phase/input/system>
+#   revisit_when: <concrete trigger>
+#   next_action: <first action after trigger>
+#   created_at: <ISO-8601>
 dependencies: []
+readiness_dimensions:
+  - functional-correctness
+  - maintainability
+required_verification:
+  commands:
+    - build
+    - test
+  observed_flows:
+    - <affected user or system flow>
 acceptance_doc: harness/evidence/module-example/P-001/ACCEPTANCE.md
+verification_evidence: harness/evidence/module-example/P-001/verification.json
 role_pipeline:
-  - role: researcher
+  - step_id: RP-01
+    role: researcher
     purpose: explore
-  - role: module-example
+    required: false
+    condition: scope_unclear
+    status: pending
+    invocation_id: null
+  - step_id: RP-02
+    role: module-example
     purpose: implement
-  - role: test
+    required: true
+    condition: null
+    status: pending
+    invocation_id: null
+  - step_id: RP-03
+    role: test
     purpose: verify
-  - role: reviewer
+    required: true
+    condition: null
+    status: pending
+    invocation_id: null
+  - step_id: RP-04
+    role: reviewer
     purpose: review
-    when: full_or_risk_ge_8
+    required: true
+    condition: full_or_risk_ge_8
+    status: pending
+    invocation_id: null
 evidence_writers:
   module-example: harness/evidence/module-example/P-001/**
   test: harness/evidence/test/P-001/**
@@ -50,13 +89,40 @@ handoff_writers:
 ## Forbidden paths
 - …
 
+## Impact analysis
+- Interfaces / callers: …
+- Data / migration: …
+- Security / privacy: …
+- Reliability / failure recovery: …
+- Performance / capacity: …
+- Deployment / configuration / rollback: …
+- Explicitly unaffected surfaces: …
+
+## Acceptance criteria
+Each criterion must state the initial condition or input, action, observable result, failure or boundary behavior, and evidence source.
+
+- [ ] Given … when … then …; boundary/failure …; evidence …
+
 ## Validation
 ```text
-…
+python harness/scripts/verify.py
 ```
 
+## Observed affected flows
+- Flow: …
+  - Method / environment: …
+  - Expected observation: …
+  - Evidence path: …
+
 ## Acceptance
-- [ ] role_pipeline 必选步骤完成
+- [ ] every pipeline condition was evaluated before dispatch or close
+- [ ] required steps whose condition is true are `passed` with an `invocation_id`
+- [ ] condition-false or optional unused steps are `skipped` with a recorded reason
+- [ ] Test and Reviewer invocations use an independent context from implementation
+- [ ] `VERIFY PASS` evidence covers every `required_verification.commands` entry
+- [ ] every required observed flow was actually exercised and recorded
+- [ ] all affected `readiness_dimensions` have evidence or a justified not-applicable decision
+- [ ] acceptance criteria are observable and satisfied
 - [ ] acceptance_doc 已写
 - [ ] 有变更则 must-commit（记录 SHA）
 

@@ -14,10 +14,16 @@ primary_owner: <role>                 # phase lead; MUST exist as agents/<role>.
 code_owner: <role|null>
 test_owner: <role|null>
 acceptance_doc: harness/evidence/<lead>/<P-00x>/ACCEPTANCE.md
-role_pipeline:                        # ordered role steps inside this phase
-  - role: <role>
+verification_evidence: harness/evidence/<lead>/<P-00x>/verification.json
+role_pipeline:                        # ordered, stateful role steps inside this phase
+  - step_id: <RP-01>                  # unique within Packet
+    role: <role>
     purpose: explore|implement|verify|review|…
-    when: null|full_or_risk_ge_8
+    required: true|false
+    condition: null|scope_unclear|full_or_risk_ge_8
+    status: pending|running|passed|failed|blocked|skipped
+    invocation_id: <INV-00x|null>
+    status_reason: <required for failed|blocked|skipped>
 evidence_writers:
   <role>: harness/evidence/<role>/<task>/**
 handoff_writers:
@@ -26,7 +32,14 @@ handoff_writers:
     path: harness/handoffs/...
     file_writer: <role|orchestrator>
 status: ready|in_progress|accepted|blocked
+blocker: null                         # required object when status=blocked
+# blocker fields: id, kind, reason, owner, waiting_for, revisit_when, next_action, created_at
 dependencies: []                      # other P-00x; empty + serial default across initiative
+readiness_dimensions:                 # affected dimensions from docs/production-readiness.md
+  - functional-correctness
+required_verification:
+  commands: [build, test]              # ids from harness/verification.json
+  observed_flows: [<affected user or system flow>]
 risk_score: 0
 conflict_score: 0
 execution: serial|multitask|optional-worktree
@@ -34,9 +47,44 @@ execution_mode: subagent-required|direct-exception
 direct_exception_reason: null
 ```
 
-Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner`.  
-Phase cannot be `accepted` without `acceptance_doc`.  
+Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner`.
+Code/integration/release Packets must declare affected `readiness_dimensions`, command check IDs, and observable affected flows.
+Acceptance criteria must name an initial condition/input, action, observable result, boundary or failure behavior, and evidence source; vague completion statements do not pass Plan.
+Phase cannot be `accepted` without `acceptance_doc`, `VERIFY PASS` for all declared command checks, recorded observed flows, and readiness evidence.
 New plans must not use `Task N` / `WP-*` titles — see `glossary.md`.
+
+## Build approval manifest
+
+Path: `harness/builds/<B-00x>.json`. Template: `harness/builds/_BUILD.template.json`.
+
+An approved Build requires `schema_version`, `build_id`, `initiative_id`, `plan_revision`, `status: approved`, non-empty `approved_phase_ids`, and an approval object with human reference/time. Orchestrator may dispatch and accept only listed Phase IDs. A scope change creates a new manifest/revision linked by `supersedes`; do not silently edit historical approval.
+
+## Blocker
+
+Whenever Phase `status: blocked` or a role step is `blocked`, record: `id`, `kind`, `reason`, `owner`, `waiting_for`, `revisit_when`, `next_action`, and `created_at`. Missing recovery data means `context-incomplete`; blocked work cannot be accepted.
+
+## Acceptance evidence
+
+Path comes from Packet `acceptance_doc`; start from `harness/evidence/_ACCEPTANCE.template.md`. It must map approved scope, each criterion, role invocations, command evidence, observed flows, readiness dimensions, residual risks, version-control checkpoint, and the final decision. `accepted` requires a real candidate SHA unless an explicit deferred reason is recorded.
+
+## Role pipeline state
+
+Before dispatch, Orchestrator evaluates every step condition and records the result:
+
+- condition true + required → step must reach `passed`;
+- condition false → `skipped` with `status_reason` naming the evaluated condition;
+- optional unused → `skipped` with reason;
+- `failed` / `blocked` require a reason and prevent Phase close;
+- `passed` / `running` / `failed` / `blocked` require an `invocation_id`;
+- Test and Reviewer invocations must set `independent_context: true` and must not reuse the implementation invocation.
+
+A retry gets a new invocation ID and records `replaces`; prior attempts remain in the ledger.
+
+## Invocation ledger
+
+Path: `harness/runtime/invocations/<B-00x>.yaml`. Template: `harness/runtime/_INVOCATIONS.template.yaml`.
+
+Each invocation requires: `invocation_id`, `phase_id`, `role`, `purpose`, `status`, `required`, `condition`, `condition_result`, `independent_context`, timestamps, `attempt`, `replaces`, input/output references, evidence paths, and failure/blocker details. Invocation status uses `running|passed|failed|blocked|cancelled`; a skipped Packet step has no invocation.
 
 ## Handoff payload
 

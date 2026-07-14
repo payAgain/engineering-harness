@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "build_id": "B-001",
+  "initiative_id": "I-001",
+  "plan_revision": 1,
+  "status": "approved",
+  "approved_phase_ids": [
+    "P-001"
+  ],
+  "approval": {
+    "reference": "<human-approval-reference>",
+    "approved_at": "<ISO-8601>",
+    "approved_by": "human"
+  },
+  "supersedes": null,
+  "scope_changes": []
+}

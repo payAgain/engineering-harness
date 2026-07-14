@@ -20,8 +20,8 @@ Code written ≠ releasable. States advance one gate at a time.
 | G0 Intent | Charter draft + human approval | intent-approved |
 | G1 System | health, roles, ownership, DAG, session/skills | system-ready |
 | G2 Contract/Red | contracts, probes, baseline | implementation-ready |
-| G3 Module | local verify, invocation ledger, handoff, ownership, git decision | module-complete |
-| G4 Integration | frozen candidates with commit SHA (or waived), cross-module verify | integrated |
+| G3 Module | configured project checks PASS, affected behavior observed, invocation ledger, handoff, ownership, git decision | module-complete |
+| G4 Integration | frozen candidates with commit SHA (or waived), cross-module and end-to-end affected-flow verification | integrated |
 | G5 Evidence | evidence pack, docs transaction, drift check | evidence-complete |
 | G6 Release | readonly review, version/status/rollback, authorization | releasable/released |
 
@@ -56,3 +56,5 @@ Clarity PASS ≠ Charter approved. Both human gates are required.
 - Reviewer is readonly
 - Implementation and final acceptance must not share an unbarriered round
 - Missing real commands fail the corresponding gate; never fake green
+- `VERIFY INCOMPLETE` and `VERIFY FAIL` block Accept; required checks must be configured and pass
+- Command success alone is insufficient for product-source changes; record an observed affected user or system flow

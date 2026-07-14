@@ -64,14 +64,20 @@ class FrameworkStructureTests(unittest.TestCase):
             "scripts/audit.ps1",
             "assets/templates/AGENTS.md",
             "assets/templates/docs/branching.md",
+            "assets/templates/docs/production-readiness.md",
             "assets/templates/skills/start.md",
             "assets/templates/skills/clarify.md",
             "assets/templates/harness/tasks/_PACKET.template.md",
+            "assets/templates/harness/runtime/_INVOCATIONS.template.yaml",
+            "assets/templates/harness/builds/_BUILD.template.json",
+            "assets/templates/harness/evidence/_ACCEPTANCE.template.md",
             "assets/templates/skills/initiative.md",
             "assets/templates/harness/initiatives/INDEX.md",
             "assets/templates/harness/drafts/INTENT-CLARITY.md",
             "assets/templates/skills/commit.md",
             "assets/templates/harness/scripts/harness_check.py",
+            "assets/templates/harness/scripts/verify.py",
+            "assets/templates/harness/verification.json",
             "assets/templates/harness/scripts/branch_check.py",
             "integrations/generic/README.md",
         ]
@@ -159,6 +165,39 @@ class FrameworkStructureTests(unittest.TestCase):
                         offenders.append(f"{path.relative_to(ROOT).as_posix()} contains {token!r}")
         self.assertEqual(offenders, [], "machine-local paths found:\n" + "\n".join(offenders))
 
+    def test_production_readiness_contract_is_wired_into_packets(self):
+        readiness = (ROOT / "assets/templates/docs/production-readiness.md").read_text(encoding="utf-8")
+        packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
+        schemas = (ROOT / "protocol/references/schemas.md").read_text(encoding="utf-8")
+        dispatch = (ROOT / "protocol/references/dispatch.md").read_text(encoding="utf-8")
+        self.assertIn("Functional correctness", readiness)
+        self.assertIn("Rollback and recovery", readiness)
+        self.assertIn("readiness_dimensions:", packet)
+        self.assertIn("required_verification:", packet)
+        self.assertIn("observed_flows:", packet)
+        self.assertIn("Impact analysis", packet)
+        self.assertIn("boundary/failure", packet)
+        self.assertIn("readiness_dimensions", schemas)
+        self.assertIn("verification_evidence", dispatch)
+        self.assertIn("running product", dispatch)
+
+    def test_role_pipeline_and_invocation_contract_are_stateful(self):
+        packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
+        ledger = (ROOT / "assets/templates/harness/runtime/_INVOCATIONS.template.yaml").read_text(encoding="utf-8")
+        schemas = (ROOT / "protocol/references/schemas.md").read_text(encoding="utf-8")
+        dispatch = (ROOT / "protocol/references/dispatch.md").read_text(encoding="utf-8")
+        self.assertIn("step_id: RP-01", packet)
+        self.assertIn("status: pending", packet)
+        self.assertIn("invocation_id: null", packet)
+        self.assertIn("condition: full_or_risk_ge_8", packet)
+        self.assertIn("independent context", packet)
+        self.assertIn("schema_version: 1", ledger)
+        self.assertIn("independent_context: true", ledger)
+        self.assertIn("replaces: null", ledger)
+        self.assertIn("pending|running|passed|failed|blocked|skipped", schemas)
+        self.assertIn("no fabricated invocation", dispatch)
+        self.assertIn("different invocation from implementation", dispatch)
+
     def test_version_matches_pyproject(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertRegex(version, r"^\d+\.\d+\.\d+")
@@ -187,11 +226,14 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(version["level"], "Standard")
             self.assertEqual(version.get("cli"), "python")
             self.assertTrue((target / "docs/branching.md").exists())
+            self.assertTrue((target / "docs/production-readiness.md").exists())
             self.assertTrue((target / "skills/clarify.md").exists())
             self.assertTrue((target / "skills/initiative.md").exists())
             self.assertTrue((target / "harness/initiatives/INDEX.md").exists())
             self.assertTrue((target / "harness/drafts/INTENT-CLARITY.md").exists())
             self.assertTrue((target / "harness/scripts/branch_check.py").exists())
+            self.assertTrue((target / "harness/scripts/verify.py").exists())
+            self.assertTrue((target / "harness/verification.json").exists())
 
             audit = _cli("audit", str(target))
             self.assertEqual(audit.returncode, 0, audit.stdout + audit.stderr)
@@ -200,6 +242,156 @@ class PythonCliSmokeTests(unittest.TestCase):
 
             guard_bad = _cli("guard", "--", "git reset --hard")
             self.assertEqual(guard_bad.returncode, 1, guard_bad.stdout + guard_bad.stderr)
+
+    def test_verification_requires_real_project_commands(self):
+        with tempfile.TemporaryDirectory(prefix="eh-verify-") as tmp:
+            target = Path(tmp) / "demo"
+            target.mkdir()
+            init = _cli("init", str(target), "--level", "Light", "--name", "demo")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+
+            verify_script = target / "harness/scripts/verify.py"
+            evidence = target / "harness/evidence/verification-latest.json"
+            incomplete = subprocess.run(
+                [sys.executable, str(verify_script)],
+                capture_output=True,
+                text=True,
+                cwd=target,
+            )
+            self.assertEqual(incomplete.returncode, 2, incomplete.stdout + incomplete.stderr)
+            self.assertIn("VERIFY INCOMPLETE", incomplete.stdout)
+            self.assertEqual(json.loads(evidence.read_text(encoding="utf-8"))["status"], "INCOMPLETE")
+
+            config_path = target / "harness/verification.json"
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            config["checks"][0]["command"] = f'"{sys.executable}" -c "print(123)"'
+            config["checks"][1]["command"] = f'"{sys.executable}" -c "print(456)"'
+            config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+
+            passed = subprocess.run(
+                [sys.executable, str(verify_script)],
+                capture_output=True,
+                text=True,
+                cwd=target,
+            )
+            self.assertEqual(passed.returncode, 0, passed.stdout + passed.stderr)
+            self.assertIn("VERIFY PASS", passed.stdout)
+            self.assertEqual(json.loads(evidence.read_text(encoding="utf-8"))["status"], "PASS")
+
+            config["checks"][1]["command"] = f'"{sys.executable}" -c "raise SystemExit(7)"'
+            config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            failed = subprocess.run(
+                [sys.executable, str(verify_script)],
+                capture_output=True,
+                text=True,
+                cwd=target,
+            )
+            self.assertEqual(failed.returncode, 1, failed.stdout + failed.stderr)
+            self.assertIn("VERIFY FAIL", failed.stdout)
+            self.assertEqual(json.loads(evidence.read_text(encoding="utf-8"))["status"], "FAIL")
+
+    def test_harness_check_enforces_accepted_phase_evidence(self):
+        with tempfile.TemporaryDirectory(prefix="eh-accept-") as tmp:
+            target = Path(tmp) / "demo"
+            target.mkdir()
+            init = _cli("init", str(target), "--level", "Standard", "--name", "demo")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+
+            packet = target / "harness/tasks/P-001.md"
+            packet.write_text(
+                "---\ntask_id: P-001\nbuild_id: B-001\nstatus: accepted\n"
+                "acceptance_doc: harness/evidence/module/P-001/ACCEPTANCE.md\n"
+                "verification_evidence: harness/evidence/module/P-001/verification.json\n---\n",
+                encoding="utf-8",
+            )
+            check_script = target / "harness/scripts/harness_check.py"
+            rejected = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_rejected = _cli("check", str(target))
+            self.assertEqual(rejected.returncode, 1, rejected.stdout + rejected.stderr)
+            self.assertEqual(framework_rejected.returncode, 1, framework_rejected.stdout + framework_rejected.stderr)
+            self.assertIn("ACCEPTED WITHOUT APPROVED BUILD", rejected.stdout)
+            self.assertIn("ACCEPTED WITHOUT APPROVED BUILD", framework_rejected.stdout)
+            self.assertIn("ACCEPTED WITHOUT EVIDENCE", rejected.stdout)
+
+            blocked = target / "harness/tasks/P-002.md"
+            blocked.write_text(
+                "---\ntask_id: P-002\nstatus: blocked\nblocker: null\n---\n", encoding="utf-8"
+            )
+            blocked_result = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(blocked_result.returncode, 1, blocked_result.stdout + blocked_result.stderr)
+            self.assertIn("BLOCKED WITHOUT RECOVERY DATA", blocked_result.stdout)
+            blocked.unlink()
+
+            build = json.loads((target / "harness/builds/_BUILD.template.json").read_text(encoding="utf-8"))
+            build["approval"]["reference"] = "human-message-1"
+            build["approval"]["approved_at"] = "2026-07-14T00:00:00Z"
+            (target / "harness/builds/B-001.json").write_text(
+                json.dumps(build, indent=2) + "\n", encoding="utf-8"
+            )
+            acceptance = target / "harness/evidence/module/P-001/ACCEPTANCE.md"
+            acceptance.parent.mkdir(parents=True)
+            acceptance.write_text("# Evidence\n\n- Decision: `accepted`\n", encoding="utf-8")
+            verification = target / "harness/evidence/module/P-001/verification.json"
+            verification.write_text(
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-001"}\n', encoding="utf-8"
+            )
+
+            accepted = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_accepted = _cli("check", str(target))
+            self.assertEqual(accepted.returncode, 0, accepted.stdout + accepted.stderr)
+            self.assertEqual(framework_accepted.returncode, 0, framework_accepted.stdout + framework_accepted.stderr)
+            self.assertIn("HARNESS_CHECK PASS", accepted.stdout)
+
+            verification.write_text(
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-999"}\n', encoding="utf-8"
+            )
+            stale = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(stale.returncode, 1, stale.stdout + stale.stderr)
+            self.assertIn("ACCEPTED WITHOUT VERIFY PASS", stale.stdout)
+
+            verification.write_text("[]\n", encoding="utf-8")
+            non_object = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(non_object.returncode, 1, non_object.stdout + non_object.stderr)
+            self.assertIn("root must be an object", non_object.stdout)
+
+    def test_harness_check_rejects_placeholder_approval_and_external_evidence(self):
+        with tempfile.TemporaryDirectory(prefix="eh-contract-") as tmp:
+            target = Path(tmp) / "demo"
+            target.mkdir()
+            init = _cli("init", str(target), "--level", "Standard", "--name", "demo")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+            packet = target / "harness/tasks/P-001.md"
+            packet.write_text(
+                "---\ntask_id: P-001\nbuild_id: B-001\nstatus: accepted\n"
+                "acceptance_doc: ../outside.md\nverification_evidence: ../outside.json\n---\n",
+                encoding="utf-8",
+            )
+            build = json.loads((target / "harness/builds/_BUILD.template.json").read_text(encoding="utf-8"))
+            (target / "harness/builds/B-001.json").write_text(
+                json.dumps(build, indent=2) + "\n", encoding="utf-8"
+            )
+            (target.parent / "outside.md").write_text("- Decision: `accepted`\n", encoding="utf-8")
+            (target.parent / "outside.json").write_text(
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-001"}\n', encoding="utf-8"
+            )
+            check_script = target / "harness/scripts/harness_check.py"
+            rejected = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(rejected.returncode, 1, rejected.stdout + rejected.stderr)
+            self.assertIn("approval reference", rejected.stdout)
+            self.assertIn("ACCEPTED WITHOUT EVIDENCE", rejected.stdout)
+            self.assertIn("ACCEPTED WITHOUT PHASE VERIFICATION", rejected.stdout)
 
     def test_branch_check_logic_with_temp_repo(self):
         with tempfile.TemporaryDirectory(prefix="eh-branch-") as tmp:

@@ -84,14 +84,15 @@ Stage: Plan for Initiative I-00x.
 ```text
 I approve Build B-00x for Initiative I-00x: Phases <P-00x, …>.
 
-1. Spawn a **new orchestrator** instance. Human Gate must not orchestrate or implement.
-2. Progress SSOT = REGISTRY + Phase Packets (P-00x). Missing → packet-missing.
-3. Human approved SCOPE only. Orchestrator decides serial vs parallel from dependencies/conflict_score/write domains. NEVER ask human about 并行/同步.
-4. Default: advance Phases serially. Multi-Phase in one Build ≠ parallel.
-5. Inside each Phase: role_pipeline (multi-role). FORBIDDEN: anonymous "implementing Task N"; FORBIDDEN: auto reviewer every Phase.
-6. Worker prompts: references/dispatch.md skeleton.
-7. Reviewer only if Full / risk>=8 code / human requested.
-8. Accept: acceptance_doc → must-commit → status=accepted → REGISTRY. No Ship without human auth.
+1. Materialize `harness/builds/B-00x.json` from `_BUILD.template.json`, recording exactly the approved Phase IDs, current Plan revision, and this human approval reference/time. Do not dispatch before it exists.
+2. Spawn a **new orchestrator** instance. Human Gate must not orchestrate or implement.
+3. Progress SSOT = approved Build manifest + REGISTRY + Phase Packets (P-00x). Missing → build-approval-missing / packet-missing.
+4. Human approved SCOPE only. Orchestrator decides serial vs parallel from dependencies/conflict_score/write domains. NEVER ask human about 并行/同步.
+5. Default: advance Phases serially. Multi-Phase in one Build ≠ parallel.
+6. Inside each Phase: role_pipeline (multi-role). FORBIDDEN: anonymous "implementing Task N"; FORBIDDEN: auto reviewer every Phase.
+7. Worker prompts: references/dispatch.md skeleton.
+8. Reviewer only if Full / risk>=8 code / human requested.
+9. Accept: start from `_ACCEPTANCE.template.md`; verify approved scope, pipeline, project checks, observed flows, readiness, and SHA → status=accepted → REGISTRY. No Ship without human auth.
 ```
 
 ## Archive — 关闭 Initiative（legacy: Round Close）
