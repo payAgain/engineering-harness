@@ -1,0 +1,22 @@
+schema_version: 1
+build_id: B-001
+phase_id: P-001
+invocations:
+  - invocation_id: INV-001
+    role: module-example
+    purpose: implement
+    status: passed
+    required: true
+    condition: null
+    condition_result: true
+    independent_context: true
+    started_at: "<ISO-8601>"
+    completed_at: "<ISO-8601>"
+    attempt: 1
+    replaces: null
+    input_reference: harness/tasks/P-001.md
+    output_reference: harness/handoffs/module-example/P-001.yaml
+    evidence_paths:
+      - harness/evidence/module-example/P-001/**
+    failure: null
+    blocker: null

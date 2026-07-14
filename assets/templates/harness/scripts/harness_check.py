@@ -43,6 +43,7 @@ STANDARD_REQUIRED = [
     "agents/integration-release.md",
     "harness/tasks/REGISTRY.yaml",
     "harness/ownership/OWNERSHIP.yaml",
+    "harness/runtime/_INVOCATIONS.template.yaml",
 ]
 
 

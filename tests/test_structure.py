@@ -68,6 +68,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "assets/templates/skills/start.md",
             "assets/templates/skills/clarify.md",
             "assets/templates/harness/tasks/_PACKET.template.md",
+            "assets/templates/harness/runtime/_INVOCATIONS.template.yaml",
             "assets/templates/skills/initiative.md",
             "assets/templates/harness/initiatives/INDEX.md",
             "assets/templates/harness/drafts/INTENT-CLARITY.md",
@@ -177,6 +178,23 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("readiness_dimensions", schemas)
         self.assertIn("verification-latest.json", dispatch)
         self.assertIn("running product", dispatch)
+
+    def test_role_pipeline_and_invocation_contract_are_stateful(self):
+        packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
+        ledger = (ROOT / "assets/templates/harness/runtime/_INVOCATIONS.template.yaml").read_text(encoding="utf-8")
+        schemas = (ROOT / "protocol/references/schemas.md").read_text(encoding="utf-8")
+        dispatch = (ROOT / "protocol/references/dispatch.md").read_text(encoding="utf-8")
+        self.assertIn("step_id: RP-01", packet)
+        self.assertIn("status: pending", packet)
+        self.assertIn("invocation_id: null", packet)
+        self.assertIn("condition: full_or_risk_ge_8", packet)
+        self.assertIn("independent context", packet)
+        self.assertIn("schema_version: 1", ledger)
+        self.assertIn("independent_context: true", ledger)
+        self.assertIn("replaces: null", ledger)
+        self.assertIn("pending|running|passed|failed|blocked|skipped", schemas)
+        self.assertIn("no fabricated invocation", dispatch)
+        self.assertIn("different invocation from implementation", dispatch)
 
     def test_version_matches_pyproject(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()

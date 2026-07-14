@@ -14,10 +14,15 @@ primary_owner: <role>                 # phase lead; MUST exist as agents/<role>.
 code_owner: <role|null>
 test_owner: <role|null>
 acceptance_doc: harness/evidence/<lead>/<P-00x>/ACCEPTANCE.md
-role_pipeline:                        # ordered role steps inside this phase
-  - role: <role>
+role_pipeline:                        # ordered, stateful role steps inside this phase
+  - step_id: <RP-01>                  # unique within Packet
+    role: <role>
     purpose: explore|implement|verify|review|…
-    when: null|full_or_risk_ge_8
+    required: true|false
+    condition: null|scope_unclear|full_or_risk_ge_8
+    status: pending|running|passed|failed|blocked|skipped
+    invocation_id: <INV-00x|null>
+    status_reason: <required for failed|blocked|skipped>
 evidence_writers:
   <role>: harness/evidence/<role>/<task>/**
 handoff_writers:
@@ -44,6 +49,25 @@ Code/integration/release Packets must declare affected `readiness_dimensions`, c
 Acceptance criteria must name an initial condition/input, action, observable result, boundary or failure behavior, and evidence source; vague completion statements do not pass Plan.
 Phase cannot be `accepted` without `acceptance_doc`, `VERIFY PASS` for all declared command checks, recorded observed flows, and readiness evidence.
 New plans must not use `Task N` / `WP-*` titles — see `glossary.md`.
+
+## Role pipeline state
+
+Before dispatch, Orchestrator evaluates every step condition and records the result:
+
+- condition true + required → step must reach `passed`;
+- condition false → `skipped` with `status_reason` naming the evaluated condition;
+- optional unused → `skipped` with reason;
+- `failed` / `blocked` require a reason and prevent Phase close;
+- `passed` / `running` / `failed` / `blocked` require an `invocation_id`;
+- Test and Reviewer invocations must set `independent_context: true` and must not reuse the implementation invocation.
+
+A retry gets a new invocation ID and records `replaces`; prior attempts remain in the ledger.
+
+## Invocation ledger
+
+Path: `harness/runtime/invocations/<B-00x>.yaml`. Template: `harness/runtime/_INVOCATIONS.template.yaml`.
+
+Each invocation requires: `invocation_id`, `phase_id`, `role`, `purpose`, `status`, `required`, `condition`, `condition_result`, `independent_context`, timestamps, `attempt`, `replaces`, input/output references, evidence paths, and failure/blocker details. Invocation status uses `running|passed|failed|blocked|cancelled`; a skipped Packet step has no invocation.
 
 ## Handoff payload
 
