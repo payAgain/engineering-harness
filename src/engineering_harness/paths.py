@@ -47,6 +47,8 @@ STANDARD_FILES = [
     ("harness/tasks/_PACKET.template.md", "harness/tasks/_PACKET.template.md"),
     ("harness/ownership/OWNERSHIP.yaml", "harness/ownership/OWNERSHIP.yaml"),
     ("harness/runtime/_INVOCATIONS.template.yaml", "harness/runtime/_INVOCATIONS.template.yaml"),
+    ("harness/builds/_BUILD.template.json", "harness/builds/_BUILD.template.json"),
+    ("harness/evidence/_ACCEPTANCE.template.md", "harness/evidence/_ACCEPTANCE.template.md"),
     ("DECISIONS/INDEX.md", "DECISIONS/INDEX.md"),
 ]
 
@@ -96,6 +98,8 @@ STANDARD_REQUIRED = [
     "harness/tasks/REGISTRY.yaml",
     "harness/ownership/OWNERSHIP.yaml",
     "harness/runtime/_INVOCATIONS.template.yaml",
+    "harness/builds/_BUILD.template.json",
+    "harness/evidence/_ACCEPTANCE.template.md",
 ]
 
 DANGEROUS_PATTERNS = [

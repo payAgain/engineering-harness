@@ -51,7 +51,15 @@ Each run writes machine-readable evidence to:
 harness/evidence/verification-latest.json
 ```
 
-Acceptance evidence must reference this result and any required observed user-flow verification. Running commands is not by itself proof that the affected behavior works.
+For Phase acceptance, write Phase-bound evidence instead of relying on the mutable latest pointer:
+
+```text
+python harness/scripts/verify.py --phase P-001 --evidence harness/evidence/<lead>/P-001/verification.json
+```
+
+The Packet `verification_evidence` must name that repository-contained file. `verification-latest.json` remains a convenience result for interactive runs and cannot authorize an accepted Phase.
+
+Acceptance evidence must reference the Phase-bound result and any required observed user-flow verification. Running commands is not by itself proof that the affected behavior works.
 
 ## Change-Type Matrix
 

@@ -49,6 +49,7 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--config", type=Path, default=None)
     parser.add_argument("--evidence", type=Path, default=None)
+    parser.add_argument("--phase", default=None, help="Phase ID recorded in evidence")
     args = parser.parse_args()
 
     root = args.root.resolve()
@@ -121,6 +122,7 @@ def main() -> int:
         "started_at": started_at,
         "finished_at": _now(),
         "project_root": str(root),
+        "phase_id": args.phase,
         "config": str(config_path),
         "results": results,
     }

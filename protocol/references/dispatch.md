@@ -43,6 +43,7 @@ Each approved **Build** creates a **new** orchestrator role instance that restor
 - Charter / ADR / contracts
 - ownership / **Task Registry + Phase Packets**
 - active Initiative brief
+- approved `harness/builds/<B-00x>.json` (Phase scope + Plan revision + human approval reference)
 - `current-task.md` / `harness/session/*`
 - git status / HEAD / current branch
 - approval reference (Build B-00x scope)
@@ -51,14 +52,15 @@ Missing required restore inputs → `context-incomplete`.
 
 ## How to advance Phases（不是 1 Phase = 1 匿名 Agent）
 
-1. 从 REGISTRY 选出本 Build 批准且依赖已满足的 Phases（默认按 ID/依赖串行）
-2. 读 `role_pipeline`（缺失则停止为 `packet-incomplete`；不得运行时猜测并写回质量角色）
-3. 求值每个 step `condition`：false 或未使用的 optional step 写 `status: skipped` + `status_reason`
-4. 对 condition=true 的步骤创建新 invocation，先写 ledger `running`，再派发绑定角色实例
-5. 角色完成后同时更新 ledger、handoff/evidence 和 Packet step status；重试必须使用新 invocation ID
-6. 同角色可合并；不同角色写权不冲突时可并行 steps
-7. `reviewer` 在 Full、risk≥8 或人类点名时 condition=true；其他情况合法 `skipped`
-8. **Accept**：核对 pipeline/ledger/独立上下文和质量证据 → `acceptance_doc` → must-commit → `accepted` → REGISTRY
+1. Read the approved Build manifest and select only its `approved_phase_ids`; missing/invalid approval → `build-approval-missing`
+2. From that scope, choose Phases whose dependencies are satisfied（default serial by ID/dependency）
+3. 读 `role_pipeline`（缺失则停止为 `packet-incomplete`；不得运行时猜测并写回质量角色）
+4. 求值每个 step `condition`：false 或未使用的 optional step 写 `status: skipped` + `status_reason`
+5. 对 condition=true 的步骤创建新 invocation，先写 ledger `running`，再派发绑定角色实例
+6. 角色完成后同时更新 ledger、handoff/evidence 和 Packet step status；重试必须使用新 invocation ID
+7. 同角色可合并；不同角色写权不冲突时可并行 steps
+8. `reviewer` 在 Full、risk≥8 或人类点名时 condition=true；其他情况合法 `skipped`
+9. **Accept**：用 `_ACCEPTANCE.template.md` 核对 approval/pipeline/ledger/质量证据 → must-commit → `accepted` → REGISTRY
 
 ## Forced role delegation
 
@@ -106,7 +108,7 @@ Do NOT introduce yourself as "implementing Task N". You are the role above worki
 3. condition-false or unused optional steps are `skipped` with `status_reason` and no fabricated invocation
 4. Test and Reviewer use `independent_context: true` and a different invocation from implementation
 5. Packet acceptance criteria are observable and each has recorded evidence
-6. `harness/evidence/verification-latest.json` is `PASS` and covers every Packet `required_verification.commands` id
+6. Packet `verification_evidence` is repository-contained, is `PASS`, has the same `phase_id`, and covers every `required_verification.commands` id
 7. every Packet `required_verification.observed_flows` entry was exercised against the running product and recorded
 8. every affected `readiness_dimensions` entry has evidence required by `docs/production-readiness.md`
 9. `acceptance_doc` 已写入且含验证摘要、observed-flow 结果、readiness 结论与 commit SHA（有变更时）

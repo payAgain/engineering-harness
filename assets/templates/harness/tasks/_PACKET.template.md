@@ -13,6 +13,16 @@ execution: serial
 execution_mode: subagent-required
 direct_exception_reason: null
 status: ready
+blocker: null
+# When blocked, replace null with:
+#   id: BLOCK-001
+#   kind: dependency|human_input|external|intent_ambiguous
+#   reason: <why progress cannot continue>
+#   owner: <role|human>
+#   waiting_for: <phase/input/system>
+#   revisit_when: <concrete trigger>
+#   next_action: <first action after trigger>
+#   created_at: <ISO-8601>
 dependencies: []
 readiness_dimensions:
   - functional-correctness
@@ -24,6 +34,7 @@ required_verification:
   observed_flows:
     - <affected user or system flow>
 acceptance_doc: harness/evidence/module-example/P-001/ACCEPTANCE.md
+verification_evidence: harness/evidence/module-example/P-001/verification.json
 role_pipeline:
   - step_id: RP-01
     role: researcher

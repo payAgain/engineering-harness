@@ -69,6 +69,8 @@ class FrameworkStructureTests(unittest.TestCase):
             "assets/templates/skills/clarify.md",
             "assets/templates/harness/tasks/_PACKET.template.md",
             "assets/templates/harness/runtime/_INVOCATIONS.template.yaml",
+            "assets/templates/harness/builds/_BUILD.template.json",
+            "assets/templates/harness/evidence/_ACCEPTANCE.template.md",
             "assets/templates/skills/initiative.md",
             "assets/templates/harness/initiatives/INDEX.md",
             "assets/templates/harness/drafts/INTENT-CLARITY.md",
@@ -176,7 +178,7 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("Impact analysis", packet)
         self.assertIn("boundary/failure", packet)
         self.assertIn("readiness_dimensions", schemas)
-        self.assertIn("verification-latest.json", dispatch)
+        self.assertIn("verification_evidence", dispatch)
         self.assertIn("running product", dispatch)
 
     def test_role_pipeline_and_invocation_contract_are_stateful(self):
@@ -287,6 +289,109 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(failed.returncode, 1, failed.stdout + failed.stderr)
             self.assertIn("VERIFY FAIL", failed.stdout)
             self.assertEqual(json.loads(evidence.read_text(encoding="utf-8"))["status"], "FAIL")
+
+    def test_harness_check_enforces_accepted_phase_evidence(self):
+        with tempfile.TemporaryDirectory(prefix="eh-accept-") as tmp:
+            target = Path(tmp) / "demo"
+            target.mkdir()
+            init = _cli("init", str(target), "--level", "Standard", "--name", "demo")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+
+            packet = target / "harness/tasks/P-001.md"
+            packet.write_text(
+                "---\ntask_id: P-001\nbuild_id: B-001\nstatus: accepted\n"
+                "acceptance_doc: harness/evidence/module/P-001/ACCEPTANCE.md\n"
+                "verification_evidence: harness/evidence/module/P-001/verification.json\n---\n",
+                encoding="utf-8",
+            )
+            check_script = target / "harness/scripts/harness_check.py"
+            rejected = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_rejected = _cli("check", str(target))
+            self.assertEqual(rejected.returncode, 1, rejected.stdout + rejected.stderr)
+            self.assertEqual(framework_rejected.returncode, 1, framework_rejected.stdout + framework_rejected.stderr)
+            self.assertIn("ACCEPTED WITHOUT APPROVED BUILD", rejected.stdout)
+            self.assertIn("ACCEPTED WITHOUT APPROVED BUILD", framework_rejected.stdout)
+            self.assertIn("ACCEPTED WITHOUT EVIDENCE", rejected.stdout)
+
+            blocked = target / "harness/tasks/P-002.md"
+            blocked.write_text(
+                "---\ntask_id: P-002\nstatus: blocked\nblocker: null\n---\n", encoding="utf-8"
+            )
+            blocked_result = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(blocked_result.returncode, 1, blocked_result.stdout + blocked_result.stderr)
+            self.assertIn("BLOCKED WITHOUT RECOVERY DATA", blocked_result.stdout)
+            blocked.unlink()
+
+            build = json.loads((target / "harness/builds/_BUILD.template.json").read_text(encoding="utf-8"))
+            build["approval"]["reference"] = "human-message-1"
+            build["approval"]["approved_at"] = "2026-07-14T00:00:00Z"
+            (target / "harness/builds/B-001.json").write_text(
+                json.dumps(build, indent=2) + "\n", encoding="utf-8"
+            )
+            acceptance = target / "harness/evidence/module/P-001/ACCEPTANCE.md"
+            acceptance.parent.mkdir(parents=True)
+            acceptance.write_text("# Evidence\n\n- Decision: `accepted`\n", encoding="utf-8")
+            verification = target / "harness/evidence/module/P-001/verification.json"
+            verification.write_text(
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-001"}\n', encoding="utf-8"
+            )
+
+            accepted = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_accepted = _cli("check", str(target))
+            self.assertEqual(accepted.returncode, 0, accepted.stdout + accepted.stderr)
+            self.assertEqual(framework_accepted.returncode, 0, framework_accepted.stdout + framework_accepted.stderr)
+            self.assertIn("HARNESS_CHECK PASS", accepted.stdout)
+
+            verification.write_text(
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-999"}\n', encoding="utf-8"
+            )
+            stale = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(stale.returncode, 1, stale.stdout + stale.stderr)
+            self.assertIn("ACCEPTED WITHOUT VERIFY PASS", stale.stdout)
+
+            verification.write_text("[]\n", encoding="utf-8")
+            non_object = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(non_object.returncode, 1, non_object.stdout + non_object.stderr)
+            self.assertIn("root must be an object", non_object.stdout)
+
+    def test_harness_check_rejects_placeholder_approval_and_external_evidence(self):
+        with tempfile.TemporaryDirectory(prefix="eh-contract-") as tmp:
+            target = Path(tmp) / "demo"
+            target.mkdir()
+            init = _cli("init", str(target), "--level", "Standard", "--name", "demo")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+            packet = target / "harness/tasks/P-001.md"
+            packet.write_text(
+                "---\ntask_id: P-001\nbuild_id: B-001\nstatus: accepted\n"
+                "acceptance_doc: ../outside.md\nverification_evidence: ../outside.json\n---\n",
+                encoding="utf-8",
+            )
+            build = json.loads((target / "harness/builds/_BUILD.template.json").read_text(encoding="utf-8"))
+            (target / "harness/builds/B-001.json").write_text(
+                json.dumps(build, indent=2) + "\n", encoding="utf-8"
+            )
+            (target.parent / "outside.md").write_text("- Decision: `accepted`\n", encoding="utf-8")
+            (target.parent / "outside.json").write_text(
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-001"}\n', encoding="utf-8"
+            )
+            check_script = target / "harness/scripts/harness_check.py"
+            rejected = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(rejected.returncode, 1, rejected.stdout + rejected.stderr)
+            self.assertIn("approval reference", rejected.stdout)
+            self.assertIn("ACCEPTED WITHOUT EVIDENCE", rejected.stdout)
+            self.assertIn("ACCEPTED WITHOUT PHASE VERIFICATION", rejected.stdout)
 
     def test_branch_check_logic_with_temp_repo(self):
         with tempfile.TemporaryDirectory(prefix="eh-branch-") as tmp:
