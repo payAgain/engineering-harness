@@ -181,6 +181,72 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("verification_evidence", dispatch)
         self.assertIn("running product", dispatch)
 
+    def test_intent_fidelity_contract_is_wired_into_protocol_and_templates(self):
+        protocol = (ROOT / "PROTOCOL.md").read_text(encoding="utf-8")
+        intent = (ROOT / "protocol/references/intent.md").read_text(encoding="utf-8")
+        gates = (ROOT / "protocol/references/gates.md").read_text(encoding="utf-8")
+        phases = (ROOT / "protocol/references/phases.md").read_text(encoding="utf-8")
+        packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
+        acceptance = (ROOT / "assets/templates/harness/evidence/_ACCEPTANCE.template.md").read_text(encoding="utf-8")
+        clarity = (ROOT / "assets/templates/harness/drafts/INTENT-CLARITY.md").read_text(encoding="utf-8")
+
+        for text in (protocol, intent, gates):
+            self.assertIn("Intent Fidelity", text)
+            self.assertIn("Completeness Scale", text)
+            self.assertIn("Scope complete", text)
+            self.assertIn("Intent satisfied", text)
+
+        self.assertIn("High-risk wording trigger", clarity)
+        for trigger_term in (
+            "complete", "完整", "all functionality", "全量", "所有功能",
+            "production-ready", "生产级", "产品级", "shippable", "可发布",
+            "parity", "对齐", "no omissions", "不要遗漏",
+        ):
+            self.assertIn(trigger_term, clarity)
+        self.assertIn("Completeness Scale", clarity)
+        self.assertIn("Original wording", clarity)
+        self.assertIn("Engineering interpretation", clarity)
+        self.assertIn("Can still claim requested completeness", clarity)
+        self.assertIn("For `major`, `feature`, production, complete, parity, or release-oriented work", phases)
+
+        self.assertIn("user_entrypoints:", packet)
+        self.assertIn("minimum_evidence:", packet)
+        self.assertIn("forbidden_pseudo_evidence:", packet)
+        self.assertIn("gap_audit:", packet)
+        self.assertIn("scope_adequacy_review:", packet)
+
+        self.assertIn("Intent reconciliation", acceptance)
+        self.assertIn("Evidence layer", acceptance)
+        self.assertIn("Completion claim", acceptance)
+        self.assertIn("VERIFY profile", acceptance)
+
+    def test_roles_and_readiness_enforce_scope_adequacy_and_evidence_layers(self):
+        architect = (ROOT / "assets/templates/agents/architect-contract.md").read_text(encoding="utf-8")
+        reviewer = (ROOT / "assets/templates/agents/reviewer.md").read_text(encoding="utf-8")
+        test_role = (ROOT / "assets/templates/agents/test.md").read_text(encoding="utf-8")
+        roles = (ROOT / "protocol/references/roles.md").read_text(encoding="utf-8")
+        anti = (ROOT / "protocol/references/anti-patterns.md").read_text(encoding="utf-8")
+        readiness = (ROOT / "assets/templates/docs/production-readiness.md").read_text(encoding="utf-8")
+        verification = (ROOT / "assets/templates/docs/verification.md").read_text(encoding="utf-8")
+
+        for text in (architect, reviewer, test_role, roles):
+            self.assertIn("Scope Adequacy", text)
+            self.assertIn("Evidence layer", text)
+            self.assertIn("forbidden pseudo-evidence", text)
+
+        self.assertIn("self-contained but too narrow", anti)
+        self.assertIn("Matrix complete", anti)
+        self.assertIn("VERIFY PASS", anti)
+
+        self.assertIn("Production-ready", readiness)
+        self.assertIn("consumer entrypoint", readiness)
+        self.assertIn("deferred impact", readiness)
+
+        self.assertIn("verify --profile dev", verification)
+        self.assertIn("verify --profile accept", verification)
+        self.assertIn("verify --profile ship", verification)
+        self.assertIn("VERIFY PASS for <profile>", verification)
+
     def test_role_pipeline_and_invocation_contract_are_stateful(self):
         packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
         ledger = (ROOT / "assets/templates/harness/runtime/_INVOCATIONS.template.yaml").read_text(encoding="utf-8")

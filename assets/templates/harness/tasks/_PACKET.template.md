@@ -33,6 +33,23 @@ required_verification:
     - test
   observed_flows:
     - <affected user or system flow>
+verification_profile: accept
+user_entrypoints:
+  - name: <consumer entrypoint name>
+    trigger: <how the user or downstream system invokes it>
+    minimum_evidence: consumer-entrypoint-it
+    forbidden_pseudo_evidence:
+      - <internal-only evidence that cannot close this capability>
+gap_audit:
+  required: false
+  reference_baseline: <none|standard|official-implementation|historical-implementation|human-specified>
+  known_gaps: []
+  deferred_impact: none
+scope_adequacy_review:
+  required: false
+  reviewer: reviewer
+  status: pending
+  completion_claim_supported: scope-complete
 acceptance_doc: harness/evidence/module-example/P-001/ACCEPTANCE.md
 verification_evidence: harness/evidence/module-example/P-001/verification.json
 role_pipeline:
@@ -103,6 +120,25 @@ Each criterion must state the initial condition or input, action, observable res
 
 - [ ] Given … when … then …; boundary/failure …; evidence …
 
+## Evidence layer requirements
+
+| Capability | User entrypoint | Minimum evidence | Forbidden pseudo-evidence |
+|---|---|---|---|
+| … | … | implementation / integration / consumer-entrypoint / black-box-consumer | … |
+
+## Gap audit and deferred impact
+
+| Item | Reference baseline | Status | Impact on original intent | Can still claim requested completeness |
+|---|---|---|---|---|
+| … | … | implemented/deferred/non-goal | none/minor/major/blocking | yes/no |
+
+## Scope Adequacy
+
+- [ ] Original wording was compared with this Phase scope.
+- [ ] Known gaps are listed with impact.
+- [ ] Deferred items do not contradict the requested completion claim, or Human Gate approved the narrower claim.
+- [ ] Evidence proves the user entrypoint, not only internal implementation.
+
 ## Validation
 ```text
 python harness/scripts/verify.py
@@ -123,6 +159,11 @@ python harness/scripts/verify.py
 - [ ] every required observed flow was actually exercised and recorded
 - [ ] all affected `readiness_dimensions` have evidence or a justified not-applicable decision
 - [ ] acceptance criteria are observable and satisfied
+- [ ] verification profile is recorded as `dev`, `accept`, or `ship`
+- [ ] required user entrypoints have evidence at or above `minimum_evidence`
+- [ ] forbidden pseudo-evidence was not used as the sole evidence for a production capability
+- [ ] Scope Adequacy review is passed or explicitly not required with reason
+- [ ] completion claim is no stronger than the evidence permits
 - [ ] acceptance_doc 已写
 - [ ] 有变更则 must-commit（记录 SHA）
 

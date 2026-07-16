@@ -3,6 +3,23 @@
 ## Purpose
 Define the executable checks and observed behavior required before agents declare work complete.
 
+## Verification profiles
+
+Use profile-qualified language:
+
+```text
+verify --profile dev
+  Fast local checks for development feedback.
+
+verify --profile accept
+  Evidence required to accept the current Phase or Initiative, including required consumer entrypoints.
+
+verify --profile ship
+  Release-oriented verification such as clean consumption, black-box consumer checks, and Ship checklist evidence.
+```
+
+Say `VERIFY PASS for <profile>`. Do not treat `VERIFY PASS for dev` as production-ready or shippable evidence.
+
 ## Baseline
 
 All harness levels include the structure check and project verification entrypoint:
