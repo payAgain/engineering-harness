@@ -52,6 +52,35 @@ Ask across these dimensions. Skip only with an explicit human “N/A / 以后再
 | Harness | Light / Standard / Full 与原因 |
 | Git | 是否已有仓？分支策略是否接受 GitHub Flow？ |
 
+## High-risk wording trigger
+
+**Intent Fidelity** requires the delivered scope to remain traceable to the human's wording: Scope complete ≠ Intent satisfied.
+
+When the human uses any of these terms, Intent Clarity must define a **Completeness Scale** before Charter / Scope can pass:
+
+- complete / 完整
+- all functionality / 全量 / 所有功能
+- production-ready / 生产级 / 产品级
+- shippable / 可发布
+- parity / 对齐
+- no omissions / 不要遗漏
+
+Record the exact human wording as **Original wording** and the engineered interpretation as **Engineering interpretation**. If the interpretation narrows the wording, ask the human to approve the narrower claim or expand scope.
+
+## Completeness Scale
+
+Use one of these labels, or record a custom human-approved scale:
+
+| Scale | Meaning | Minimum evidence |
+|---|---|---|
+| MVP complete | smallest demonstrable end-to-end slice | smoke / demo flow |
+| Core complete | core user paths work | core user entrypoint integration evidence |
+| Production complete | production-common paths, errors, configuration, docs, and verification are covered | consumer entrypoint evidence + readiness checklist |
+| Parity complete | explicitly matches a named baseline surface | gap audit + parity matrix |
+| Release complete | ready for external consumption | black-box consumer evidence + Ship checklist |
+
+Exit criteria for high-risk wording include a recorded answer to: **Can still claim requested completeness: yes/no**.
+
 ## Dialogue style
 
 1. **先给简短理解复述**（1 段），再提问。

@@ -12,6 +12,16 @@
 - Approval reference: `<reference>`
 - Phase is present in `approved_phase_ids`: `yes|no`
 
+## Intent reconciliation
+
+| Item | Value |
+|---|---|
+| Original wording | `<quote or reference>` |
+| Engineering interpretation | `<scope summary>` |
+| Completeness Scale | `MVP complete|Core complete|Production complete|Parity complete|Release complete|custom|not-applicable` |
+| Known narrowing | `<none or summary>` |
+| Human-approved narrower claim | `yes|no|not-needed` |
+
 ## Acceptance criteria
 
 | Criterion | Result | Evidence |
@@ -31,11 +41,23 @@
 - Overall status: `PASS|FAIL|INCOMPLETE`
 - Required check IDs covered: `<ids>`
 
+## VERIFY profile
+
+- Profile: `dev|accept|ship`
+- Statement: `VERIFY PASS for <profile>|VERIFY FAIL for <profile>|VERIFY INCOMPLETE for <profile>`
+- Why this profile is sufficient for this Phase: `<reason>`
+
 ## Observed affected flows
 
 | Flow | Environment and method | Expected | Observed | Result | Evidence |
 |---|---|---|---|---|---|
 | … | … | … | … | PASS/FAIL | `<path>` |
+
+## Evidence layer
+
+| Capability | User entrypoint | Minimum evidence | Actual evidence layer | Forbidden pseudo-evidence avoided | Result |
+|---|---|---|---|---|---|
+| … | … | implementation/integration/consumer-entrypoint/black-box-consumer | … | yes/no | PASS/FAIL |
 
 ## Production readiness
 
@@ -43,17 +65,23 @@
 |---|---|---|---|
 | functional-correctness | … | … | PASS/FAIL/N/A |
 
-## Residual risk and limitations
+## Residual risk, deferred impact, and limitations
 
-- Known limitations: `<none or list>`
-- Residual risks: `<none or list>`
-- Deferred follow-up: `<none or tracked IDs>`
+| Item | Impact on original intent | Can still claim requested completeness | User-facing limitation | Follow-up |
+|---|---|---|---|---|
+| `<none or item>` | none/minor/major/blocking | yes/no | `<none or docs path>` | `<none or tracked ID>` |
 
 ## Version control checkpoint
 
 - Branch: `<working branch>`
 - Candidate commit: `<real SHA>`
 - Deferred reason when no commit: `<N/A or reason>`
+
+## Completion claim
+
+- Allowed claim: `Scope complete|Matrix complete|Intent satisfied|Production-ready|Shippable`
+- Stronger claims explicitly forbidden: `<none or list>`
+- Rationale: `<evidence-backed reason>`
 
 ## Acceptance decision
 

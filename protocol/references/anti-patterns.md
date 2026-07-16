@@ -3,6 +3,14 @@
 > 正确模型：`references/glossary.md`、`phases.md`。  
 > Phase 必须有（进度）；错的是匿名工人、乱命名、把并行甩给人类。
 
+## Self-contained but too narrow
+
+**Smell:** The matrix is complete, tests pass, and `VERIFY PASS` is true, but the delivered scope no longer matches the human's original “complete / production-ready / all functionality” wording.
+
+**Why it happens:** Clarify or Plan silently narrows intent into a self-contained contract, then every role validates only that contract. The result is self-contained but too narrow for the original request.
+
+**Prevention:** Use Intent Fidelity, Completeness Scale, gap audit, deferred impact, and completion claim rules. Matrix complete is not Product complete. VERIFY PASS is not Production-ready. Accepted is not Shipped.
+
 ## AP-1: 匿名 Todo 工人
 
 **错误：** `Task 0 →「实现 Task 0」` + 自动配 Review。  

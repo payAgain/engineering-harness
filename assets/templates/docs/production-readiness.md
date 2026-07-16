@@ -10,6 +10,19 @@ For every dimension, choose exactly one status:
 
 Do not leave a dimension undecided before approving a production Build.
 
+## Completeness and consumer entrypoint evidence
+
+`Production-ready` may be claimed only when the selected Completeness Scale allows it and the relevant consumer entrypoint evidence is recorded. Internal implementation evidence is insufficient by itself for user-facing production capability claims.
+
+Deferred items must include deferred impact:
+
+| Impact | Meaning |
+|---|---|
+| none | does not affect the original intent |
+| minor | limits an edge case; document if user-visible |
+| major | weakens the requested completion claim; Human Gate must accept narrower claim |
+| blocking | prevents the requested completion claim |
+
 ## Project context
 
 - Product/runtime type: `<service|web|cli|library|data|infrastructure|other>`
