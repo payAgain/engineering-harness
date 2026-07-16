@@ -25,6 +25,20 @@ Code written ≠ releasable. States advance one gate at a time.
 | G5 Evidence | evidence pack, docs transaction, drift check | evidence-complete |
 | G6 Release | readonly review, version/status/rollback, authorization | releasable/released |
 
+## Intent Fidelity and completion claims
+
+For high-risk wording, gate advancement must distinguish these claims:
+
+| Claim | Required gate evidence |
+|---|---|
+| Scope complete | approved Scope / Phase work is complete |
+| Matrix complete | every accepted matrix row is closed with allowed evidence |
+| Intent satisfied | original wording was reconciled against delivered scope and known gaps |
+| Production-ready | selected Completeness Scale permits this claim and consumer entrypoint evidence exists |
+| Shippable | Ship gate evidence, release authorization, and black-box or equivalent consumer verification |
+
+`VERIFY PASS` means only that the selected verification profile passed. Write `VERIFY PASS for <profile>` when profile semantics matter.
+
 ## State machine (S0–S11)
 
 0. **S0a Intent Clarity** — multi-round Q&A; `harness/drafts/INTENT-CLARITY.md`; no business code
@@ -58,3 +72,4 @@ Clarity PASS ≠ Charter approved. Both human gates are required.
 - Missing real commands fail the corresponding gate; never fake green
 - `VERIFY INCOMPLETE` and `VERIFY FAIL` block Accept; required checks must be configured and pass
 - Command success alone is insufficient for product-source changes; record an observed affected user or system flow
+- For high-risk wording, Accept must include Intent Fidelity reconciliation; Scope complete is not enough to claim Intent satisfied.

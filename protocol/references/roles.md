@@ -62,6 +62,13 @@ Human Gate chat  ──approve / clarify only──►  Orchestrator (MUST be se
 | Supervisor pattern (2026 default) | ephemeral orchestrator instance |
 | Pipeline (plan→code→test→review) | batch invocation order + reviewer gate |
 
+## Scope Adequacy and Evidence layer duties
+
+- architect-contract owns Completeness Scale, gap audit, packet Evidence layer fields, and identification of forbidden pseudo-evidence.
+- test owns verification at the requested Evidence layer and must reject forbidden pseudo-evidence as sole proof.
+- reviewer owns Scope Adequacy Review and must block self-contained but too narrow delivery claims.
+- orchestrator owns completion claim wording and must not upgrade `Scope complete` into `Intent satisfied`, `Production-ready`, or `Shippable` without the matching gate evidence.
+
 ## Completeness checklist for a new project
 
 1. Is there exactly one ephemeral orchestrator instance per batch?

@@ -40,8 +40,9 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 8. **GitHub Flow** after Bootstrap/G1. See `references/branching.md`.
 9. **Full:** risk≥8 `code` needs reviewer before must-commit.
 10. **Clarify before act** (product Clarify or scoped Scope). See `references/intent.md`.
-11. **Phase = progress unit; execute via role_pipeline.** IDs `I-00x`/`P-00x`/`B-00x`. See `references/glossary.md` + `phases.md`.
-12. **Phases serial by default.** Human never asked about 并行/同步；orchestrator owns parallel from dependencies. See `glossary.md` §4.
+11. **Intent Fidelity for high-risk wording.** If the human asks for “complete”, “production-ready”, “all functionality”, “full parity”, or “shippable”, define a **Completeness Scale** and reconcile the engineered scope back to the original wording before Plan / Accept. Scope complete ≠ Intent satisfied.
+12. **Phase = progress unit; execute via role_pipeline.** IDs `I-00x`/`P-00x`/`B-00x`. See `references/glossary.md` + `phases.md`.
+13. **Phases serial by default.** Human never asked about 并行/同步；orchestrator owns parallel from dependencies. See `glossary.md` §4.
 
 ## 3. Modes
 
@@ -95,6 +96,7 @@ Details: `references/lifecycle.md` · naming: `references/glossary.md`.
 | Phase / 进度追踪 | `references/phases.md` |
 | Anti-patterns | `references/anti-patterns.md` |
 | Intent Clarity | `references/intent.md` |
+| Intent Fidelity / Completeness Scale | `references/intent.md` + `references/gates.md` |
 | Roles | `references/roles.md` |
 | Gates (internal G*) | `references/gates.md` |
 | Dispatch / commits | `references/dispatch.md` |
@@ -128,4 +130,5 @@ contracts/
 - init: once; artifacts + baseline commit
 - initiative: brief + branch + tasks closed + evidence + commit SHAs + INDEX updated
 - batch: separate instances + must-commit SHA
+- completion claims: say `Scope complete`, `Matrix complete`, `Intent satisfied`, `Production-ready`, or `Shippable` only when the matching gate is satisfied
 - never push/tag/release without human authorization

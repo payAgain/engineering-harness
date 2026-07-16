@@ -35,6 +35,18 @@ acceptance_doc + must-commit + status=accepted
 **禁止：** 派「implementing Task N」匿名工人。  
 **要求：** 按 `role_pipeline` 派真实角色；Phase 之间**默认串行**。
 
+## Completeness and gap audit in Plan
+
+For `major`, `feature`, production, complete, parity, or release-oriented work, Plan must add to each relevant Phase Packet:
+
+- `user_entrypoints`: how a consumer triggers the capability
+- `minimum_evidence`: lowest acceptable evidence layer
+- `forbidden_pseudo_evidence`: evidence that is useful but insufficient to close the capability
+- `gap_audit`: reference baseline, known gaps, and deferred impact
+- `scope_adequacy_review`: whether the Phase supports the original completion claim
+
+A self-contained matrix is not enough. Plan must also identify what would make the completion claim false.
+
 ## 串行与并行（强制）
 
 1. Phase **默认** `P-001 → P-002 → …`  
