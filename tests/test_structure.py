@@ -479,8 +479,8 @@ class PythonCliSmokeTests(unittest.TestCase):
             blocked.unlink()
 
             build = json.loads((target / "harness/builds/_BUILD.template.json").read_text(encoding="utf-8"))
-            build["approval"]["reference"] = "human-message-1"
-            build["approval"]["approved_at"] = "2026-07-14T00:00:00Z"
+            build["authorization"]["reference"] = "human-message-1"
+            build["authorization"]["authorized_at"] = "2026-07-14T00:00:00Z"
             (target / "harness/builds/B-001.json").write_text(
                 json.dumps(build, indent=2) + "\n", encoding="utf-8"
             )
@@ -541,7 +541,7 @@ class PythonCliSmokeTests(unittest.TestCase):
                 [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
             )
             self.assertEqual(rejected.returncode, 1, rejected.stdout + rejected.stderr)
-            self.assertIn("approval reference", rejected.stdout)
+            self.assertIn("authorization reference", rejected.stdout)
             self.assertIn("ACCEPTED WITHOUT EVIDENCE", rejected.stdout)
             self.assertIn("ACCEPTED WITHOUT PHASE VERIFICATION", rejected.stdout)
 
