@@ -222,6 +222,10 @@ class FrameworkStructureTests(unittest.TestCase):
             "parity", "对齐", "no omissions", "不要遗漏",
         ):
             self.assertIn(trigger_term, clarity)
+        self.assertIn("Human-confirmed document IDs", clarity)
+        self.assertIn("AI-recommended document IDs", clarity)
+        self.assertIn("交付文档选择已由 Agent 主动提出建议", intent)
+        self.assertIn("`eh init --docs <ids-or-none>`", (ROOT / "protocol/references/prompts.md").read_text(encoding="utf-8"))
         self.assertIn("Completeness Scale", clarity)
         self.assertIn("Original wording", clarity)
         self.assertIn("Engineering interpretation", clarity)
