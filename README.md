@@ -428,13 +428,14 @@ Scope containment 要求每个委派 Build 绑定既有成功标准、保持在 
 
 0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS
 1. **Charter → Bootstrap**（init 仅一次）→ 填写验证命令与 Production Readiness
-2. **Scope → Plan**（`P-00x`，默认串行）→ 可观察验收标准、影响分析、required checks / flows
-3. 人类批准 **Build B-00x 范围** → 写入 Build Manifest → 新 Orchestrator 按依赖推进
-4. Phase 内按有状态 `role_pipeline` 派独立角色 → 保留 Invocation Ledger
-5. 执行 Phase-bound 项目验证与真实流程观察 → 汇总 Production Readiness 证据
-6. **Accept** → Acceptance Evidence → must-commit → 记录真实 SHA
-7. **Archive**；下一 feature/fix/hotfix 回到 Scope，无需重新 init
-8. **audit / resume** → resume 仅限同一 Initiative；blocked 工作按 blocker trigger 恢复
+2. **Scope confirmation** → 默认创建有界 `Goal G-00x`；显式 `build-by-build` 时才逐 Build 审批
+3. **Plan / Replan**（`P-00x`，默认串行）→ 成功标准映射、影响分析、containment 与 required checks / flows
+4. Goal Controller 在当前 Scope revision 内签发 `B-00x` → 新 Orchestrator 按依赖推进
+5. Phase 内按有状态 `role_pipeline` 派独立角色 → 保留 Invocation Ledger
+6. 执行 Phase-bound 项目验证与真实流程观察 → **Build Accept** → must-commit → 记录真实 SHA
+7. **Goal Evaluate** → `continue` 自动推进下一 Build；`achieved` 完成 Goal Acceptance；`escalate` 停止并请求 Human
+8. **Archive**；下一 feature/fix/hotfix 回到 Scope，无需重新 init
+9. **audit / resume** → 恢复当前 Goal/Build；blocked 工作按 blocker trigger 恢复
 
 验证命令示例：
 
