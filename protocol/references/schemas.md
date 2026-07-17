@@ -35,6 +35,7 @@ status: ready|in_progress|accepted|blocked
 blocker: null                         # required object when status=blocked
 # blocker fields: id, kind, reason, owner, waiting_for, revisit_when, next_action, created_at
 dependencies: []                      # other P-00x; empty + serial default across initiative
+requirement_ids: [FR-001]             # approved docs/requirements.md IDs covered by this Phase
 readiness_dimensions:                 # affected dimensions from docs/production-readiness.md
   - functional-correctness
 required_verification:
@@ -49,13 +50,13 @@ direct_exception_reason: null
 
 Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner`.
 Code/integration/release Packets must declare affected `readiness_dimensions`, command check IDs, and observable affected flows.
-Acceptance criteria must name an initial condition/input, action, observable result, boundary or failure behavior, and evidence source; vague completion statements do not pass Plan.
+Acceptance criteria must name an initial condition/input, action, observable result, boundary or failure behavior, and evidence source; vague completion statements do not pass Plan. Every approved requirement ID in `docs/requirements.md` must be allocated to an Initiative/Goal criterion and at least one Packet `requirement_ids` entry, or explicitly deferred with impact.
 Phase cannot be `accepted` without `acceptance_doc`, `VERIFY PASS` for all declared command checks, recorded observed flows, and readiness evidence.
 New plans must not use `Task N` / `WP-*` titles — see `glossary.md`.
 
 ## Goal manifest
 
-Path: `harness/goals/<G-00x>.yaml`. Goal YAML is a constrained, dependency-free schema: top-level `schema_version`, `goal_id`, `initiative_id`, `status`, `loop_stage`, and `execution_mode`; section-anchored `success_criteria`, `scope`, `authorization`, `budgets`, `progress`, `evaluation_ledger`, and `escalation`. Goal status is `draft|awaiting_scope_confirmation|active|achieved|accepted|paused|blocked|escalation_required|cancelled`. Criterion IDs are `SC-00x`; required criteria record `unmet|met`. Scope has a positive `revision`. Progress records `active_build_id`, aligned `accepted_build_ids` and `accepted_commit_shas`, and counters. At most one Goal may be `active` per Initiative.
+Path: `harness/goals/<G-00x>.yaml`. Goal YAML is a constrained, dependency-free schema: top-level `schema_version`, `goal_id`, `initiative_id`, `status`, `loop_stage`, and `execution_mode`; section-anchored `success_criteria`, `scope`, `authorization`, `budgets`, `progress`, `evaluation_ledger`, and `escalation`. Goal status is `draft|awaiting_scope_confirmation|active|achieved|accepted|paused|blocked|escalation_required|cancelled`. Criterion IDs are `SC-00x`; each criterion lists the approved requirement IDs it covers, or an explicit no-requirement reason; required criteria record `unmet|met`. Scope has a positive `revision`. Progress records `active_build_id`, aligned `accepted_build_ids` and `accepted_commit_shas`, and counters. At most one Goal may be `active` per Initiative.
 
 The checker intentionally parses only this repository-owned YAML shape, not general YAML. Recovery requires an active Build to exist and belong to the Goal, every accepted Build checkpoint to have a commit SHA, and `escalation.required: true` to pair with `status: escalation_required`.
 
@@ -72,7 +73,7 @@ Delegated containment has non-empty `success_criterion_ids`, all declared by the
 
 ## Goal acceptance evidence
 
-Path: `harness/goals/<G-00x>-ACCEPTANCE.md`. An accepted Goal requires all required criteria `met`, no active Build, and concrete sections for Criterion evidence, Build commits, Observed flows, Intent reconciliation, and Worktree checkpoint. It must state `Unauthorized outward actions: none` and end with `- Decision: `accepted``. Build acceptance remains separate and uses the Packet `acceptance_doc`.
+Path: `harness/goals/<G-00x>-ACCEPTANCE.md`. An accepted Goal requires all required criteria `met`, complete coverage or explicit deferral of every approved requirement ID, no active Build, and concrete sections for Requirement coverage, Criterion evidence, Build commits, Observed flows, Intent reconciliation, and Worktree checkpoint. It must state `Unauthorized outward actions: none` and end with `- Decision: `accepted``. Build acceptance remains separate and uses the Packet `acceptance_doc`.
 
 ## Blocker
 

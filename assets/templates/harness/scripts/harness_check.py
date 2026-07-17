@@ -6,8 +6,8 @@ import json
 import re
 from pathlib import Path
 
-LIGHT_REQUIRED = ['AGENTS.md', 'current-task.md', 'docs/verification.md', 'docs/production-readiness.md', 'harness/session/session-state.json', 'harness/session/session-log.md', 'skills/clarify.md', 'skills/start.md', 'skills/handoff.md', 'harness/scripts/harness_check.py', 'harness/scripts/verify.py', 'harness/verification.json', 'harness/drafts/INTENT-CLARITY.md']
-STANDARD_REQUIRED = ['docs/error-journal.md', 'docs/architecture.md', 'docs/branching.md', 'harness/session/progress-map.md', 'harness/session/command-history.md', 'skills/plan.md', 'skills/review.md', 'skills/commit.md', 'skills/initiative.md', 'harness/initiatives/INDEX.md', 'harness/scripts/safe_bash_guard.py', 'harness/scripts/branch_check.py', 'agents/orchestrator.md', 'agents/architect-contract.md', 'agents/reviewer.md', 'agents/integration-release.md', 'harness/tasks/REGISTRY.yaml', 'harness/ownership/OWNERSHIP.yaml', 'harness/runtime/_INVOCATIONS.template.yaml', 'harness/builds/_BUILD.template.json', 'harness/evidence/_ACCEPTANCE.template.md']
+LIGHT_REQUIRED = ['AGENTS.md', 'current-task.md', 'docs/delivery-overview.md', 'docs/verification.md', 'docs/production-readiness.md', 'harness/session/session-state.json', 'harness/session/session-log.md', 'skills/clarify.md', 'skills/start.md', 'skills/handoff.md', 'harness/scripts/harness_check.py', 'harness/scripts/verify.py', 'harness/verification.json', 'harness/drafts/INTENT-CLARITY.md']
+STANDARD_REQUIRED = ['docs/requirements.md', 'docs/deployment-operations.md', 'docs/releases/_RELEASE.template.md', 'docs/error-journal.md', 'docs/architecture.md', 'docs/branching.md', 'harness/session/progress-map.md', 'harness/session/command-history.md', 'skills/plan.md', 'skills/review.md', 'skills/commit.md', 'skills/initiative.md', 'skills/goal.md', 'agents/goal-controller.md', 'harness/goals/_GOAL.template.yaml', 'harness/goals/_GOAL-ACCEPTANCE.template.md', 'harness/initiatives/INDEX.md', 'harness/scripts/safe_bash_guard.py', 'harness/scripts/branch_check.py', 'agents/orchestrator.md', 'agents/architect-contract.md', 'agents/reviewer.md', 'agents/integration-release.md', 'harness/tasks/REGISTRY.yaml', 'harness/ownership/OWNERSHIP.yaml', 'harness/runtime/_INVOCATIONS.template.yaml', 'harness/builds/_BUILD.template.json', 'harness/evidence/_ACCEPTANCE.template.md']
 DANGEROUS_PATTERNS = ['rm -rf /', 'rm -rf .', 'git reset --hard', 'git clean -fd', 'git push --force', 'git push -f', 'drop database', 'truncate table', 'supabase db reset', 'prisma migrate reset']
 
 GOAL_STATUSES = {"draft", "awaiting_scope_confirmation", "active", "achieved", "accepted", "paused", "blocked", "escalation_required", "cancelled"}
@@ -34,6 +34,17 @@ def _frontmatter_value(text: str, key: str) -> str | None:
         return None
     field = re.search(rf"(?m)^{re.escape(key)}:\s*([^\n#]+)", match.group(1))
     return field.group(1).strip() if field else None
+
+
+def _frontmatter_list(text: str, key: str) -> list[str]:
+    match = re.match(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", text, re.DOTALL)
+    if not match:
+        return []
+    inline = re.search(rf"(?m)^{re.escape(key)}:\s*\[([^]]*)\]\s*$", match.group(1))
+    if inline:
+        return [item.strip().strip("\"'") for item in inline.group(1).split(",") if item.strip()]
+    block = re.search(rf"(?ms)^{re.escape(key)}:\s*\n((?:\s{{2}}-\s*[^\n]+\n?)*)", match.group(1))
+    return re.findall(r"(?m)^\s{2}-\s*([^\n#]+)", block.group(1)) if block else []
 
 
 def _inside_root(root: Path, value: str | None) -> Path | None:
@@ -223,7 +234,11 @@ def _semantic_problems(root: Path) -> list[str]:
         acceptance_rel, verification_rel = _frontmatter_value(text, "acceptance_doc"), _frontmatter_value(text, "verification_evidence")
         acceptance = _inside_root(root, acceptance_rel)
         if not acceptance or not acceptance.is_file(): problems.append(f"ACCEPTED WITHOUT EVIDENCE: {path.relative_to(root)}")
-        elif not re.search(r"(?m)^- Decision:\s*`accepted`\s*$", acceptance.read_text(encoding="utf-8")): problems.append(f"INVALID ACCEPTANCE DECISION: {acceptance_rel}")
+        else:
+            acceptance_text = acceptance.read_text(encoding="utf-8")
+            if not re.search(r"(?m)^- Decision:\s*`accepted`\s*$", acceptance_text): problems.append(f"INVALID ACCEPTANCE DECISION: {acceptance_rel}")
+            missing_requirements = [requirement for requirement in _frontmatter_list(text, "requirement_ids") if requirement not in acceptance_text]
+            if missing_requirements: problems.append(f"ACCEPTED WITHOUT REQUIREMENT EVIDENCE: {path.relative_to(root)}: {', '.join(missing_requirements)}")
         verification = _inside_root(root, verification_rel)
         if not verification:
             problems.append(f"ACCEPTED WITHOUT PHASE VERIFICATION: {path.relative_to(root)}")

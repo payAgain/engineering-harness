@@ -158,6 +158,8 @@ eh.cmd init <project> --level Standard --name my-app
 | 差异（摘要） | Light | Standard | Full |
 |---|---|---|---|
 | 目标澄清 + 会话续作 | ✓ | ✓ | ✓ |
+| 人类交付概览 | ✓ | ✓ | ✓ |
+| 需求、架构、部署运维、版本交付文档 | ✗ | ✓ | ✓ |
 | 多角色 + Task DAG + 调度台账 | ✗ | ✓ | ✓ |
 | Reviewer / 集成屏障 / 发版纪律 | ✗ | 按需 | **强制** |
 
@@ -293,7 +295,7 @@ engineering-harness/
 | `harness/session/` | 可恢复的会话状态、日志和进度图 |
 | `harness/scripts/` | 目标项目内执行的结构、分支、验证和命令守卫脚本 |
 | `harness/ownership/` | 模块或路径的责任边界 |
-| `docs/` | 架构、验证、分支和错误日志模板 |
+| `docs/` | 面向人类的交付文档：概览、需求、架构、验证、部署运维、版本记录，以及工程治理附件 |
 | `DECISIONS/` | 架构决策索引 |
 
 模板写入目标项目后，**目标项目中的副本才是该项目的运行时 SSOT**。不要让 `integrations/` 中的 IDE 镜像取代这些中性文件。
@@ -376,7 +378,16 @@ harness/
   evidence/               # Phase 验证、Acceptance 和生产就绪证据
   ownership/              # 模块与路径责任边界
   verification.json       # 真实项目 build/test/lint 等命令契约
-docs/                     # verification、production-readiness、branching、error-journal…
+docs/                     # 面向人类的项目与版本交付文档
+  delivery-overview.md     # 产品范围、入口、限制和文档地图（所有级别）
+  requirements.md          # 人类可读需求基线与追踪（Standard+）
+  architecture.md          # 架构与边界（Standard+）
+  deployment-operations.md # 部署、配置、运维、恢复与回滚（Standard+）
+  releases/                # 每次版本或交付的说明与批准记录（Standard+）
+  verification.md          # 验证约定与证据规则
+  production-readiness.md  # 生产就绪定义
+  branching.md             # GitHub Flow 工程治理（Standard+）
+  error-journal.md         # 故障与经验记录（Standard+）
 DECISIONS/                # 长期架构决策索引
 contracts/                # 模块、接口和数据契约
 .harness-version
@@ -390,7 +401,7 @@ contracts/                # 模块、接口和数据契约
 |---|---|
 | `eh.cmd --version` | 打印框架版本 |
 | `eh.cmd doctor` | 打印框架路径与 Python |
-| `eh.cmd init <path> [--level] [--name] [--force]` | 初始化驾驭架文件 |
+| `eh.cmd init <path> [--level] [--name] [--force]` | 初始化驾驭架文件；`--force` 仍保留已填写的人类维护文档 |
 | `eh.cmd audit <path>` | 审计已初始化项目 |
 | `eh.cmd check <path>` | 仅做结构检查 |
 | `eh.cmd guard -- "<cmd>"` | 危险命令模式拦截 |

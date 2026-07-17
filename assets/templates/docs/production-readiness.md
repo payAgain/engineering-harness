@@ -46,6 +46,19 @@ Deferred items must include deferred impact:
 | Compatibility | conditional | Public API, schema, config or client changes | Compatibility tests and migration/deprecation plan |
 | Maintainability | required | All maintained projects | Tests, architecture/decision updates and handoff |
 
+## Human delivery documents
+
+Before accepting a user-visible or operational change, update the human-facing documents it affects:
+
+| Change | Required document update |
+|---|---|
+| Product scope, capability, entrypoint, or limitation | `docs/delivery-overview.md`; also `docs/requirements.md` when present |
+| Component boundary, public interface, or data/control flow | `docs/architecture.md` when present; otherwise record the change in `docs/delivery-overview.md` |
+| Configuration, deployment, monitoring, recovery, or rollback | `docs/deployment-operations.md` when present; otherwise record the operational limitation in `docs/delivery-overview.md` |
+| Release-oriented delivery | Standard/Full: create a concrete `docs/releases/<release>.md` from the template; Light: record release impact and limitations in `docs/delivery-overview.md` |
+
+Internal Packets, invocation ledgers, session files, and raw verification JSON may support these documents but do not replace a human-readable delivery record.
+
 ## Project verification commands
 
 The executable command contract is `harness/verification.json`. Required checks must be configured and return `VERIFY PASS`; this profile adds behavioral and production evidence that command exit codes alone cannot prove.

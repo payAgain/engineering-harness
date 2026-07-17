@@ -8,9 +8,19 @@ from engineering_harness import FRAMEWORK_ROOT
 
 LEVELS = ("Light", "Standard", "Full")
 
+HUMAN_MAINTAINED_FILES = {
+    "docs/delivery-overview.md",
+    "docs/requirements.md",
+    "docs/architecture.md",
+    "docs/deployment-operations.md",
+    "docs/production-readiness.md",
+    "docs/error-journal.md",
+}
+
 LIGHT_FILES = [
     ("AGENTS.md", "AGENTS.md"),
     ("current-task.md", "current-task.md"),
+    ("docs/delivery-overview.md", "docs/delivery-overview.md"),
     ("docs/verification.md", "docs/verification.md"),
     ("docs/production-readiness.md", "docs/production-readiness.md"),
     ("harness/session/session-state.json", "harness/session/session-state.json"),
@@ -25,6 +35,9 @@ LIGHT_FILES = [
 ]
 
 STANDARD_FILES = [
+    ("docs/requirements.md", "docs/requirements.md"),
+    ("docs/deployment-operations.md", "docs/deployment-operations.md"),
+    ("docs/releases/_RELEASE.template.md", "docs/releases/_RELEASE.template.md"),
     ("docs/error-journal.md", "docs/error-journal.md"),
     ("docs/architecture.md", "docs/architecture.md"),
     ("docs/branching.md", "docs/branching.md"),
@@ -70,6 +83,7 @@ STANDARD_DIRS = [
 LIGHT_REQUIRED = [
     "AGENTS.md",
     "current-task.md",
+    "docs/delivery-overview.md",
     "docs/verification.md",
     "docs/production-readiness.md",
     "harness/session/session-state.json",
@@ -84,6 +98,9 @@ LIGHT_REQUIRED = [
 ]
 
 STANDARD_REQUIRED = [
+    "docs/requirements.md",
+    "docs/deployment-operations.md",
+    "docs/releases/_RELEASE.template.md",
     "docs/error-journal.md",
     "docs/architecture.md",
     "docs/branching.md",

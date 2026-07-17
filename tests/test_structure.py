@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -65,6 +66,10 @@ class FrameworkStructureTests(unittest.TestCase):
             "scripts/audit.ps1",
             "assets/templates/AGENTS.md",
             "assets/templates/docs/branching.md",
+            "assets/templates/docs/delivery-overview.md",
+            "assets/templates/docs/requirements.md",
+            "assets/templates/docs/deployment-operations.md",
+            "assets/templates/docs/releases/_RELEASE.template.md",
             "assets/templates/docs/production-readiness.md",
             "assets/templates/skills/start.md",
             "assets/templates/skills/clarify.md",
@@ -326,6 +331,43 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("continue | achieved | escalate", dispatch)
         self.assertIn("Scope confirmation", prompts)
 
+    def test_human_delivery_documents_are_initialized_by_level(self):
+        overview = (ROOT / "assets/templates/docs/delivery-overview.md").read_text(encoding="utf-8")
+        requirements = (ROOT / "assets/templates/docs/requirements.md").read_text(encoding="utf-8")
+        operations = (ROOT / "assets/templates/docs/deployment-operations.md").read_text(encoding="utf-8")
+        release = (ROOT / "assets/templates/docs/releases/_RELEASE.template.md").read_text(encoding="utf-8")
+        local_check = (ROOT / "assets/templates/harness/scripts/harness_check.py").read_text(encoding="utf-8")
+        goal = (ROOT / "assets/templates/harness/goals/_GOAL.template.yaml").read_text(encoding="utf-8")
+        packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
+        acceptance = (ROOT / "assets/templates/harness/evidence/_ACCEPTANCE.template.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("Human delivery document", overview)
+        self.assertIn("Document map", overview)
+        self.assertIn("Known limitations", overview)
+        self.assertIn("Requirements traceability", requirements)
+        self.assertIn("Out of scope", requirements)
+        self.assertIn("Rollback", operations)
+        self.assertIn("Operational verification", operations)
+        self.assertIn("does **not** authorize tag, push, release", release)
+        for document in (requirements, overview, release):
+            table_lines = (line for line in document.splitlines() if line.startswith("|"))
+            code_spans = (span for line in table_lines for span in re.findall(r"`([^`\n]*)`", line))
+            self.assertFalse(any("|" in span for span in code_spans))
+        for path in (
+            "docs/delivery-overview.md",
+            "docs/requirements.md",
+            "docs/deployment-operations.md",
+            "docs/releases/_RELEASE.template.md",
+        ):
+            self.assertIn(path, local_check)
+        self.assertIn("requirement_ids: [FR-001]", goal)
+        self.assertIn("requirement_ids:", packet)
+        self.assertIn("Requirement IDs", acceptance)
+        self.assertIn("面向人类的交付文档", readme)
+        self.assertIn("branching.md", readme)
+        self.assertIn("error-journal.md", readme)
+
     def test_version_matches_pyproject(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertRegex(version, r"^\d+\.\d+\.\d+")
@@ -354,6 +396,10 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(version["level"], "Standard")
             self.assertEqual(version.get("cli"), "python")
             self.assertTrue((target / "docs/branching.md").exists())
+            self.assertTrue((target / "docs/delivery-overview.md").exists())
+            self.assertTrue((target / "docs/requirements.md").exists())
+            self.assertTrue((target / "docs/deployment-operations.md").exists())
+            self.assertTrue((target / "docs/releases/_RELEASE.template.md").exists())
             self.assertTrue((target / "docs/production-readiness.md").exists())
             self.assertTrue((target / "skills/clarify.md").exists())
             self.assertTrue((target / "skills/initiative.md").exists())
@@ -366,6 +412,13 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertTrue((target / "harness/goals/_GOAL-ACCEPTANCE.template.md").exists())
             self.assertTrue((target / "agents/goal-controller.md").exists())
             self.assertTrue((target / "skills/goal.md").exists())
+
+            requirements = target / "docs/requirements.md"
+            requirements.write_text("# Approved requirements\n\nDO NOT OVERWRITE\n", encoding="utf-8")
+            forced = _cli("init", str(target), "--level", "Standard", "--name", "demo", "--force")
+            self.assertEqual(forced.returncode, 0, forced.stdout + forced.stderr)
+            self.assertIn("PRESERVE human-maintained: docs/requirements.md", forced.stdout)
+            self.assertIn("DO NOT OVERWRITE", requirements.read_text(encoding="utf-8"))
 
             audit = _cli("audit", str(target))
             self.assertEqual(audit.returncode, 0, audit.stdout + audit.stderr)
@@ -401,6 +454,10 @@ class PythonCliSmokeTests(unittest.TestCase):
             target.mkdir()
             init = _cli("init", str(target), "--level", "Light", "--name", "demo")
             self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+            self.assertTrue((target / "docs/delivery-overview.md").exists())
+            self.assertFalse((target / "docs/requirements.md").exists())
+            self.assertFalse((target / "docs/deployment-operations.md").exists())
+            self.assertFalse((target / "docs/releases/_RELEASE.template.md").exists())
 
             verify_script = target / "harness/scripts/verify.py"
             evidence = target / "harness/evidence/verification-latest.json"
@@ -452,6 +509,7 @@ class PythonCliSmokeTests(unittest.TestCase):
             packet = target / "harness/tasks/P-001.md"
             packet.write_text(
                 "---\ntask_id: P-001\nbuild_id: B-001\nstatus: accepted\n"
+                "requirement_ids:\n  - FR-001\n"
                 "acceptance_doc: harness/evidence/module/P-001/ACCEPTANCE.md\n"
                 "verification_evidence: harness/evidence/module/P-001/verification.json\n---\n",
                 encoding="utf-8",
@@ -491,6 +549,16 @@ class PythonCliSmokeTests(unittest.TestCase):
             verification.write_text(
                 '{"schema_version": 1, "status": "PASS", "phase_id": "P-001"}\n', encoding="utf-8"
             )
+
+            missing_requirement = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_missing_requirement = _cli("check", str(target))
+            self.assertEqual(missing_requirement.returncode, 1, missing_requirement.stdout + missing_requirement.stderr)
+            self.assertEqual(framework_missing_requirement.returncode, 1, framework_missing_requirement.stdout + framework_missing_requirement.stderr)
+            self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", missing_requirement.stdout)
+            self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", framework_missing_requirement.stdout)
+            acceptance.write_text("# Evidence\n\n- Requirement IDs: `FR-001`\n- Decision: `accepted`\n", encoding="utf-8")
 
             accepted = subprocess.run(
                 [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target

@@ -31,14 +31,28 @@ This framework writes **tool-agnostic** paths. Any coding agent can read them.
 │   ├── evidence/
 │   ├── drafts/
 │   └── scripts/
-├── docs/
+├── docs/                         # human-facing project and delivery documents
+│   ├── delivery-overview.md      # all levels
+│   ├── requirements.md           # Standard+
+│   ├── architecture.md           # Standard+
+│   ├── deployment-operations.md  # Standard+
+│   ├── releases/                 # Standard+ release records
+│   │   └── _RELEASE.template.md
 │   ├── verification.md
-│   ├── error-journal.md
-│   └── architecture.md
+│   ├── production-readiness.md
+│   ├── branching.md
+│   └── error-journal.md
 ├── DECISIONS/
 ├── contracts/
 └── .harness-version
 ```
+
+## Human delivery boundary
+
+- `docs/` is for people who use, approve, operate, or maintain the delivered project.
+- `harness/`, `agents/`, `skills/`, and session files are the Agent control plane; they are auditable inputs, not substitutes for requirements, operational guidance, or release notes.
+- Do not overwrite an existing project `README.md`. `docs/delivery-overview.md` provides a stable initialized entrypoint that the project README may link to.
+- Copy `_RELEASE.template.md` to a concrete release file for each release-oriented delivery; never record an actual release by editing the template.
 
 ## Vocabulary mapping across tools
 

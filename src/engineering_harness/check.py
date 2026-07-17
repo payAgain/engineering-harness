@@ -34,6 +34,17 @@ def _frontmatter_value(text: str, key: str) -> str | None:
     return field.group(1).strip() if field else None
 
 
+def _frontmatter_list(text: str, key: str) -> list[str]:
+    match = re.match(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", text, re.DOTALL)
+    if not match:
+        return []
+    inline = re.search(rf"(?m)^{re.escape(key)}:\s*\[([^]]*)\]\s*$", match.group(1))
+    if inline:
+        return [item.strip().strip("\"'") for item in inline.group(1).split(",") if item.strip()]
+    block = re.search(rf"(?ms)^{re.escape(key)}:\s*\n((?:\s{{2}}-\s*[^\n]+\n?)*)", match.group(1))
+    return re.findall(r"(?m)^\s{2}-\s*([^\n#]+)", block.group(1)) if block else []
+
+
 def _inside_root(root: Path, value: str | None) -> Path | None:
     if not value:
         return None
@@ -221,7 +232,11 @@ def _semantic_problems(root: Path) -> list[str]:
         acceptance_rel, verification_rel = _frontmatter_value(text, "acceptance_doc"), _frontmatter_value(text, "verification_evidence")
         acceptance = _inside_root(root, acceptance_rel)
         if not acceptance or not acceptance.is_file(): problems.append(f"ACCEPTED WITHOUT EVIDENCE: {path.relative_to(root)}")
-        elif not re.search(r"(?m)^- Decision:\s*`accepted`\s*$", acceptance.read_text(encoding="utf-8")): problems.append(f"INVALID ACCEPTANCE DECISION: {acceptance_rel}")
+        else:
+            acceptance_text = acceptance.read_text(encoding="utf-8")
+            if not re.search(r"(?m)^- Decision:\s*`accepted`\s*$", acceptance_text): problems.append(f"INVALID ACCEPTANCE DECISION: {acceptance_rel}")
+            missing_requirements = [requirement for requirement in _frontmatter_list(text, "requirement_ids") if requirement not in acceptance_text]
+            if missing_requirements: problems.append(f"ACCEPTED WITHOUT REQUIREMENT EVIDENCE: {path.relative_to(root)}: {', '.join(missing_requirements)}")
         verification = _inside_root(root, verification_rel)
         if not verification:
             problems.append(f"ACCEPTED WITHOUT PHASE VERIFICATION: {path.relative_to(root)}")

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from engineering_harness import read_version
 from engineering_harness.paths import (
+    HUMAN_MAINTAINED_FILES,
     LIGHT_FILES,
     STANDARD_DIRS,
     STANDARD_FILES,
@@ -57,6 +58,8 @@ def copy_template(
 ) -> str:
     src = templates_root() / Path(source_rel)
     dst = target / Path(dest_rel)
+    if dst.exists() and dest_rel in HUMAN_MAINTAINED_FILES:
+        return f"PRESERVE human-maintained: {dest_rel}"
     if dst.exists() and not force:
         return f"SKIP existing: {dest_rel}"
     if not src.exists():

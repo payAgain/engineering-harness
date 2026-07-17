@@ -26,6 +26,8 @@ Do not implement business features during harness initialization.
 | Invocation | this `PROTOCOL.md` | what you paste/open for any agent |
 | Runtime | target project files | AGENTS, Charter, agents/, skills/, harness/, docs/ |
 
+In the target project, `docs/` contains human-facing project and delivery documentation; `harness/` is the Agent control plane and evidence store. Internal Packets, ledgers, and raw evidence may support a delivery record but do not replace it.
+
 Optional IDE adapters live under `integrations/*` and are **not required**.
 
 ## 2. Hard rules
@@ -130,6 +132,7 @@ contracts/
 - init: once; artifacts + baseline commit
 - initiative: brief + branch + tasks closed + evidence + commit SHAs + INDEX updated
 - batch: separate instances + must-commit SHA
+- human delivery: update affected `docs/` files; release-oriented Standard/Full work needs a concrete `docs/releases/<release>.md` before Ship, while Light records the same human-readable impact in `docs/delivery-overview.md`
 - completion claims: say `Scope complete`, `Matrix complete`, `Intent satisfied`, `Production-ready`, or `Shippable` only when the matching gate is satisfied
 - never push/tag/release without human authorization
 

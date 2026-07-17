@@ -1,18 +1,43 @@
-# Architecture Notes
+# Architecture
 
-## Repository Type
-To be determined from repository inspection.
+## System context
 
-## Main Directories
-List observed directories and likely responsibilities only.
+Describe the system's users, external dependencies, trust boundaries, and place in the wider environment. Base statements on repository or runtime evidence.
 
-## Entry Points
-List discovered application, package, CLI, test, or build entry points.
+| Actor or system | Relationship | Interface | Trust or ownership boundary |
+|---|---|---|---|
+| `<fill>` | `<fill>` | `<fill>` | `<fill>` |
 
-## Data / Control Flow
-To be expanded when evidence exists. Do not invent.
+## Components and responsibilities
 
-## Notes for Future Agents
-- Do not assume architecture from file names alone
-- Inspect relevant files before editing
-- Record stable decisions in DECISIONS/
+| Component | Responsibility | Owned data | Dependencies |
+|---|---|---|---|
+| `<fill>` | `<fill>` | `<fill or none>` | `<fill>` |
+
+## Entrypoints and public interfaces
+
+List application, package, CLI, API, event, file-format, test, and build entrypoints that consumers or maintainers rely on. Link detailed contracts under `contracts/`.
+
+## Data and control flow
+
+Explain the important request, event, job, or data paths, including failure boundaries. Add diagrams when they clarify behavior, but keep the text usable on its own.
+
+## Deployment topology
+
+Describe runtime processes, infrastructure, networks, persistence, and external services, or state why deployment topology does not apply. Operational procedures belong in `docs/deployment-operations.md`.
+
+## Key constraints
+
+- `<compatibility, security, performance, data, platform, or organizational constraint>`
+
+## Decisions
+
+Durable decisions belong under `DECISIONS/` and should be linked from `DECISIONS/INDEX.md`.
+
+## Known architectural risks
+
+| Risk | Impact | Mitigation or decision needed |
+|---|---|---|
+| `<fill or none>` | `<fill>` | `<fill>` |
+
+Do not infer architecture from file names alone. Mark unknowns explicitly and update this document when evidence changes.
