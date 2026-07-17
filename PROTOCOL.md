@@ -39,7 +39,7 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 7. Project facts live in the target repository (runtime SSOT).
 8. **GitHub Flow** after Bootstrap/G1. See `references/branching.md`.
 9. **Full:** risk≥8 `code` needs reviewer before must-commit.
-10. **Clarify before act** (product Clarify or scoped Scope). See `references/intent.md`.
+10. **Clarify before act** (product Clarify or scoped Scope). See `references/intent.md`, `references/goals.md`.
 11. **Intent Fidelity for high-risk wording.** If the human asks for “complete”, “production-ready”, “all functionality”, “full parity”, or “shippable”, define a **Completeness Scale** and reconcile the engineered scope back to the original wording before Plan / Accept. Scope complete ≠ Intent satisfied.
 12. **Phase = progress unit; execute via role_pipeline.** IDs `I-00x`/`P-00x`/`B-00x`. See `references/glossary.md` + `phases.md`.
 13. **Phases serial by default.** Human never asked about 并行/同步；orchestrator owns parallel from dependencies. See `glossary.md` §4.
@@ -60,7 +60,7 @@ Optional IDE adapters live under `integrations/*` and are **not required**.
 
 ### 4.0 Clarify（仅首次或产品级转向）
 
-See `references/intent.md` + `glossary.md`.  
+See `references/intent.md`, `references/goals.md` + `glossary.md`.  
 **Do not** ask `hotfix|feature|major` or Phase parallel here.
 
 ### 4.1 Bootstrap / init（仅一次）
@@ -95,8 +95,8 @@ Details: `references/lifecycle.md` · naming: `references/glossary.md`.
 | Lifecycle / next feature | `references/lifecycle.md` |
 | Phase / 进度追踪 | `references/phases.md` |
 | Anti-patterns | `references/anti-patterns.md` |
-| Intent Clarity | `references/intent.md` |
-| Intent Fidelity / Completeness Scale | `references/intent.md` + `references/gates.md` |
+| Intent Clarity | `references/intent.md`, `references/goals.md` |
+| Intent Fidelity / Completeness Scale | `references/intent.md`, `references/goals.md` + `references/gates.md` |
 | Roles | `references/roles.md` |
 | Gates (internal G*) | `references/gates.md` |
 | Dispatch / commits | `references/dispatch.md` |
@@ -132,3 +132,11 @@ contracts/
 - batch: separate instances + must-commit SHA
 - completion claims: say `Scope complete`, `Matrix complete`, `Intent satisfied`, `Production-ready`, or `Shippable` only when the matching gate is satisfied
 - never push/tag/release without human authorization
+
+## Goal execution
+
+**Human Gate chat ≠ worker.** Confirm Scope/Goal boundaries, review SHAs, decide escalations, and authorize Ship. Scope confirmation defaults to bounded Goal execution; explicit `build-by-build` keeps per-Build approval.
+
+Modes include `goal` (default after Scope), `batch` (compatibility), and resume.
+
+`Scope → Goal → (Plan/Replan → Build → Accept → Evaluate)* → Goal Accept → Archive`

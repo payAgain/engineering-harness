@@ -73,3 +73,7 @@ Clarity PASS ≠ Charter approved. Both human gates are required.
 - `VERIFY INCOMPLETE` and `VERIFY FAIL` block Accept; required checks must be configured and pass
 - Command success alone is insufficient for product-source changes; record an observed affected user or system flow
 - For high-risk wording, Accept must include Intent Fidelity reconciliation; Scope complete is not enough to claim Intent satisfied.
+
+## Goal gates
+
+Scope confirmation authorizes Goal G-00x. Build accepted is local Build evidence; Goal accepted reconciles all criteria. Ship remains Human-only. In `build-by-build`, each Build uses Human approval.
