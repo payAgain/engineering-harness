@@ -31,7 +31,7 @@ Explain the user-visible outcome and intended audience in plain language.
 - Upgrade path: `<fill>`
 - Data migration: `<not applicable or procedure>`
 - Irreversible steps: `<none or explicit approval reference>`
-- Operator guide: `docs/deployment-operations.md`
+- Operator guide: the selected deployment or operations document
 
 ## Verification and acceptance
 

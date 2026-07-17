@@ -7,7 +7,7 @@
 ## Rules
 - Inspect relevant files first; keep scope tight
 - Include command checks from `harness/verification.json` and affected flows that must be observed
-- Read `docs/production-readiness.md`; declare affected readiness dimensions and justify exclusions
+- Declare affected quality/readiness dimensions in the Packet and justify exclusions
 - Write acceptance criteria as condition/input → action → observable result, including boundary/failure behavior and evidence source
 - Record interface, data, security, reliability, performance, deployment/configuration, rollback, and compatibility impact; use explicit unaffected findings instead of omission
 - **Do not implement inside plan**

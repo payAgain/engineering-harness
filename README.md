@@ -52,7 +52,7 @@ Clarify
 → Human 批准 Build 范围
 → 独立 Role Pipeline
 → 项目命令验证 + 真实流程观察
-→ Production Readiness 证据
+→ Phase 质量与验收证据
 → Phase-bound Accept
 → must-commit
 → Archive / 下一轮维护
@@ -62,7 +62,7 @@ Clarify
 
 | 机制 | 作用 | 目标项目中的 SSOT |
 |---|---|---|
-| Production Readiness Profile | 定义功能、可靠性、数据、安全、性能、可观测性、部署、回滚、兼容性和可维护性要求 | `docs/production-readiness.md` |
+| Quality/readiness dimensions | 在 Phase Packet 中声明功能、可靠性、数据、安全、性能、可观测性、部署、回滚、兼容性和可维护性影响 | `harness/tasks/P-00x.md` |
 | Verification Contract | 配置真实 build/test/lint/type 等项目命令 | `harness/verification.json` |
 | Build Approval Manifest | 固化人类批准的 Plan revision 与 Phase 范围 | `harness/builds/B-00x.json` |
 | Phase Packet | 记录影响面、验收标准、角色步骤、验证 ID 和真实流程 | `harness/tasks/P-00x.md` |
@@ -140,7 +140,13 @@ python -m pip install -e .
 ### 1. 初始化目标仓库
 
 ```text
-eh.cmd init <project> --level Standard --name my-app
+eh.cmd init <project> --level Standard --name my-app --docs recommended
+```
+
+`--docs` 与 Harness level 独立，接受 `none`（默认）、`recommended`、`all`，或逗号分隔的文档 ID。例如：
+
+```text
+eh.cmd init <project> --docs requirements,design,test-plan,test-report
 ```
 
 会把模板复制进目标项目（含 `AGENTS.md`、`skills/`、`harness/PROTOCOL.md`、`.harness-version` 等）。
@@ -158,8 +164,7 @@ eh.cmd init <project> --level Standard --name my-app
 | 差异（摘要） | Light | Standard | Full |
 |---|---|---|---|
 | 目标澄清 + 会话续作 | ✓ | ✓ | ✓ |
-| 人类交付概览 | ✓ | ✓ | ✓ |
-| 需求、架构、部署运维、版本交付文档 | ✗ | ✓ | ✓ |
+| 可选交付文档（`--docs`） | 按项目选择 | 按项目选择 | 按项目选择 |
 | 多角色 + Task DAG + 调度台账 | ✗ | ✓ | ✓ |
 | Reviewer / 集成屏障 / 发版纪律 | ✗ | 按需 | **强制** |
 
@@ -225,8 +230,7 @@ eh.cmd branch-check <project>
 
 细则：
 
-- 框架：[`protocol/references/branching.md`](./protocol/references/branching.md)
-- 目标项目（Standard+）：`docs/branching.md`
+- 框架规则：[`protocol/references/branching.md`](./protocol/references/branching.md)
 
 ---
 
@@ -378,16 +382,17 @@ harness/
   evidence/               # Phase 验证、Acceptance 和生产就绪证据
   ownership/              # 模块与路径责任边界
   verification.json       # 真实项目 build/test/lint 等命令契约
-docs/                     # 面向人类的项目与版本交付文档
-  delivery-overview.md     # 产品范围、入口、限制和文档地图（所有级别）
-  requirements.md          # 人类可读需求基线与追踪（Standard+）
-  architecture.md          # 架构与边界（Standard+）
-  deployment-operations.md # 部署、配置、运维、恢复与回滚（Standard+）
-  releases/                # 每次版本或交付的说明与批准记录（Standard+）
-  verification.md          # 验证约定与证据规则
-  production-readiness.md  # 生产就绪定义
-  branching.md             # GitHub Flow 工程治理（Standard+）
-  error-journal.md         # 故障与经验记录（Standard+）
+docs/                     # verification + 由 --docs 选择的交付文档
+  verification.md
+  delivery/delivery-list.md
+  requirements/software-requirements-specification.md
+  design/                  # 软件设计、接口规格、数据设计
+  testing/                 # 测试计划、测试规格、测试报告
+  user/                    # 快速入门、用户手册、管理员指南
+  operations/              # 部署指南、运维手册
+  traceability/requirements-traceability-matrix.md
+  acceptance/acceptance-report.md
+  releases/_RELEASE.template.md
 DECISIONS/                # 长期架构决策索引
 contracts/                # 模块、接口和数据契约
 .harness-version
@@ -401,7 +406,7 @@ contracts/                # 模块、接口和数据契约
 |---|---|
 | `eh.cmd --version` | 打印框架版本 |
 | `eh.cmd doctor` | 打印框架路径与 Python |
-| `eh.cmd init <path> [--level] [--name] [--force]` | 初始化驾驭架文件；`--force` 仍保留已填写的人类维护文档 |
+| `eh.cmd init <path> [--level] [--name] [--docs] [--force]` | 初始化驾驭架；按项目选择交付文档；`--force` 保留已填写的交付文档 |
 | `eh.cmd audit <path>` | 审计已初始化项目 |
 | `eh.cmd check <path>` | 仅做结构检查 |
 | `eh.cmd guard -- "<cmd>"` | 危险命令模式拦截 |
@@ -438,7 +443,7 @@ Scope containment 要求每个委派 Build 绑定既有成功标准、保持在 
 如需逐次控制，可显式选择 `execution_mode: build-by-build`，此时每个 Build 仍需人类批准。无论采用哪种模式，Goal 模式不会自动 push、创建 PR、merge、tag、release 或操作生产环境；Ship 始终是人类门禁。
 
 0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS
-1. **Charter → Bootstrap**（init 仅一次）→ 填写验证命令与 Production Readiness
+1. **Charter → Bootstrap**（init 仅一次）→ 填写验证命令与项目质量约束
 2. **Scope confirmation** → 默认创建有界 `Goal G-00x`；显式 `build-by-build` 时才逐 Build 审批
 3. **Plan / Replan**（`P-00x`，默认串行）→ 成功标准映射、影响分析、containment 与 required checks / flows
 4. Goal Controller 在当前 Scope revision 内签发 `B-00x` → 新 Orchestrator 按依赖推进

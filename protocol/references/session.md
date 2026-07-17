@@ -9,7 +9,7 @@
 5. `PROJECT_CHARTER.md`
 6. applicable ADR / contracts / ownership / task packet
 7. `docs/verification.md`
-8. `docs/error-journal.md`
+8. current blockers and verification evidence
 9. relevant `agents/<role>.md` and `skills/*.md`
 
 Do not edit business code during start.
@@ -50,7 +50,7 @@ Include `cognitive_state` (`failure_count`, `tried_approaches`, `blocked_on`). I
 - `session-log.md`
 - `progress-map.md`
 - `command-history.md`
-- `docs/error-journal.md`
+- the current blocker or verification evidence
 
 ## Handoff
 

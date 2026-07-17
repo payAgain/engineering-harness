@@ -8,6 +8,8 @@ from pathlib import Path
 
 from engineering_harness import read_version
 from engineering_harness.paths import (
+    DELIVERY_DOCUMENTS,
+    DOCUMENT_PRESETS,
     HUMAN_MAINTAINED_FILES,
     LIGHT_FILES,
     STANDARD_DIRS,
@@ -69,12 +71,25 @@ def copy_template(
     return f"WRITE: {dest_rel}"
 
 
+def resolve_delivery_documents(selection: str | None) -> list[str]:
+    value = (selection or "none").strip()
+    if value in DOCUMENT_PRESETS:
+        return list(DOCUMENT_PRESETS[value])
+    document_ids = [item.strip() for item in value.split(",") if item.strip()]
+    unknown = sorted(set(document_ids) - DELIVERY_DOCUMENTS.keys())
+    if unknown:
+        choices = ", ".join(DELIVERY_DOCUMENTS)
+        raise ValueError(f"unknown delivery document(s): {', '.join(unknown)}; choose from: {choices}")
+    return list(dict.fromkeys(document_ids))
+
+
 def init_project(
     target: Path,
     *,
     level: str = "Standard",
     project_name: str | None = None,
     force: bool = False,
+    delivery_documents: str | None = None,
 ) -> list[str]:
     if level not in {"Light", "Standard", "Full"}:
         raise ValueError(f"unsupported level: {level}")
@@ -83,6 +98,7 @@ def init_project(
     target.mkdir(parents=True, exist_ok=True)
     name = project_name or target.name
     timestamp = _now()
+    selected_documents = resolve_delivery_documents(delivery_documents)
     logs: list[str] = []
 
     for source_rel, dest_rel in LIGHT_FILES:
@@ -124,6 +140,20 @@ def init_project(
                 path.mkdir(parents=True, exist_ok=True)
                 logs.append(f"DIR: {rel}")
 
+    for document_id in selected_documents:
+        source_rel, dest_rel = DELIVERY_DOCUMENTS[document_id]
+        logs.append(
+            copy_template(
+                source_rel=source_rel,
+                dest_rel=dest_rel,
+                target=target,
+                project_name=name,
+                level=level,
+                timestamp=timestamp,
+                force=force,
+            )
+        )
+
     if level == "Full":
         policy = target / "docs" / "approval-policy.md"
         if policy.exists() and not force:
@@ -138,6 +168,7 @@ def init_project(
         "level": level,
         "layout": "tool-agnostic",
         "cli": "python",
+        "delivery_documents": selected_documents,
         "initialized_at": timestamp,
     }
     _write_text(target / ".harness-version", json.dumps(meta, indent=2, ensure_ascii=False) + "\n")

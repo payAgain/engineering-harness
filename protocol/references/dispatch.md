@@ -110,7 +110,7 @@ Do NOT introduce yourself as "implementing Task N". You are the role above worki
 5. Packet acceptance criteria are observable and each has recorded evidence
 6. Packet `verification_evidence` is repository-contained, is `PASS`, has the same `phase_id`, and covers every `required_verification.commands` id
 7. every Packet `required_verification.observed_flows` entry was exercised against the running product and recorded
-8. every affected `readiness_dimensions` entry has evidence required by `docs/production-readiness.md`
+8. every affected `readiness_dimensions` entry has concrete evidence in the Packet acceptance record
 9. `acceptance_doc` 已写入且含验证摘要、observed-flow 结果、readiness 结论与 commit SHA（有变更时）
 10. 工作分支 must-commit 已完成（或记录 `deferred_reason`）
 11. invocations ledger 记录了本阶段各角色实例

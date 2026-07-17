@@ -132,7 +132,7 @@ contracts/
 - init: once; artifacts + baseline commit
 - initiative: brief + branch + tasks closed + evidence + commit SHAs + INDEX updated
 - batch: separate instances + must-commit SHA
-- human delivery: update affected `docs/` files; release-oriented Standard/Full work needs a concrete `docs/releases/<release>.md` before Ship, while Light records the same human-readable impact in `docs/delivery-overview.md`
+- human delivery: update affected `docs/` files; update every delivery document selected in `.harness-version`; release-oriented work selects and creates a concrete release-notes file before Ship
 - completion claims: say `Scope complete`, `Matrix complete`, `Intent satisfied`, `Production-ready`, or `Shippable` only when the matching gate is satisfied
 - never push/tag/release without human authorization
 

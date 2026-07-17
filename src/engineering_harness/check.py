@@ -6,7 +6,12 @@ import json
 import re
 from pathlib import Path
 
-from engineering_harness.paths import DANGEROUS_PATTERNS, LIGHT_REQUIRED, STANDARD_REQUIRED
+from engineering_harness.paths import (
+    DANGEROUS_PATTERNS,
+    DELIVERY_DOCUMENTS,
+    LIGHT_REQUIRED,
+    STANDARD_REQUIRED,
+)
 
 GOAL_STATUSES = {"draft", "awaiting_scope_confirmation", "active", "achieved", "accepted", "paused", "blocked", "escalation_required", "cancelled"}
 
@@ -19,10 +24,14 @@ def load_level(root: Path) -> str:
     return str(meta.get("level") or "Standard")
 
 
-def required_files(level: str) -> list[str]:
+def required_files(level: str, delivery_documents: list[str] | None = None) -> list[str]:
     files = list(LIGHT_REQUIRED)
     if level in {"Standard", "Full"}:
         files.extend(STANDARD_REQUIRED)
+    for document_id in delivery_documents or []:
+        document = DELIVERY_DOCUMENTS.get(document_id)
+        if document:
+            files.append(document[1])
     return files
 
 
@@ -255,9 +264,16 @@ def _semantic_problems(root: Path) -> list[str]:
 
 def harness_check(root: Path) -> list[str]:
     root = root.resolve(); problems: list[str] = []
-    try: level = load_level(root)
-    except Exception as exc: return [str(exc)]
-    problems.extend(f"MISSING: {rel}" for rel in required_files(level) if not (root / rel).exists())
+    try:
+        level = load_level(root)
+        meta = json.loads((root / ".harness-version").read_text(encoding="utf-8"))
+    except Exception as exc:
+        return [str(exc)]
+    selected = meta.get("delivery_documents", [])
+    if not isinstance(selected, list) or any(item not in DELIVERY_DOCUMENTS for item in selected):
+        problems.append(".harness-version has invalid delivery_documents")
+        selected = []
+    problems.extend(f"MISSING: {rel}" for rel in required_files(level, selected) if not (root / rel).exists())
     state = root / "harness" / "session" / "session-state.json"
     if state.exists():
         try: json.loads(state.read_text(encoding="utf-8"))

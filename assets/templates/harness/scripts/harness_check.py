@@ -6,8 +6,26 @@ import json
 import re
 from pathlib import Path
 
-LIGHT_REQUIRED = ['AGENTS.md', 'current-task.md', 'docs/delivery-overview.md', 'docs/verification.md', 'docs/production-readiness.md', 'harness/session/session-state.json', 'harness/session/session-log.md', 'skills/clarify.md', 'skills/start.md', 'skills/handoff.md', 'harness/scripts/harness_check.py', 'harness/scripts/verify.py', 'harness/verification.json', 'harness/drafts/INTENT-CLARITY.md']
-STANDARD_REQUIRED = ['docs/requirements.md', 'docs/deployment-operations.md', 'docs/releases/_RELEASE.template.md', 'docs/error-journal.md', 'docs/architecture.md', 'docs/branching.md', 'harness/session/progress-map.md', 'harness/session/command-history.md', 'skills/plan.md', 'skills/review.md', 'skills/commit.md', 'skills/initiative.md', 'skills/goal.md', 'agents/goal-controller.md', 'harness/goals/_GOAL.template.yaml', 'harness/goals/_GOAL-ACCEPTANCE.template.md', 'harness/initiatives/INDEX.md', 'harness/scripts/safe_bash_guard.py', 'harness/scripts/branch_check.py', 'agents/orchestrator.md', 'agents/architect-contract.md', 'agents/reviewer.md', 'agents/integration-release.md', 'harness/tasks/REGISTRY.yaml', 'harness/ownership/OWNERSHIP.yaml', 'harness/runtime/_INVOCATIONS.template.yaml', 'harness/builds/_BUILD.template.json', 'harness/evidence/_ACCEPTANCE.template.md']
+LIGHT_REQUIRED = ['AGENTS.md', 'current-task.md', 'docs/verification.md', 'harness/session/session-state.json', 'harness/session/session-log.md', 'skills/clarify.md', 'skills/start.md', 'skills/handoff.md', 'harness/scripts/harness_check.py', 'harness/scripts/verify.py', 'harness/verification.json', 'harness/drafts/INTENT-CLARITY.md']
+STANDARD_REQUIRED = ['harness/session/progress-map.md', 'harness/session/command-history.md', 'skills/plan.md', 'skills/review.md', 'skills/commit.md', 'skills/initiative.md', 'skills/goal.md', 'agents/goal-controller.md', 'harness/goals/_GOAL.template.yaml', 'harness/goals/_GOAL-ACCEPTANCE.template.md', 'harness/initiatives/INDEX.md', 'harness/scripts/safe_bash_guard.py', 'harness/scripts/branch_check.py', 'agents/orchestrator.md', 'agents/architect-contract.md', 'agents/reviewer.md', 'agents/integration-release.md', 'harness/tasks/REGISTRY.yaml', 'harness/ownership/OWNERSHIP.yaml', 'harness/runtime/_INVOCATIONS.template.yaml', 'harness/builds/_BUILD.template.json', 'harness/evidence/_ACCEPTANCE.template.md']
+DELIVERY_DOCUMENTS = {
+    'delivery-list': 'docs/delivery/delivery-list.md',
+    'requirements': 'docs/requirements/software-requirements-specification.md',
+    'design': 'docs/design/software-design-description.md',
+    'interface-spec': 'docs/design/interface-specification.md',
+    'data-design': 'docs/design/data-design.md',
+    'test-plan': 'docs/testing/test-plan.md',
+    'test-spec': 'docs/testing/test-specification.md',
+    'test-report': 'docs/testing/test-report.md',
+    'quick-start': 'docs/user/quick-start.md',
+    'user-manual': 'docs/user/user-manual.md',
+    'admin-guide': 'docs/user/administrator-guide.md',
+    'deployment-guide': 'docs/operations/deployment-guide.md',
+    'operations-manual': 'docs/operations/operations-manual.md',
+    'traceability': 'docs/traceability/requirements-traceability-matrix.md',
+    'acceptance-report': 'docs/acceptance/acceptance-report.md',
+    'release-notes': 'docs/releases/_RELEASE.template.md',
+}
 DANGEROUS_PATTERNS = ['rm -rf /', 'rm -rf .', 'git reset --hard', 'git clean -fd', 'git push --force', 'git push -f', 'drop database', 'truncate table', 'supabase db reset', 'prisma migrate reset']
 
 GOAL_STATUSES = {"draft", "awaiting_scope_confirmation", "active", "achieved", "accepted", "paused", "blocked", "escalation_required", "cancelled"}
@@ -21,10 +39,11 @@ def load_level(root: Path) -> str:
     return str(meta.get("level") or "Standard")
 
 
-def required_files(level: str) -> list[str]:
+def required_files(level: str, delivery_documents: list[str] | None = None) -> list[str]:
     files = list(LIGHT_REQUIRED)
     if level in {"Standard", "Full"}:
         files.extend(STANDARD_REQUIRED)
+    files.extend(DELIVERY_DOCUMENTS[item] for item in delivery_documents or [] if item in DELIVERY_DOCUMENTS)
     return files
 
 
@@ -257,9 +276,16 @@ def _semantic_problems(root: Path) -> list[str]:
 
 def harness_check(root: Path) -> list[str]:
     root = root.resolve(); problems: list[str] = []
-    try: level = load_level(root)
-    except Exception as exc: return [str(exc)]
-    problems.extend(f"MISSING: {rel}" for rel in required_files(level) if not (root / rel).exists())
+    try:
+        level = load_level(root)
+        meta = json.loads((root / ".harness-version").read_text(encoding="utf-8"))
+    except Exception as exc:
+        return [str(exc)]
+    selected = meta.get("delivery_documents", [])
+    if not isinstance(selected, list) or any(item not in DELIVERY_DOCUMENTS for item in selected):
+        problems.append(".harness-version has invalid delivery_documents")
+        selected = []
+    problems.extend(f"MISSING: {rel}" for rel in required_files(level, selected) if not (root / rel).exists())
     state = root / "harness" / "session" / "session-state.json"
     if state.exists():
         try: json.loads(state.read_text(encoding="utf-8"))

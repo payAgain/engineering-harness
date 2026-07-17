@@ -30,7 +30,7 @@ is_background: false
 - `harness/evidence/orchestrator/**`
 - `harness/evidence/reviewer/**`
 - `harness/evidence/readonly-results/**`
-- `docs/verification.md`、`docs/error-journal.md`、`docs/architecture.md`、`docs/branching.md`
+- `docs/verification.md` and delivery documents selected in `.harness-version`
 
 # 禁止修改路径
 - 业务模块代码与测试（必须派给 module/test 实例）
