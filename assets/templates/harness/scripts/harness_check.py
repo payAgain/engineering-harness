@@ -39,6 +39,7 @@ def _frontmatter_value(text: str, key: str) -> str | None:
 def _inside_root(root: Path, value: str | None) -> Path | None:
     if not value:
         return None
+    root = root.resolve()
     candidate = (root / value).resolve()
     try:
         candidate.relative_to(root)
