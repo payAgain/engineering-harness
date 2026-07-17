@@ -137,6 +137,6 @@ contracts/
 
 **Human Gate chat ≠ worker.** Confirm Scope/Goal boundaries, review SHAs, decide escalations, and authorize Ship. Scope confirmation defaults to bounded Goal execution; explicit `build-by-build` keeps per-Build approval.
 
-Modes include `goal` (default after Scope), `batch` (compatibility), and resume.
+Modes include `goal` (default after Scope), `batch` (compatibility), and resume. Goal manifests use `G-00x` identifiers.
 
 `Scope → Goal → (Plan/Replan → Build → Accept → Evaluate)* → Goal Accept → Archive`

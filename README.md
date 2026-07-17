@@ -361,10 +361,11 @@ integrations/
 ```text
 AGENTS.md                 # 任意 Agent 的项目操作入口
 current-task.md           # 当前任务 / batch 焦点
-agents/                   # 角色定义（工具无关）
-skills/                   # clarify / initiative / start / plan / review / commit / handoff
+agents/                   # 角色定义（含 goal-controller，工具无关）
+skills/                   # clarify / initiative / goal / start / plan / review / commit / handoff
 harness/
-  builds/                 # B-00x 人类批准范围与 Plan revision
+  builds/                 # B-00x 的授权范围与 Plan revision
+  goals/                  # G-00x Goal manifest 与 Goal Acceptance
   drafts/                 # INTENT-CLARITY.md（产品级澄清）
   initiatives/            # 每个 feature/版本的 brief + INDEX
   PROTOCOL.md             # 协议副本
@@ -408,6 +409,22 @@ python harness/scripts/safe_bash_guard.py -- "<command>"
 ---
 
 ## 推荐工作流（摘要）
+
+### Goal mode（默认）
+
+```text
+Scope clarification
+→ Human confirms Scope once
+→ Goal G-001 becomes active by default
+→ AI repeats Plan/Replan → Build → Accept → commit → Evaluate
+→ continue | achieved | escalate
+→ Goal Acceptance or structured Human escalation
+→ stop on local working branch
+```
+
+Scope containment 要求每个委派 Build 绑定既有成功标准、保持在 `in_scope` 内、避开 `out_of_scope`，且不得越过高风险或对外操作门禁。默认预算为：同一 blocker 连续失败 3 次、无进展 Build 2 个、无人类确认的 Replan 5 次；达到预算即 `escalate`。
+
+如需逐次控制，可显式选择 `execution_mode: build-by-build`，此时每个 Build 仍需人类批准。无论采用哪种模式，Goal 模式不会自动 push、创建 PR、merge、tag、release 或操作生产环境；Ship 始终是人类门禁。
 
 0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS
 1. **Charter → Bootstrap**（init 仅一次）→ 填写验证命令与 Production Readiness
