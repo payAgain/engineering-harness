@@ -15,3 +15,6 @@ build/
 
 # Local Engineering Harness analysis notes (not tracked)
 .local-harness-analysis/
+
+# Claude Code local workspace and worktrees
+.claude/
