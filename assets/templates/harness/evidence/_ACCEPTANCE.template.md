@@ -89,3 +89,8 @@
 - Decided by: `orchestrator`
 - Date: `<ISO-8601>`
 - Blocker reference when not accepted: `<N/A or blocker id>`
+## Goal checkpoint
+- Goal ID: `G-00x`
+- Scope revision: 1
+- Authorization type: `goal-delegation|human-build-approval`
+- Accepted commit SHA: `<sha>`

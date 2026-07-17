@@ -171,3 +171,4 @@ python harness/scripts/verify.py
 - 进度单位 = 本 Phase；执行 = `role_pipeline`。
 - 默认与其他 Phase 串行；禁止询问人类并行。
 - 用 `dispatch.md` 角色骨架派发。
+<!-- Goal fields: goal_id, success_criterion_ids, containment_evidence -->
