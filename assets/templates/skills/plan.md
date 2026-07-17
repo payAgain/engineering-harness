@@ -43,3 +43,6 @@ Risks:
 
 Next: await human Build approval (scope only — not parallel strategy)
 ```
+
+## Replan
+Every Phase lists `success_criterion_ids`. Increment `plan_revision`, preserve accepted history, record evidence, and rerun containment.

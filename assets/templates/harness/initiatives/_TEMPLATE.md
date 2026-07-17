@@ -29,3 +29,8 @@
 
 ## Status
 `clarifying` — waiting for human: 「本 Initiative 范围已明确，可以开干」
+
+
+- Execution mode: `goal|build-by-build`
+- Active Goal: `G-00x`
+- Scope confirmation reference: `<human-reference>`

@@ -75,3 +75,6 @@ Human Gate chat  ──approve / clarify only──►  Orchestrator (MUST be se
 2. Does every `code|test|review|contract|integration|release` task have a non-Human-Gate instance?
 3. Is reviewer present for Full / risk≥8 code before the required commit?
 4. Are optional specialists only created when a Task Packet names them?
+
+## Goal roles
+Goal Controller and Build Orchestrator are separate role instances. The controller plans and returns `continue | achieved | escalate`; the orchestrator executes an authorized Build.

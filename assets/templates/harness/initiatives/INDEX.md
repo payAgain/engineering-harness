@@ -8,3 +8,7 @@
 | — | — | （尚无） | — | — | {{TIMESTAMP}} |
 
 Status: `clarifying` | `active` | `completed` | `abandoned`
+
+
+| Initiative | execution_mode | active_goal_id | Scope confirmation |
+|---|---|---|---|

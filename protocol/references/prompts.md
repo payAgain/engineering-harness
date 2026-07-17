@@ -120,3 +120,6 @@ Follow skills/start.md. Resume the **current** open Initiative only.
 If the human wants a new feature/version, switch to Scope (initiative mode).
 Do not ask about parallelizing Phases.
 ```
+
+## Goal prompts
+Scope confirmation defaults to Goal G-00x (`execution_mode: goal`), with explicit `build-by-build` fallback. Resume before issuance; evaluate `continue | achieved | escalate`; escalate with evidence and exact resume point.
