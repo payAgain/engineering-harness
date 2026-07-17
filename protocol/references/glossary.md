@@ -81,3 +81,9 @@ Next Build: B-001 → P-001   # 默认一次只推进依赖已满足的最早 Ph
 2. 阶段 ID 是否为 `P-00x`，Initiative 是否为 `I-00x`，Build 是否为 `B-00x`？  
 3. 是否向人类询问并行/同步？若是 → 删掉，改为 orchestrator 依赖分析。  
 4. 默认是否按 Phase 串行叙述 Next Build？
+
+## Goal vocabulary
+
+- **Goal (`G-00x`)**: bounded authorization created by Scope confirmation.
+- **Build authorization**: exactly `human-build-approval` or `goal-delegation`.
+- **Execution mode**: `goal` by default; `build-by-build` for explicit per-Build Human approval.

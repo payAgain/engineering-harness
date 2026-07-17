@@ -185,3 +185,6 @@ version_control_checkpoint:
 ## Boundary scripts
 
 - `safe_bash_guard` / `harness_check` / `branch_check` / `verify`
+
+## Goal authorization and handoff
+Accept exactly `approved + human-build-approval` or `authorized + goal-delegation + active matching Goal + matching Scope revision + containment PASS`. Build Accept and an accepted commit SHA return control to Goal Controller, which decides `continue | achieved | escalate` before another Build.

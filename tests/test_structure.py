@@ -57,6 +57,7 @@ class FrameworkStructureTests(unittest.TestCase):
             "protocol/references/levels.md",
             "protocol/references/prompts.md",
             "protocol/references/layout.md",
+            "protocol/references/goals.md",
             "src/engineering_harness/cli.py",
             "src/engineering_harness/branch.py",
             "scripts/eh.cmd",
@@ -71,6 +72,10 @@ class FrameworkStructureTests(unittest.TestCase):
             "assets/templates/harness/runtime/_INVOCATIONS.template.yaml",
             "assets/templates/harness/builds/_BUILD.template.json",
             "assets/templates/harness/evidence/_ACCEPTANCE.template.md",
+            "assets/templates/harness/goals/_GOAL.template.yaml",
+            "assets/templates/harness/goals/_GOAL-ACCEPTANCE.template.md",
+            "assets/templates/agents/goal-controller.md",
+            "assets/templates/skills/goal.md",
             "assets/templates/skills/initiative.md",
             "assets/templates/harness/initiatives/INDEX.md",
             "assets/templates/harness/drafts/INTENT-CLARITY.md",
@@ -109,6 +114,8 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("install.cmd", readme)
         self.assertIn("GitHub Flow", readme)
         self.assertIn("必须 commit", readme)
+        for token in ("Goal mode", "Scope", "build-by-build", "continue", "achieved", "escalate", "不会自动 push"):
+            self.assertIn(token, readme)
 
     def test_no_cursor_runtime_ssot_in_templates(self):
         ag = (ROOT / "assets/templates/AGENTS.md").read_text(encoding="utf-8")
@@ -264,6 +271,61 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("no fabricated invocation", dispatch)
         self.assertIn("different invocation from implementation", dispatch)
 
+    def test_goal_mode_contract_is_wired_into_protocol(self):
+        protocol = (ROOT / "PROTOCOL.md").read_text(encoding="utf-8")
+        goals = (ROOT / "protocol/references/goals.md").read_text(encoding="utf-8")
+        glossary = (ROOT / "protocol/references/glossary.md").read_text(encoding="utf-8")
+        lifecycle = (ROOT / "protocol/references/lifecycle.md").read_text(encoding="utf-8")
+        gates = (ROOT / "protocol/references/gates.md").read_text(encoding="utf-8")
+        anti = (ROOT / "protocol/references/anti-patterns.md").read_text(encoding="utf-8")
+        self.assertLessEqual(len(protocol.splitlines()), 220)
+        for text in (protocol, goals, glossary, lifecycle, gates):
+            self.assertIn("Goal", text)
+            self.assertIn("G-00x", text)
+        for token in ("Scope confirmation", "execution_mode: goal", "execution_mode: build-by-build", "continue | achieved | escalate", "one active Goal", "goal-delegation", "human-build-approval", "Build accepted", "Goal accepted", "Scope complete ≠ Intent satisfied"):
+            self.assertIn(token, goals)
+        self.assertIn("fake Human approval", anti)
+        self.assertIn("no-progress", anti)
+
+    def test_goal_templates_define_bounded_authorization(self):
+        goal = (ROOT / "assets/templates/harness/goals/_GOAL.template.yaml").read_text(encoding="utf-8")
+        acceptance = (ROOT / "assets/templates/harness/goals/_GOAL-ACCEPTANCE.template.md").read_text(encoding="utf-8")
+        build = json.loads((ROOT / "assets/templates/harness/builds/_BUILD.template.json").read_text(encoding="utf-8"))
+        controller = (ROOT / "assets/templates/agents/goal-controller.md").read_text(encoding="utf-8")
+        skill = (ROOT / "assets/templates/skills/goal.md").read_text(encoding="utf-8")
+        for token in ("goal_id: G-001", "execution_mode: goal", "loop_stage:", "success_criteria:", "scope:", "budgets:", "evaluation_ledger:", "escalation:"):
+            self.assertIn(token, goal)
+        self.assertEqual(build["authorization"]["type"], "human-build-approval")
+        self.assertIn("goal_id", build)
+        self.assertIn("containment", build)
+        self.assertIn("Criterion evidence", acceptance)
+        self.assertIn("continue | achieved | escalate", controller)
+        self.assertIn("Do not implement", controller)
+        self.assertIn("push", skill)
+        self.assertIn("release", skill)
+
+    def test_goal_loop_is_wired_into_runtime_instructions(self):
+        initiative = (ROOT / "assets/templates/skills/initiative.md").read_text(encoding="utf-8")
+        start = (ROOT / "assets/templates/skills/start.md").read_text(encoding="utf-8")
+        handoff = (ROOT / "assets/templates/skills/handoff.md").read_text(encoding="utf-8")
+        orchestrator = (ROOT / "assets/templates/agents/orchestrator.md").read_text(encoding="utf-8")
+        state = json.loads((ROOT / "assets/templates/harness/session/session-state.json").read_text(encoding="utf-8"))
+        dispatch = (ROOT / "protocol/references/dispatch.md").read_text(encoding="utf-8")
+        prompts = (ROOT / "protocol/references/prompts.md").read_text(encoding="utf-8")
+        self.assertIn("execution_mode: goal", initiative)
+        self.assertIn("build-by-build", initiative)
+        self.assertIn("Goal G-00x", initiative)
+        self.assertIn("active_build_id", start)
+        self.assertIn("Do not issue a second Build", start)
+        self.assertIn("scope_revision", handoff)
+        self.assertIn("goal-delegation", orchestrator)
+        self.assertIn("human-build-approval", orchestrator)
+        self.assertIn("accepted commit SHA", orchestrator)
+        for key in ("active_goal_id", "goal_loop_stage", "active_build_id"):
+            self.assertIn(key, state)
+        self.assertIn("continue | achieved | escalate", dispatch)
+        self.assertIn("Scope confirmation", prompts)
+
     def test_version_matches_pyproject(self):
         version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         self.assertRegex(version, r"^\d+\.\d+\.\d+")
@@ -300,6 +362,10 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertTrue((target / "harness/scripts/branch_check.py").exists())
             self.assertTrue((target / "harness/scripts/verify.py").exists())
             self.assertTrue((target / "harness/verification.json").exists())
+            self.assertTrue((target / "harness/goals/_GOAL.template.yaml").exists())
+            self.assertTrue((target / "harness/goals/_GOAL-ACCEPTANCE.template.md").exists())
+            self.assertTrue((target / "agents/goal-controller.md").exists())
+            self.assertTrue((target / "skills/goal.md").exists())
 
             audit = _cli("audit", str(target))
             self.assertEqual(audit.returncode, 0, audit.stdout + audit.stderr)
@@ -308,6 +374,26 @@ class PythonCliSmokeTests(unittest.TestCase):
 
             guard_bad = _cli("guard", "--", "git reset --hard")
             self.assertEqual(guard_bad.returncode, 1, guard_bad.stdout + guard_bad.stderr)
+
+    def test_initialized_goal_flow_has_complete_local_stop_contract(self):
+        with tempfile.TemporaryDirectory(prefix="eh-goal-flow-") as tmp:
+            target = Path(tmp) / "demo"
+            target.mkdir()
+            init = _cli("init", str(target), "--level", "Standard", "--name", "demo")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+            combined = "\n".join(
+                (target / rel).read_text(encoding="utf-8")
+                for rel in (
+                    "harness/PROTOCOL.md", "skills/initiative.md", "skills/goal.md",
+                    "agents/goal-controller.md", "agents/orchestrator.md",
+                    "harness/goals/_GOAL.template.yaml",
+                    "harness/goals/_GOAL-ACCEPTANCE.template.md",
+                )
+            )
+            for token in ("Scope", "G-00x", "B-00x", "continue", "achieved", "escalate", "commit SHA", "build-by-build"):
+                self.assertIn(token, combined)
+            for token in ("push", "merge", "tag", "release"):
+                self.assertIn(token, combined)
 
     def test_verification_requires_real_project_commands(self):
         with tempfile.TemporaryDirectory(prefix="eh-verify-") as tmp:
@@ -393,8 +479,8 @@ class PythonCliSmokeTests(unittest.TestCase):
             blocked.unlink()
 
             build = json.loads((target / "harness/builds/_BUILD.template.json").read_text(encoding="utf-8"))
-            build["approval"]["reference"] = "human-message-1"
-            build["approval"]["approved_at"] = "2026-07-14T00:00:00Z"
+            build["authorization"]["reference"] = "human-message-1"
+            build["authorization"]["authorized_at"] = "2026-07-14T00:00:00Z"
             (target / "harness/builds/B-001.json").write_text(
                 json.dumps(build, indent=2) + "\n", encoding="utf-8"
             )
@@ -455,7 +541,7 @@ class PythonCliSmokeTests(unittest.TestCase):
                 [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
             )
             self.assertEqual(rejected.returncode, 1, rejected.stdout + rejected.stderr)
-            self.assertIn("approval reference", rejected.stdout)
+            self.assertIn("authorization reference", rejected.stdout)
             self.assertIn("ACCEPTED WITHOUT EVIDENCE", rejected.stdout)
             self.assertIn("ACCEPTED WITHOUT PHASE VERIFICATION", rejected.stdout)
 

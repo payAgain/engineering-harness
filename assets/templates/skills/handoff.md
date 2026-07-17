@@ -21,3 +21,6 @@ Known Issues:
 Next 3 Steps:
 Resume From:
 ```
+
+## Goal handoff
+Record goal_id, goal status, `scope_revision`, plan_revision, active_build_id, accepted Build SHAs, counters, and exact resume point.

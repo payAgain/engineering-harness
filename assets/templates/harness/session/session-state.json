@@ -36,5 +36,11 @@
   "handoff": {
     "last_summary": "Harness templates initialized.",
     "resume_from": "Run /start, then continue from current-task.md."
-  }
+  },
+  "active_goal_id": null,
+  "goal_status": null,
+  "goal_loop_stage": null,
+  "scope_revision": null,
+  "plan_revision": null,
+  "active_build_id": null
 }

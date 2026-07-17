@@ -66,3 +66,6 @@ Output a Session Briefing before editing.
 
 Harness level: `{{HARNESS_LEVEL}}`  
 Framework version: see `.harness-version`
+
+## Goal mode
+After Scope confirmation, default to Goal G-00x. Keep Goal Controller and Orchestrator as separate role instances. Replan only unstarted work, stop on the local branch, and leave push, PR, merge, tag, release, protected branches, and production to Human Ship gates.

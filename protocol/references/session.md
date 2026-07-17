@@ -63,3 +63,6 @@ When an **Initiative** completes, also:
 - remind the human that the next feature uses **initiative** mode (Round I), not this chat forever
 
 See `references/lifecycle.md`.
+
+## Goal recovery
+Restore worktree, Initiative, unique Goal G-00x, revisions, then `active_build_id`. If it exists, resume it and do not issue a second Build. Unknown changes, conflicting Goals, missing SHA, or revision mismatch stop safely.

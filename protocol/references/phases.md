@@ -99,3 +99,6 @@ role_pipeline:
 3. `acceptance_doc` + 真实 SHA/证据  
 
 聊天勾选 **不是** 进度 SSOT。
+
+## Goal Replan
+Every Phase maps `success_criterion_ids`; Replan increments `plan_revision`, preserves accepted history, and reruns containment.

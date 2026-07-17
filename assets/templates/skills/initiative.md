@@ -35,3 +35,6 @@ Open Questions:
 Status: clarifying | ready-for-build
 Next: await Build scope approval (not parallel strategy)
 ```
+
+## Goal creation
+After Human Scope confirmation write `execution_mode: goal` unless explicitly `build-by-build`, then materialize Goal G-00x before implementation.

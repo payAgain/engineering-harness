@@ -50,3 +50,7 @@ forever:
   resume          # same Initiative
   audit / upgrade
 ```
+
+## Goal lifecycle
+
+`Scope → Goal G-00x → (Plan/Replan → Build → Accept → Evaluate)* → Goal Accept → Archive`. Evaluation is `continue | achieved | escalate`.

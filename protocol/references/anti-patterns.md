@@ -59,3 +59,10 @@ WP-1.0 和 WP-1.1 要不要同步进行？请批准一起做还是分开。
 3. 是否问了人类并行？  
 4. 是否规划了 `acceptance_doc`？  
 5. reviewer 是否仅按规则出现？
+
+## Goal anti-patterns
+
+- Recording goal delegation as fake Human approval.
+- Silent Goal or Scope expansion.
+- Clearing retry counts by changing Build or blocker IDs.
+- Continuing after the no-progress or replan budget is exhausted.

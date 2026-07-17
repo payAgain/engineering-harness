@@ -36,3 +36,6 @@ is_background: false
 - 业务模块代码与测试（必须派给 module/test 实例）
 - 其他角色的 handoff/evidence 命名空间
 - ROADMAP 最终状态、版本文件、tag（integration-release + 人类授权）
+
+## Goal authorization
+Consume exactly one valid path: `approved + human-build-approval`, or `authorized + goal-delegation` with active matching Goal, matching Scope revision, and containment PASS. Complete Build Accept and an accepted commit SHA before returning to Goal Controller.

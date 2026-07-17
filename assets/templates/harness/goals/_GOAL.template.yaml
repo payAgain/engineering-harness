@@ -1,0 +1,38 @@
+schema_version: 1
+goal_id: G-001
+initiative_id: I-001
+status: awaiting_scope_confirmation
+loop_stage: planning
+execution_mode: goal
+objective: <human-confirmed-objective>
+success_criteria:
+  - id: SC-001
+    statement: <verifiable-success-criterion>
+    required: true
+    status: unmet
+    evidence: []
+scope:
+  revision: 1
+  in_scope: []
+  out_of_scope: []
+  constraints: []
+authorization:
+  human_scope_reference: <scope-confirmation-reference>
+  confirmed_at: <ISO-8601>
+  revoked_at: null
+budgets:
+  max_consecutive_failures_per_blocker: 3
+  max_no_progress_builds: 2
+  max_replans_without_human: 5
+progress:
+  current_plan_revision: 1
+  active_build_id: null
+  accepted_build_ids: []
+  accepted_commit_shas: []
+  replan_count: 0
+  no_progress_build_count: 0
+evaluation_ledger: []
+escalation:
+  required: false
+  trigger: null
+  packet: null

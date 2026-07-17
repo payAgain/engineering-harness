@@ -43,3 +43,6 @@ Known Risks / Blockers:
 Open Questions (if any):
 Resume From:
 ```
+
+## Goal recovery
+Restore the unique Goal and inspect `active_build_id`. If present, resume it. Do not issue a second Build. Stop for unknown worktree changes, missing accepted SHA, conflicting Goals, or revision mismatch.

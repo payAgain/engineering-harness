@@ -54,3 +54,6 @@ This framework writes **tool-agnostic** paths. Any coding agent can read them.
 - Prefer the neutral paths above as SSOT.
 - Do not require installing this framework into any global IDE skills folder.
 - Optional adapters under `integrations/` may copy or symlink into IDE folders; they never replace `agents/` or `skills/` as source of truth.
+
+## Goal runtime layout
+`harness/goals/G-00x.yaml` and `G-00x-ACCEPTANCE.md` are runtime SSOT; `skills/goal.md` and `agents/goal-controller.md` drive the bounded loop.

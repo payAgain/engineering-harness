@@ -361,10 +361,11 @@ integrations/
 ```text
 AGENTS.md                 # 任意 Agent 的项目操作入口
 current-task.md           # 当前任务 / batch 焦点
-agents/                   # 角色定义（工具无关）
-skills/                   # clarify / initiative / start / plan / review / commit / handoff
+agents/                   # 角色定义（含 goal-controller，工具无关）
+skills/                   # clarify / initiative / goal / start / plan / review / commit / handoff
 harness/
-  builds/                 # B-00x 人类批准范围与 Plan revision
+  builds/                 # B-00x 的授权范围与 Plan revision
+  goals/                  # G-00x Goal manifest 与 Goal Acceptance
   drafts/                 # INTENT-CLARITY.md（产品级澄清）
   initiatives/            # 每个 feature/版本的 brief + INDEX
   PROTOCOL.md             # 协议副本
@@ -409,15 +410,32 @@ python harness/scripts/safe_bash_guard.py -- "<command>"
 
 ## 推荐工作流（摘要）
 
+### Goal mode（默认）
+
+```text
+Scope clarification
+→ Human confirms Scope once
+→ Goal G-001 becomes active by default
+→ AI repeats Plan/Replan → Build → Accept → commit → Evaluate
+→ continue | achieved | escalate
+→ Goal Acceptance or structured Human escalation
+→ stop on local working branch
+```
+
+Scope containment 要求每个委派 Build 绑定既有成功标准、保持在 `in_scope` 内、避开 `out_of_scope`，且不得越过高风险或对外操作门禁。默认预算为：同一 blocker 连续失败 3 次、无进展 Build 2 个、无人类确认的 Replan 5 次；达到预算即 `escalate`。
+
+如需逐次控制，可显式选择 `execution_mode: build-by-build`，此时每个 Build 仍需人类批准。无论采用哪种模式，Goal 模式不会自动 push、创建 PR、merge、tag、release 或操作生产环境；Ship 始终是人类门禁。
+
 0. **Clarify**（产品级，通常仅首次）→ Intent Clarity PASS
 1. **Charter → Bootstrap**（init 仅一次）→ 填写验证命令与 Production Readiness
-2. **Scope → Plan**（`P-00x`，默认串行）→ 可观察验收标准、影响分析、required checks / flows
-3. 人类批准 **Build B-00x 范围** → 写入 Build Manifest → 新 Orchestrator 按依赖推进
-4. Phase 内按有状态 `role_pipeline` 派独立角色 → 保留 Invocation Ledger
-5. 执行 Phase-bound 项目验证与真实流程观察 → 汇总 Production Readiness 证据
-6. **Accept** → Acceptance Evidence → must-commit → 记录真实 SHA
-7. **Archive**；下一 feature/fix/hotfix 回到 Scope，无需重新 init
-8. **audit / resume** → resume 仅限同一 Initiative；blocked 工作按 blocker trigger 恢复
+2. **Scope confirmation** → 默认创建有界 `Goal G-00x`；显式 `build-by-build` 时才逐 Build 审批
+3. **Plan / Replan**（`P-00x`，默认串行）→ 成功标准映射、影响分析、containment 与 required checks / flows
+4. Goal Controller 在当前 Scope revision 内签发 `B-00x` → 新 Orchestrator 按依赖推进
+5. Phase 内按有状态 `role_pipeline` 派独立角色 → 保留 Invocation Ledger
+6. 执行 Phase-bound 项目验证与真实流程观察 → **Build Accept** → must-commit → 记录真实 SHA
+7. **Goal Evaluate** → `continue` 自动推进下一 Build；`achieved` 完成 Goal Acceptance；`escalate` 停止并请求 Human
+8. **Archive**；下一 feature/fix/hotfix 回到 Scope，无需重新 init
+9. **audit / resume** → 恢复当前 Goal/Build；blocked 工作按 blocker trigger 恢复
 
 验证命令示例：
 

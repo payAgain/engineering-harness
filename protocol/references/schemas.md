@@ -53,11 +53,26 @@ Acceptance criteria must name an initial condition/input, action, observable res
 Phase cannot be `accepted` without `acceptance_doc`, `VERIFY PASS` for all declared command checks, recorded observed flows, and readiness evidence.
 New plans must not use `Task N` / `WP-*` titles — see `glossary.md`.
 
-## Build approval manifest
+## Goal manifest
+
+Path: `harness/goals/<G-00x>.yaml`. Goal YAML is a constrained, dependency-free schema: top-level `schema_version`, `goal_id`, `initiative_id`, `status`, `loop_stage`, and `execution_mode`; section-anchored `success_criteria`, `scope`, `authorization`, `budgets`, `progress`, `evaluation_ledger`, and `escalation`. Goal status is `draft|awaiting_scope_confirmation|active|achieved|accepted|paused|blocked|escalation_required|cancelled`. Criterion IDs are `SC-00x`; required criteria record `unmet|met`. Scope has a positive `revision`. Progress records `active_build_id`, aligned `accepted_build_ids` and `accepted_commit_shas`, and counters. At most one Goal may be `active` per Initiative.
+
+The checker intentionally parses only this repository-owned YAML shape, not general YAML. Recovery requires an active Build to exist and belong to the Goal, every accepted Build checkpoint to have a commit SHA, and `escalation.required: true` to pair with `status: escalation_required`.
+
+## Build authorization manifest
 
 Path: `harness/builds/<B-00x>.json`. Template: `harness/builds/_BUILD.template.json`.
 
-An approved Build requires `schema_version`, `build_id`, `initiative_id`, `plan_revision`, `status: approved`, non-empty `approved_phase_ids`, and an approval object with human reference/time. Orchestrator may dispatch and accept only listed Phase IDs. A scope change creates a new manifest/revision linked by `supersedes`; do not silently edit historical approval.
+A Build uses exactly one alternative:
+
+- `status: approved` plus `authorization.type: human-build-approval`, with non-placeholder `reference` and `authorized_at`;
+- `status: authorized` plus `authorization.type: goal-delegation`, with a matching active Goal, Initiative and positive Scope revision, and `containment.status: PASS`.
+
+Delegated containment has non-empty `success_criterion_ids`, all declared by the Goal, and an in-repository `evidence` path. Both alternatives require `schema_version`, `build_id`, `initiative_id`, positive `plan_revision`, and non-empty `approved_phase_ids`. Orchestrator may dispatch and accept only listed Phase IDs. Historical manifests are immutable and may link replacements through `supersedes`.
+
+## Goal acceptance evidence
+
+Path: `harness/goals/<G-00x>-ACCEPTANCE.md`. An accepted Goal requires all required criteria `met`, no active Build, and concrete sections for Criterion evidence, Build commits, Observed flows, Intent reconciliation, and Worktree checkpoint. It must state `Unauthorized outward actions: none` and end with `- Decision: `accepted``. Build acceptance remains separate and uses the Packet `acceptance_doc`.
 
 ## Blocker
 
