@@ -42,12 +42,16 @@ Configure `harness/verification.json` after confirming the commands work in this
 - `id`: stable, unique check name;
 - `required`: whether completion is impossible without this check;
 - `command`: command executed from the project root;
-- optional `cwd`: working directory relative to the project root.
+- optional `cwd`: working directory relative to the project root;
+- `timeout_seconds`: positive execution deadline; timeout is `FAIL`;
+- optional `result_file`: repository-relative JSON summary written by a test command when stricter suite accounting is useful;
+- optional `minimum_test_count`: minimum executed test count required when `result_file` is enabled.
 
 Initial command placeholders are:
 
 - Build: `{{BUILD_CMD}}`
-- Test: `{{TEST_CMD}}`
+- Unit test: `{{UNIT_TEST_CMD}}`
+- Integration test: `{{INTEGRATION_TEST_CMD}}`
 - Lint/type: `{{LINT_CMD}}`
 
 Do not replace an unknown command with a guessed command. An unconfigured required check produces `VERIFY INCOMPLETE` (exit 2), never `VERIFY PASS`.
@@ -77,6 +81,32 @@ python harness/scripts/verify.py --phase P-001 --evidence harness/evidence/<lead
 The Packet `verification_evidence` must name that repository-contained file. `verification-latest.json` remains a convenience result for interactive runs and cannot authorize an accepted Phase.
 
 Acceptance evidence must reference the Phase-bound result and any required observed user-flow verification. Running commands is not by itself proof that the affected behavior works.
+
+## Minimum Test Baseline
+
+Every executable software project requires both unit and integration tests as its minimum repeatable baseline:
+
+- **Unit tests** isolate changed logic and assert observable behavior, including relevant boundary and failure cases.
+- **Integration tests** exercise named real component or interface boundaries. A test that fully mocks every collaborating boundary is not integration evidence.
+- A behavior-changing Phase adds or updates regression tests at the appropriate layer and runs both affected baseline layers.
+- Existing tests may satisfy a layer when they genuinely cover the change; every Phase need not create redundant new tests.
+- Missing, failing, empty, or assertion-free required tests make verification `INCOMPLETE` or `FAIL`, and block Accept.
+
+A layer may be `exempt` only for a genuinely non-executable project or change, such as documentation-only or static assets with no executable behavior. Record the layer, narrow reason, and evidence supporting non-applicability. Convenience, schedule pressure, or an unavailable environment is not an exemption; unavailable required validation leaves the Phase incomplete.
+
+The Packet records this decision in `test_baseline`, and Acceptance maps each required layer to stable check IDs and Phase-bound evidence. Unit and integration checks should be separate IDs in `harness/verification.json` when the project exposes separate commands; if one command runs both, evidence must still identify both suites and their results.
+
+Projects that need stricter suite accounting may configure `result_file` and `minimum_test_count`. The test command then writes normalized JSON:
+
+```json
+{
+  "test_count": 12,
+  "failed": 0,
+  "skipped": 1
+}
+```
+
+When enabled, `test_count` must meet `minimum_test_count`, `failed` must be zero, and `skipped` must be between zero and `test_count`; stale results are deleted before execution. This enhancement is optional by default so projects can use their native test commands without building reporters or adapters. Enable it where empty-suite detection or auditable counts justify the extra integration.
 
 ## Change-Type Matrix
 

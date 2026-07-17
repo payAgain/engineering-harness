@@ -5,19 +5,29 @@
       "id": "build",
       "description": "Build the project or validate that it can be packaged",
       "required": true,
-      "command": "{{BUILD_CMD}}"
+      "command": "{{BUILD_CMD}}",
+      "timeout_seconds": 600
     },
     {
-      "id": "test",
-      "description": "Run the project's automated test suite",
+      "id": "unit-test",
+      "description": "Run isolated unit and helper-level behavioral tests",
       "required": true,
-      "command": "{{TEST_CMD}}"
+      "command": "{{UNIT_TEST_CMD}}",
+      "timeout_seconds": 600
+    },
+    {
+      "id": "integration-test",
+      "description": "Run tests across real component or interface boundaries",
+      "required": true,
+      "command": "{{INTEGRATION_TEST_CMD}}",
+      "timeout_seconds": 900
     },
     {
       "id": "lint",
       "description": "Run linting or static type checks when the project provides them",
       "required": false,
-      "command": "{{LINT_CMD}}"
+      "command": "{{LINT_CMD}}",
+      "timeout_seconds": 600
     }
   ]
 }

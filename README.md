@@ -38,7 +38,7 @@
 5. **人类把控发布面（Ship）**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
 6. **运行时 SSOT 永远是目标项目仓库**。
 7. **GitHub Flow**：Bootstrap/G1 之后不要在 `main`/`master` 上做实现类开发。
-8. **完成必须可证明**：必需项目检查未配置时是 `INCOMPLETE`，检查失败时是 `FAIL`；只有 Phase 绑定的验证、真实流程观察、生产就绪证据和独立角色记录完整后才能 Accept。
+8. **完成必须可证明，但保持适度**：可执行项目默认要求单元测试、集成测试、命令超时和真实流程观察；必需检查未配置时是 `INCOMPLETE`，失败或超时时是 `FAIL`。安全、性能、迁移、兼容性等专项验证由具体风险触发，不把所有项目拖入统一重流程。
 
 ### 当前生产质量闭环
 
@@ -51,8 +51,8 @@ Clarify
 → Plan（可观察的验收标准 + 影响分析）
 → Human 批准 Build 范围
 → 独立 Role Pipeline
-→ 项目命令验证 + 真实流程观察
-→ Production Readiness 证据
+→ 单元测试 + 集成测试 + 真实流程观察
+→ 风险触发的 Production Readiness 验证
 → Phase-bound Accept
 → must-commit
 → Archive / 下一轮维护
@@ -62,8 +62,8 @@ Clarify
 
 | 机制 | 作用 | 目标项目中的 SSOT |
 |---|---|---|
-| Production Readiness Profile | 定义功能、可靠性、数据、安全、性能、可观测性、部署、回滚、兼容性和可维护性要求 | `docs/production-readiness.md` |
-| Verification Contract | 配置真实 build/test/lint/type 等项目命令 | `harness/verification.json` |
+| Production Readiness Profile | 按风险选择功能、可靠性、数据、安全、性能、部署、回滚和兼容性验证，不默认全部强制 | `docs/production-readiness.md` |
+| Verification Contract | 配置真实 build、unit-test、integration-test 和可选 lint/type 命令及超时 | `harness/verification.json` |
 | Build Approval Manifest | 固化人类批准的 Plan revision 与 Phase 范围 | `harness/builds/B-00x.json` |
 | Phase Packet | 记录影响面、验收标准、角色步骤、验证 ID 和真实流程 | `harness/tasks/P-00x.md` |
 | Invocation Ledger | 证明 Implement/Test/Reviewer 等角色由独立实例执行，并保留失败与重试 | `harness/runtime/invocations/B-00x.yaml` |
@@ -71,7 +71,7 @@ Clarify
 | Acceptance Evidence | 汇总批准范围、验收标准、角色、运行观察、生产就绪、风险和 commit SHA | Packet 的 `acceptance_doc` |
 | Blocker Record | 保存阻塞原因、负责人、等待对象、恢复触发条件和下一动作 | Packet 的 `blocker` |
 
-这套机制不能替代项目自身的工程判断。模板负责阻止“没有证据就宣称完成”，具体项目仍需在 Bootstrap 时填写真实命令、生产约束和关键用户流程。
+这套机制不能替代项目自身的工程判断。模板只保留高价值底线：可执行项目的单元测试、集成测试、超时、真实流程观察和可追溯验收；测试数量 sidecar 是可选严格模式，安全、性能、迁移与兼容性等由实际风险触发。目标是阻止“没有证据就宣称完成”，而不是用繁琐文档限制 Agent 的工程判断与创新。
 
 角色目录与主流框架对照见 [`protocol/references/roles.md`](./protocol/references/roles.md)。
 
@@ -340,15 +340,17 @@ integrations/
 
 ### `tests/`：结构与冒烟验证
 
-当前测试集中在 `tests/test_structure.py`，覆盖：
+当前测试覆盖：
 
 - 框架、协议、模板和入口文件是否存在；
 - 协议与 README 是否保留关键流程约束；
 - `VERSION` 与 `pyproject.toml` 是否一致；
 - 文档和脚本是否包含机器本地绝对路径；
-- CLI 的 version、doctor、init、audit、guard 和 branch 基础流程。
+- CLI 的 version、doctor、init、audit、guard 和 branch 基础流程；
+- 单元测试 / 集成测试基线、超时、Phase 验收证据及 Goal 语义；
+- wheel 构建后在全新虚拟环境中的 `eh init → audit` 黑盒消费者流程。
 
-测试使用 Python 标准库 `unittest`，不依赖 pytest。
+仓库 CI 在 Windows / Ubuntu、Python 3.10 / 3.13 上执行完整测试和 wheel 消费者验证。测试使用 Python 标准库 `unittest`，不依赖 pytest。
 
 ### `docs/`：框架自身的设计记录
 
@@ -375,7 +377,7 @@ harness/
   runtime/invocations/    # 独立角色实例、状态、失败与重试记录
   evidence/               # Phase 验证、Acceptance 和生产就绪证据
   ownership/              # 模块与路径责任边界
-  verification.json       # 真实项目 build/test/lint 等命令契约
+  verification.json       # build、unit-test、integration-test、超时及可选检查契约
 docs/                     # verification、production-readiness、branching、error-journal…
 DECISIONS/                # 长期架构决策索引
 contracts/                # 模块、接口和数据契约
