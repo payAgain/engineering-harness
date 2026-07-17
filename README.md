@@ -285,7 +285,7 @@ engineering-harness/
 
 ### `assets/templates/`：目标项目模板
 
-这里不是框架运行时产生的数据，而是 `eh init` 的**模板源目录**。CLI 会根据 Light / Standard / Full 级别选择模板，替换项目名、级别、时间戳和验证命令占位符，然后写入目标项目。
+这里不是框架运行时产生的数据，而是 `eh init` 的**模板源目录**。CLI 按 Light / Standard / Full 选择流程资产，并根据独立的 `--docs` 选择交付文档；随后替换项目名、级别、时间戳和验证命令占位符，写入目标项目。
 
 | 子目录或文件 | 初始化后的作用 |
 |---|---|
@@ -299,7 +299,7 @@ engineering-harness/
 | `harness/session/` | 可恢复的会话状态、日志和进度图 |
 | `harness/scripts/` | 目标项目内执行的结构、分支、验证和命令守卫脚本 |
 | `harness/ownership/` | 模块或路径的责任边界 |
-| `docs/` | 面向人类的交付文档：概览、需求、架构、验证、部署运维、版本记录，以及工程治理附件 |
+| `docs/` | `verification.md`，以及经 Clarify 阶段由 Agent 推荐、用户确认后通过 `--docs` 选择的需求、设计、测试、用户、运维、追踪、验收和发布文档 |
 | `DECISIONS/` | 架构决策索引 |
 
 模板写入目标项目后，**目标项目中的副本才是该项目的运行时 SSOT**。不要让 `integrations/` 中的 IDE 镜像取代这些中性文件。
@@ -311,7 +311,7 @@ engineering-harness/
 | 模块 | 职责 |
 |---|---|
 | `cli.py` | 定义命令行参数并分派 `init`、`audit`、`check`、`guard`、`branch-*`、`doctor` |
-| `init.py` | 按级别渲染和复制模板，生成 `.harness-version` |
+| `init.py` | 按 level 渲染流程资产，按 `--docs` 渲染用户确认的交付文档，生成 `.harness-version` |
 | `paths.py` | 维护模板清单、必需文件清单、危险命令模式及资源路径 |
 | `check.py` | 检查目标项目结构、读取 level、执行命令模式守卫 |
 | `audit.py` | 组合结构、守卫和分支检查，审计已初始化项目 |
