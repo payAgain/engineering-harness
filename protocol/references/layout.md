@@ -31,14 +31,28 @@ This framework writes **tool-agnostic** paths. Any coding agent can read them.
 │   ├── evidence/
 │   ├── drafts/
 │   └── scripts/
-├── docs/
+├── docs/                         # verification plus selected delivery documents
 │   ├── verification.md
-│   ├── error-journal.md
-│   └── architecture.md
+│   ├── delivery/delivery-list.md
+│   ├── requirements/software-requirements-specification.md
+│   ├── design/                   # design, interface, and data specifications
+│   ├── testing/                  # plan, specification, and report
+│   ├── user/                     # quick start and user/admin guides
+│   ├── operations/               # deployment and operations guides
+│   ├── traceability/requirements-traceability-matrix.md
+│   ├── acceptance/acceptance-report.md
+│   └── releases/_RELEASE.template.md
 ├── DECISIONS/
 ├── contracts/
 └── .harness-version
 ```
+
+## Human delivery boundary
+
+- Delivery documents are optional and selected independently of Harness level with `eh init --docs ...`; `.harness-version` records the selection.
+- `harness/`, `agents/`, `skills/`, and session files are the Agent control plane; they are auditable inputs, not substitutes for requirements, design, test, user, operations, traceability, acceptance, or release documents.
+- Do not overwrite an existing project `README.md`. Select `delivery-list` when the project needs a stable initialized document index.
+- Copy `_RELEASE.template.md` to a concrete release file for each release-oriented delivery; never record an actual release by editing the template.
 
 ## Vocabulary mapping across tools
 

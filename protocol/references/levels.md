@@ -39,6 +39,7 @@
 | Reviewer 门（risk≥8 / code） | ✗ | 建议 | ✓（强制） |
 | 完整 G0–G6 / 集成屏障 / 发版单写 | ✗ | 按需 | ✓（强制） |
 | `docs/approval-policy.md`（tag/push/release） | ✗ | 可选 | ✓（init Full 写入） |
+| 可选人类交付文档（`eh init --docs ...`） | 按项目选择 | 按项目选择 | 按项目选择；Ship 前审阅所选文档 |
 | 安全/规划等可选专家角色 | ✗ | 按需加 | 按需加且更常启用 |
 
 ## 典型场景举例

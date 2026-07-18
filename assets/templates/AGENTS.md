@@ -24,7 +24,7 @@ At session/batch start, follow `skills/start.md`:
 8. `contracts/<module>.contract.md` (if present)
 9. `harness/ownership/OWNERSHIP.yaml` (if present)
 10. `harness/tasks/<task>.md` (if present)
-11. `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md`
+11. `docs/verification.md` and delivery documents selected in `.harness-version`
 12. relevant `agents/<role>.md`
 
 Output a Session Briefing before editing.

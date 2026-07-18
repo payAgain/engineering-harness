@@ -6,7 +6,12 @@ import json
 import re
 from pathlib import Path
 
-from engineering_harness.paths import DANGEROUS_PATTERNS, LIGHT_REQUIRED, STANDARD_REQUIRED
+from engineering_harness.paths import (
+    DANGEROUS_PATTERNS,
+    DELIVERY_DOCUMENTS,
+    LIGHT_REQUIRED,
+    STANDARD_REQUIRED,
+)
 
 GOAL_STATUSES = {"draft", "awaiting_scope_confirmation", "active", "achieved", "accepted", "paused", "blocked", "escalation_required", "cancelled"}
 
@@ -19,10 +24,14 @@ def load_level(root: Path) -> str:
     return str(meta.get("level") or "Standard")
 
 
-def required_files(level: str) -> list[str]:
+def required_files(level: str, delivery_documents: list[str] | None = None) -> list[str]:
     files = list(LIGHT_REQUIRED)
     if level in {"Standard", "Full"}:
         files.extend(STANDARD_REQUIRED)
+    for document_id in delivery_documents or []:
+        document = DELIVERY_DOCUMENTS.get(document_id)
+        if document:
+            files.append(document[1])
     return files
 
 
@@ -32,6 +41,23 @@ def _frontmatter_value(text: str, key: str) -> str | None:
         return None
     field = re.search(rf"(?m)^{re.escape(key)}:\s*([^\n#]+)", match.group(1))
     return field.group(1).strip() if field else None
+
+
+def _normalize_list_item(value: str) -> str:
+    return value.strip().strip("\"'").strip()
+
+
+def _frontmatter_list(text: str, key: str) -> list[str]:
+    match = re.match(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", text, re.DOTALL)
+    if not match:
+        return []
+    inline = re.search(rf"(?m)^{re.escape(key)}:\s*\[([^]]*)\]\s*$", match.group(1))
+    if inline:
+        return [_normalize_list_item(item) for item in inline.group(1).split(",") if _normalize_list_item(item)]
+    block = re.search(rf"(?ms)^{re.escape(key)}:\s*\n((?:\s{{2}}-\s*[^\n]+\n?)*)", match.group(1))
+    if not block:
+        return []
+    return [_normalize_list_item(item) for item in re.findall(r"(?m)^\s{2}-\s*([^\n#]+)", block.group(1)) if _normalize_list_item(item)]
 
 
 def _inside_root(root: Path, value: str | None) -> Path | None:
@@ -153,11 +179,45 @@ def _validate_build_authorization(path: Path, data: dict[str, object], goals: di
     return True
 
 
+def _evidenced_requirement_ids(text: str) -> set[str]:
+    evidenced: set[str] = set()
+    requirement_column: int | None = None
+    result_column: int | None = None
+    for line in text.splitlines():
+        if line.lstrip().startswith("|"):
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            normalized = [cell.strip("` ").lower() for cell in cells]
+            if "requirement ids" in normalized and "result" in normalized:
+                requirement_column = normalized.index("requirement ids")
+                result_column = normalized.index("result")
+                continue
+            if requirement_column is not None and result_column is not None:
+                if len(cells) > max(requirement_column, result_column):
+                    result = cells[result_column].strip("` ").lower()
+                    if result == "pass":
+                        evidenced.update(
+                            re.findall(
+                                r"(?<![A-Za-z0-9_-])[A-Z][A-Z0-9_-]*-\d+(?![A-Za-z0-9_-])",
+                                cells[requirement_column],
+                            )
+                        )
+                continue
+        else:
+            requirement_column = None
+            result_column = None
+        if not re.search(r"(?i)requirement(?:\s+ids?|\s+coverage)?", line):
+            continue
+        if re.search(r"(?i)\b(fail(?:ed)?|not tested|missing|blocked)\b", line):
+            continue
+        evidenced.update(re.findall(r"(?<![A-Za-z0-9_-])[A-Z][A-Z0-9_-]*-\d+(?![A-Za-z0-9_-])", line))
+    return evidenced
+
+
 def _valid_goal_acceptance(path: Path) -> bool:
     if not path.is_file():
         return False
     text = path.read_text(encoding="utf-8")
-    required = ("Criterion evidence", "Build commits", "Observed flows", "Intent reconciliation", "Worktree checkpoint")
+    required = ("Requirement coverage", "Criterion evidence", "Build commits", "Observed flows", "Intent reconciliation", "Worktree checkpoint")
     if not all(re.search(rf"(?mi)^#+\s*{re.escape(heading)}\s*$", text) for heading in required):
         return False
     if "<" in "\n".join(line for line in text.splitlines() if any(h.lower() in line.lower() for h in required)):
@@ -221,7 +281,12 @@ def _semantic_problems(root: Path) -> list[str]:
         acceptance_rel, verification_rel = _frontmatter_value(text, "acceptance_doc"), _frontmatter_value(text, "verification_evidence")
         acceptance = _inside_root(root, acceptance_rel)
         if not acceptance or not acceptance.is_file(): problems.append(f"ACCEPTED WITHOUT EVIDENCE: {path.relative_to(root)}")
-        elif not re.search(r"(?m)^- Decision:\s*`accepted`\s*$", acceptance.read_text(encoding="utf-8")): problems.append(f"INVALID ACCEPTANCE DECISION: {acceptance_rel}")
+        else:
+            acceptance_text = acceptance.read_text(encoding="utf-8")
+            if not re.search(r"(?m)^- Decision:\s*`accepted`\s*$", acceptance_text): problems.append(f"INVALID ACCEPTANCE DECISION: {acceptance_rel}")
+            evidenced_requirements = _evidenced_requirement_ids(acceptance_text)
+            missing_requirements = [requirement for requirement in _frontmatter_list(text, "requirement_ids") if requirement not in evidenced_requirements]
+            if missing_requirements: problems.append(f"ACCEPTED WITHOUT REQUIREMENT EVIDENCE: {path.relative_to(root)}: {', '.join(missing_requirements)}")
         verification = _inside_root(root, verification_rel)
         if not verification:
             problems.append(f"ACCEPTED WITHOUT PHASE VERIFICATION: {path.relative_to(root)}")
@@ -240,9 +305,16 @@ def _semantic_problems(root: Path) -> list[str]:
 
 def harness_check(root: Path) -> list[str]:
     root = root.resolve(); problems: list[str] = []
-    try: level = load_level(root)
-    except Exception as exc: return [str(exc)]
-    problems.extend(f"MISSING: {rel}" for rel in required_files(level) if not (root / rel).exists())
+    try:
+        level = load_level(root)
+        meta = json.loads((root / ".harness-version").read_text(encoding="utf-8"))
+    except Exception as exc:
+        return [str(exc)]
+    selected = meta.get("delivery_documents", []) if isinstance(meta, dict) else None
+    if not isinstance(selected, list) or any(not isinstance(item, str) or item not in DELIVERY_DOCUMENTS for item in selected):
+        problems.append(".harness-version has invalid delivery_documents")
+        selected = []
+    problems.extend(f"MISSING: {rel}" for rel in required_files(level, selected) if not (root / rel).exists())
     state = root / "harness" / "session" / "session-state.json"
     if state.exists():
         try: json.loads(state.read_text(encoding="utf-8"))

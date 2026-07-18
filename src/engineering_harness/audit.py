@@ -65,12 +65,6 @@ def audit_project(target: Path) -> tuple[int, list[str]]:
 
     level = str(meta.get("level") or "Standard")
     if level in {"Standard", "Full"}:
-        branching = target / "docs" / "branching.md"
-        if not branching.exists():
-            lines.append("AUDIT FAIL: docs/branching.md missing (GitHub Flow policy)")
-            return 1, lines
-        lines.append("Branching policy present: docs/branching.md (GitHub Flow)")
-
         branch = current_branch(target)
         code, branch_msg = evaluate_branch(branch, allow_protected=False)
         lines.append(branch_msg)
