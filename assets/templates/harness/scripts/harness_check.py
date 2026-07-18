@@ -193,7 +193,30 @@ def _validate_build_authorization(path: Path, data: dict[str, object], goals: di
 
 def _evidenced_requirement_ids(text: str) -> set[str]:
     evidenced: set[str] = set()
+    requirement_column: int | None = None
+    result_column: int | None = None
     for line in text.splitlines():
+        if line.lstrip().startswith("|"):
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            normalized = [cell.strip("` ").lower() for cell in cells]
+            if "requirement ids" in normalized and "result" in normalized:
+                requirement_column = normalized.index("requirement ids")
+                result_column = normalized.index("result")
+                continue
+            if requirement_column is not None and result_column is not None:
+                if len(cells) > max(requirement_column, result_column):
+                    result = cells[result_column].strip("` ").lower()
+                    if result == "pass":
+                        evidenced.update(
+                            re.findall(
+                                r"(?<![A-Za-z0-9_-])[A-Z][A-Z0-9_-]*-\d+(?![A-Za-z0-9_-])",
+                                cells[requirement_column],
+                            )
+                        )
+                continue
+        else:
+            requirement_column = None
+            result_column = None
         if not re.search(r"(?i)requirement(?:\s+ids?|\s+coverage)?", line):
             continue
         if re.search(r"(?i)\b(fail(?:ed)?|not tested|missing|blocked)\b", line):

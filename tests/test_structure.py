@@ -634,7 +634,31 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", similar_requirement.stdout)
             self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", framework_similar_requirement.stdout)
 
-            acceptance.write_text("# Evidence\n\n- Requirement IDs: `FR-001`\n- Decision: `accepted`\n", encoding="utf-8")
+            acceptance.write_text(
+                "# Evidence\n\n"
+                "## Acceptance criteria\n\n"
+                "| Requirement IDs | Criterion | Result | Evidence |\n"
+                "|---|---|---|---|\n"
+                "| `FR-001` | Given … when … then … | FAIL | observed output |\n\n"
+                "- Decision: `accepted`\n",
+                encoding="utf-8",
+            )
+            failed_requirement = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_failed_requirement = _cli("check", str(target))
+            self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", failed_requirement.stdout)
+            self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", framework_failed_requirement.stdout)
+
+            acceptance.write_text(
+                "# Evidence\n\n"
+                "## Acceptance criteria\n\n"
+                "| Requirement IDs | Criterion | Result | Evidence |\n"
+                "|---|---|---|---|\n"
+                "| `FR-001` | Given … when … then … | PASS | observed output |\n\n"
+                "- Decision: `accepted`\n",
+                encoding="utf-8",
+            )
 
             accepted = subprocess.run(
                 [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
