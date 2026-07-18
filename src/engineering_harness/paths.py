@@ -43,6 +43,7 @@ LIGHT_FILES = [
     ("AGENTS.md", "AGENTS.md"),
     ("current-task.md", "current-task.md"),
     ("docs/verification.md", "docs/verification.md"),
+    ("docs/readiness.md", "docs/readiness.md"),
     ("harness/session/session-state.json", "harness/session/session-state.json"),
     ("harness/session/session-log.md", "harness/session/session-log.md"),
     ("skills/clarify.md", "skills/clarify.md"),

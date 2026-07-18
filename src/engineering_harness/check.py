@@ -43,15 +43,21 @@ def _frontmatter_value(text: str, key: str) -> str | None:
     return field.group(1).strip() if field else None
 
 
+def _normalize_list_item(value: str) -> str:
+    return value.strip().strip("\"'").strip()
+
+
 def _frontmatter_list(text: str, key: str) -> list[str]:
     match = re.match(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", text, re.DOTALL)
     if not match:
         return []
     inline = re.search(rf"(?m)^{re.escape(key)}:\s*\[([^]]*)\]\s*$", match.group(1))
     if inline:
-        return [item.strip().strip("\"'") for item in inline.group(1).split(",") if item.strip()]
+        return [_normalize_list_item(item) for item in inline.group(1).split(",") if _normalize_list_item(item)]
     block = re.search(rf"(?ms)^{re.escape(key)}:\s*\n((?:\s{{2}}-\s*[^\n]+\n?)*)", match.group(1))
-    return re.findall(r"(?m)^\s{2}-\s*([^\n#]+)", block.group(1)) if block else []
+    if not block:
+        return []
+    return [_normalize_list_item(item) for item in re.findall(r"(?m)^\s{2}-\s*([^\n#]+)", block.group(1)) if _normalize_list_item(item)]
 
 
 def _inside_root(root: Path, value: str | None) -> Path | None:
@@ -173,11 +179,22 @@ def _validate_build_authorization(path: Path, data: dict[str, object], goals: di
     return True
 
 
+def _evidenced_requirement_ids(text: str) -> set[str]:
+    evidenced: set[str] = set()
+    for line in text.splitlines():
+        if not re.search(r"(?i)requirement(?:\s+ids?|\s+coverage)?", line):
+            continue
+        if re.search(r"(?i)\b(fail(?:ed)?|not tested|missing|blocked)\b", line):
+            continue
+        evidenced.update(re.findall(r"(?<![A-Za-z0-9_-])[A-Z][A-Z0-9_-]*-\d+(?![A-Za-z0-9_-])", line))
+    return evidenced
+
+
 def _valid_goal_acceptance(path: Path) -> bool:
     if not path.is_file():
         return False
     text = path.read_text(encoding="utf-8")
-    required = ("Criterion evidence", "Build commits", "Observed flows", "Intent reconciliation", "Worktree checkpoint")
+    required = ("Requirement coverage", "Criterion evidence", "Build commits", "Observed flows", "Intent reconciliation", "Worktree checkpoint")
     if not all(re.search(rf"(?mi)^#+\s*{re.escape(heading)}\s*$", text) for heading in required):
         return False
     if "<" in "\n".join(line for line in text.splitlines() if any(h.lower() in line.lower() for h in required)):
@@ -244,7 +261,8 @@ def _semantic_problems(root: Path) -> list[str]:
         else:
             acceptance_text = acceptance.read_text(encoding="utf-8")
             if not re.search(r"(?m)^- Decision:\s*`accepted`\s*$", acceptance_text): problems.append(f"INVALID ACCEPTANCE DECISION: {acceptance_rel}")
-            missing_requirements = [requirement for requirement in _frontmatter_list(text, "requirement_ids") if requirement not in acceptance_text]
+            evidenced_requirements = _evidenced_requirement_ids(acceptance_text)
+            missing_requirements = [requirement for requirement in _frontmatter_list(text, "requirement_ids") if requirement not in evidenced_requirements]
             if missing_requirements: problems.append(f"ACCEPTED WITHOUT REQUIREMENT EVIDENCE: {path.relative_to(root)}: {', '.join(missing_requirements)}")
         verification = _inside_root(root, verification_rel)
         if not verification:
@@ -269,8 +287,8 @@ def harness_check(root: Path) -> list[str]:
         meta = json.loads((root / ".harness-version").read_text(encoding="utf-8"))
     except Exception as exc:
         return [str(exc)]
-    selected = meta.get("delivery_documents", [])
-    if not isinstance(selected, list) or any(item not in DELIVERY_DOCUMENTS for item in selected):
+    selected = meta.get("delivery_documents", []) if isinstance(meta, dict) else None
+    if not isinstance(selected, list) or any(not isinstance(item, str) or item not in DELIVERY_DOCUMENTS for item in selected):
         problems.append(".harness-version has invalid delivery_documents")
         selected = []
     problems.extend(f"MISSING: {rel}" for rel in required_files(level, selected) if not (root / rel).exists())

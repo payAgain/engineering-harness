@@ -422,6 +422,58 @@ class PythonCliSmokeTests(unittest.TestCase):
             guard_bad = _cli("guard", "--", "git reset --hard")
             self.assertEqual(guard_bad.returncode, 1, guard_bad.stdout + guard_bad.stderr)
 
+    def test_delivery_document_selection_requires_confirmation_and_survives_reinit(self):
+        with tempfile.TemporaryDirectory(prefix="eh-doc-state-") as tmp:
+            target = Path(tmp) / "demo"
+            missing = _cli("init", str(target), "--level", "Light")
+            self.assertEqual(missing.returncode, 2, missing.stdout + missing.stderr)
+            self.assertIn("--docs is required", missing.stderr)
+            self.assertFalse(target.exists())
+
+            empty = _cli("init", str(target), "--docs", ",,,")
+            self.assertEqual(empty.returncode, 2, empty.stdout + empty.stderr)
+            self.assertIn("cannot be empty", empty.stderr)
+            self.assertFalse(target.exists())
+
+            initialized = _cli("init", str(target), "--level", "Light", "--docs", "recommended")
+            self.assertEqual(initialized.returncode, 0, initialized.stdout + initialized.stderr)
+            before = json.loads((target / ".harness-version").read_text(encoding="utf-8"))["delivery_documents"]
+            repeated = _cli("init", str(target), "--level", "Light", "--force")
+            self.assertEqual(repeated.returncode, 0, repeated.stdout + repeated.stderr)
+            after = json.loads((target / ".harness-version").read_text(encoding="utf-8"))["delivery_documents"]
+            self.assertEqual(after, before)
+
+    def test_checkers_reject_invalid_document_metadata_and_match_required_files(self):
+        with tempfile.TemporaryDirectory(prefix="eh-doc-meta-") as tmp:
+            target = Path(tmp) / "demo"
+            initialized = _cli("init", str(target), "--level", "Standard", "--docs", "none")
+            self.assertEqual(initialized.returncode, 0, initialized.stdout + initialized.stderr)
+            local_script = target / "harness/scripts/harness_check.py"
+
+            meta_path = target / ".harness-version"
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            meta["delivery_documents"] = [{"id": "requirements"}]
+            meta_path.write_text(json.dumps(meta), encoding="utf-8")
+            framework = _cli("check", str(target))
+            local = subprocess.run([sys.executable, str(local_script)], capture_output=True, text=True, cwd=target)
+            self.assertEqual(framework.returncode, 1, framework.stdout + framework.stderr)
+            self.assertEqual(local.returncode, 1, local.stdout + local.stderr)
+            self.assertIn("invalid delivery_documents", framework.stdout)
+            self.assertIn("invalid delivery_documents", local.stdout)
+            self.assertNotIn("Traceback", framework.stderr + local.stderr)
+
+            meta["delivery_documents"] = []
+            meta_path.write_text(json.dumps(meta), encoding="utf-8")
+            for rel in ("agents/test.md", "DECISIONS/INDEX.md"):
+                path = target / rel
+                saved = path.read_text(encoding="utf-8")
+                path.unlink()
+                framework = _cli("check", str(target))
+                local = subprocess.run([sys.executable, str(local_script)], capture_output=True, text=True, cwd=target)
+                self.assertIn(f"MISSING: {rel}", framework.stdout)
+                self.assertIn(f"MISSING: {rel}", local.stdout)
+                path.write_text(saved, encoding="utf-8")
+
     def test_delivery_document_selection_and_dynamic_check(self):
         with tempfile.TemporaryDirectory(prefix="eh-docs-") as tmp:
             target = Path(tmp) / "demo"
@@ -448,7 +500,7 @@ class PythonCliSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="eh-goal-flow-") as tmp:
             target = Path(tmp) / "demo"
             target.mkdir()
-            init = _cli("init", str(target), "--level", "Standard", "--name", "demo")
+            init = _cli("init", str(target), "--level", "Standard", "--name", "demo", "--docs", "none")
             self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
             combined = "\n".join(
                 (target / rel).read_text(encoding="utf-8")
@@ -468,7 +520,7 @@ class PythonCliSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="eh-verify-") as tmp:
             target = Path(tmp) / "demo"
             target.mkdir()
-            init = _cli("init", str(target), "--level", "Light", "--name", "demo")
+            init = _cli("init", str(target), "--level", "Light", "--name", "demo", "--docs", "none")
             self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
             self.assertFalse((target / "docs/requirements").exists())
             self.assertFalse((target / "docs/testing").exists())
@@ -518,7 +570,7 @@ class PythonCliSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="eh-accept-") as tmp:
             target = Path(tmp) / "demo"
             target.mkdir()
-            init = _cli("init", str(target), "--level", "Standard", "--name", "demo")
+            init = _cli("init", str(target), "--level", "Standard", "--name", "demo", "--docs", "none")
             self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
 
             packet = target / "harness/tasks/P-001.md"
@@ -573,6 +625,15 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(framework_missing_requirement.returncode, 1, framework_missing_requirement.stdout + framework_missing_requirement.stderr)
             self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", missing_requirement.stdout)
             self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", framework_missing_requirement.stdout)
+
+            acceptance.write_text("# Evidence\n\n- Requirement IDs: `FR-0010`\n- Decision: `accepted`\n", encoding="utf-8")
+            similar_requirement = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_similar_requirement = _cli("check", str(target))
+            self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", similar_requirement.stdout)
+            self.assertIn("ACCEPTED WITHOUT REQUIREMENT EVIDENCE", framework_similar_requirement.stdout)
+
             acceptance.write_text("# Evidence\n\n- Requirement IDs: `FR-001`\n- Decision: `accepted`\n", encoding="utf-8")
 
             accepted = subprocess.run(
@@ -603,7 +664,7 @@ class PythonCliSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="eh-contract-") as tmp:
             target = Path(tmp) / "demo"
             target.mkdir()
-            init = _cli("init", str(target), "--level", "Standard", "--name", "demo")
+            init = _cli("init", str(target), "--level", "Standard", "--name", "demo", "--docs", "none")
             self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
             packet = target / "harness/tasks/P-001.md"
             packet.write_text(

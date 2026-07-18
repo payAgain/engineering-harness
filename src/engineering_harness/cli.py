@@ -33,8 +33,8 @@ def build_parser() -> argparse.ArgumentParser:
     init_p.add_argument("--name", default="", help="Project name override")
     init_p.add_argument(
         "--docs",
-        default="none",
-        help="Delivery documents: none, recommended, all, or comma-separated document IDs",
+        default=None,
+        help="Delivery documents: none, recommended, all, or comma-separated document IDs; required on first init",
     )
     init_p.add_argument("--force", action="store_true", help="Overwrite existing generated files")
 
@@ -89,13 +89,16 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.action == "init":
-        logs = init_project(
-            args.target,
-            level=args.level,
-            project_name=(args.name or None),
-            force=args.force,
-            delivery_documents=args.docs,
-        )
+        try:
+            logs = init_project(
+                args.target,
+                level=args.level,
+                project_name=(args.name or None),
+                force=args.force,
+                delivery_documents=args.docs,
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
         for line in logs:
             print(line)
         print("")
@@ -103,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Target: {args.target.resolve()}")
         print(f"Level: {args.level}")
         print(f"Framework: {read_version()}")
-        print(f"Delivery documents: {args.docs}")
+        print(f"Delivery documents: {args.docs or 'preserved'}")
         print("Give any agent: <project>/harness/PROTOCOL.md (or framework PROTOCOL.md)")
         print("Branching: GitHub Flow — do not develop on main; use feat/* etc.")
         print(f"Next: python -m engineering_harness audit {args.target.resolve()}")

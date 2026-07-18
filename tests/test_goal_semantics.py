@@ -79,6 +79,8 @@ class GoalSemanticValidationTests(unittest.TestCase):
         self.goal(status="accepted", criterion="met")
         self.assertIn("GOAL ACCEPTED WITHOUT EVIDENCE: G-001", self.check_both())
         acceptance = """# Goal Acceptance
+## Requirement coverage
+FR-001 covered by SC-001.
 ## Criterion evidence
 SC-001 met by tests.
 ## Build commits

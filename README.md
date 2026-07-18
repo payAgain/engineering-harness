@@ -111,7 +111,7 @@ Clarify
 ```text
 eh.cmd --version
 eh.cmd doctor
-eh.cmd init <目标项目路径> --level Standard
+eh.cmd init <目标项目路径> --level Standard --docs none
 eh.cmd audit <目标项目路径>
 eh.cmd branch-check <目标项目路径>
 eh.cmd branch-new <slug> <目标项目路径>
@@ -124,7 +124,7 @@ eh.cmd guard -- "git reset --hard"
 ```text
 install.cmd
 eh --version
-eh init <目标项目路径> --level Standard
+eh init <目标项目路径> --level Standard --docs none
 ```
 
 等价于：
@@ -143,7 +143,7 @@ python -m pip install -e .
 eh.cmd init <project> --level Standard --name my-app --docs recommended
 ```
 
-`--docs` 与 Harness level 独立，接受 `none`（默认）、`recommended`、`all`，或逗号分隔的文档 ID。正常工作流中不要求人类预先记住这些 ID：Clarify 阶段由 Agent 主动询问交付对象和项目类型，推荐最小充分集合并解释排除项，取得人类确认后由 Bootstrap 传给 `--docs`。`none` 也必须明确确认。
+`--docs` 与 Harness level 独立，接受 `none`、`recommended`、`all`，或逗号分隔的文档 ID。首次初始化必须显式传入该参数，未提供不会被静默解释为 `none`；重复初始化未提供时则保留 `.harness-version` 中的既有选择。正常工作流中不要求人类预先记住这些 ID：Clarify 阶段由 Agent 主动询问交付对象和项目类型，推荐最小充分集合并解释排除项，取得人类确认后由 Bootstrap 传给 `--docs`。`none` 也必须明确确认。
 
 ```text
 eh.cmd init <project> --docs requirements,design,test-plan,test-report

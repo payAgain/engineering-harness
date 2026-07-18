@@ -71,11 +71,15 @@ def copy_template(
     return f"WRITE: {dest_rel}"
 
 
-def resolve_delivery_documents(selection: str | None) -> list[str]:
-    value = (selection or "none").strip()
+def resolve_delivery_documents(selection: str) -> list[str]:
+    value = selection.strip()
+    if not value:
+        raise ValueError("delivery document selection cannot be empty; use 'none' explicitly")
     if value in DOCUMENT_PRESETS:
         return list(DOCUMENT_PRESETS[value])
     document_ids = [item.strip() for item in value.split(",") if item.strip()]
+    if not document_ids:
+        raise ValueError("delivery document selection cannot be empty; use 'none' explicitly")
     unknown = sorted(set(document_ids) - DELIVERY_DOCUMENTS.keys())
     if unknown:
         choices = ", ".join(DELIVERY_DOCUMENTS)
@@ -95,10 +99,28 @@ def init_project(
         raise ValueError(f"unsupported level: {level}")
 
     target = target.resolve()
+    version_path = target / ".harness-version"
+    if delivery_documents is None:
+        if not version_path.is_file():
+            raise ValueError("--docs is required on first init; use 'none' to confirm no delivery documents")
+        try:
+            existing_meta = json.loads(version_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"cannot preserve delivery documents from .harness-version: {exc}") from exc
+        if not isinstance(existing_meta, dict):
+            raise ValueError("cannot preserve delivery documents: .harness-version root must be an object")
+        existing_documents = existing_meta.get("delivery_documents")
+        if not isinstance(existing_documents, list) or not all(
+            isinstance(item, str) and item in DELIVERY_DOCUMENTS for item in existing_documents
+        ):
+            raise ValueError("cannot preserve invalid delivery_documents from .harness-version")
+        selected_documents = list(dict.fromkeys(existing_documents))
+    else:
+        selected_documents = resolve_delivery_documents(delivery_documents)
+
     target.mkdir(parents=True, exist_ok=True)
     name = project_name or target.name
     timestamp = _now()
-    selected_documents = resolve_delivery_documents(delivery_documents)
     logs: list[str] = []
 
     for source_rel, dest_rel in LIGHT_FILES:
