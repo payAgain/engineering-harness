@@ -7,7 +7,7 @@ Preserve durable state so the next agent session can resume without chat history
 - Update `current-task.md`, `session-state.json`, `session-log.md`
 - Record completed work, validation, risks, next 3 steps
 - Update cognitive_state and command-history
-- Append `docs/error-journal.md` for repeated failures
+- Record repeated failures in the current blocker and verification evidence
 - Do not claim completion without evidence
 
 ## Output

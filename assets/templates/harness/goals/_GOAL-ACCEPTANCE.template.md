@@ -4,6 +4,9 @@
 - Goal: `G-00x`
 - Scope revision: 1
 
+## Requirement coverage
+- FR-00x: `covered|deferred|blocked` — criterion/evidence reference
+
 ## Criterion evidence
 - SC-00x: evidence and commit SHA
 

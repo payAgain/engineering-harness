@@ -24,6 +24,8 @@ blocker: null
 #   next_action: <first action after trigger>
 #   created_at: <ISO-8601>
 dependencies: []
+requirement_ids:
+  - FR-001
 readiness_dimensions:
   - functional-correctness
   - maintainability

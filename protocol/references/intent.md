@@ -50,6 +50,7 @@ Ask across these dimensions. Skip only with an explicit human “N/A / 以后再
 | Options | 关键分歧的备选方案与推荐（附取舍） |
 | Risks | 已知风险、依赖外部资料、可能推翻设计的未知 |
 | Harness | Light / Standard / Full 与原因 |
+| Delivery documents | 交付对象、项目类型、AI 推荐/排除理由、用户确认的文档 ID 或明确 `none` |
 | Git | 是否已有仓？分支策略是否接受 GitHub Flow？ |
 
 ## High-risk wording trigger
@@ -94,10 +95,11 @@ Exit criteria for high-risk wording include a recorded answer to: **Can still cl
 
 1. `harness/drafts/INTENT-CLARITY.md` 存在且覆盖上表维度（允许 deferred，不允许 silent skip）
 2. Open Questions 为空，或每一项都有 `deferred + owner + revisit trigger`
-3. 人类明确确认，例如：
+3. 交付文档选择已由 Agent 主动提出建议并获得人类明确确认；不得从 Harness level 推断，`none` 也必须明确确认
+4. 人类明确确认，例如：
    - 「目标已明确，可以开始」
    - 「无歧义，进入 Round A / G0」
-4. Agent 回复中写明：`Intent Clarity: PASS` 与确认引用
+5. Agent 回复中写明：`Intent Clarity: PASS` 与确认引用
 
 未达退出条件 → 状态保持 `G0: clarifying-intent`，继续提问。
 

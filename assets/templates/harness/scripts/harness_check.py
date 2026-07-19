@@ -6,8 +6,26 @@ import json
 import re
 from pathlib import Path
 
-LIGHT_REQUIRED = ['AGENTS.md', 'current-task.md', 'docs/verification.md', 'docs/production-readiness.md', 'harness/session/session-state.json', 'harness/session/session-log.md', 'skills/clarify.md', 'skills/start.md', 'skills/handoff.md', 'harness/scripts/harness_check.py', 'harness/scripts/verify.py', 'harness/verification.json', 'harness/drafts/INTENT-CLARITY.md']
-STANDARD_REQUIRED = ['docs/error-journal.md', 'docs/architecture.md', 'docs/branching.md', 'harness/session/progress-map.md', 'harness/session/command-history.md', 'skills/plan.md', 'skills/review.md', 'skills/commit.md', 'skills/initiative.md', 'harness/initiatives/INDEX.md', 'harness/scripts/safe_bash_guard.py', 'harness/scripts/branch_check.py', 'agents/orchestrator.md', 'agents/architect-contract.md', 'agents/reviewer.md', 'agents/integration-release.md', 'harness/tasks/REGISTRY.yaml', 'harness/ownership/OWNERSHIP.yaml', 'harness/runtime/_INVOCATIONS.template.yaml', 'harness/builds/_BUILD.template.json', 'harness/evidence/_ACCEPTANCE.template.md']
+LIGHT_REQUIRED = ['AGENTS.md', 'current-task.md', 'docs/verification.md', 'docs/readiness.md', 'harness/session/session-state.json', 'harness/session/session-log.md', 'skills/clarify.md', 'skills/start.md', 'skills/handoff.md', 'harness/scripts/harness_check.py', 'harness/scripts/verify.py', 'harness/verification.json', 'harness/drafts/INTENT-CLARITY.md']
+STANDARD_REQUIRED = ['harness/session/progress-map.md', 'harness/session/command-history.md', 'skills/plan.md', 'skills/review.md', 'skills/commit.md', 'skills/initiative.md', 'skills/goal.md', 'agents/goal-controller.md', 'harness/goals/_GOAL.template.yaml', 'harness/goals/_GOAL-ACCEPTANCE.template.md', 'harness/initiatives/INDEX.md', 'harness/scripts/safe_bash_guard.py', 'harness/scripts/branch_check.py', 'agents/orchestrator.md', 'agents/architect-contract.md', 'agents/reviewer.md', 'agents/integration-release.md', 'agents/test.md', 'harness/tasks/REGISTRY.yaml', 'harness/ownership/OWNERSHIP.yaml', 'harness/runtime/_INVOCATIONS.template.yaml', 'harness/builds/_BUILD.template.json', 'harness/evidence/_ACCEPTANCE.template.md', 'DECISIONS/INDEX.md']
+DELIVERY_DOCUMENTS = {
+    'delivery-list': 'docs/delivery/delivery-list.md',
+    'requirements': 'docs/requirements/software-requirements-specification.md',
+    'design': 'docs/design/software-design-description.md',
+    'interface-spec': 'docs/design/interface-specification.md',
+    'data-design': 'docs/design/data-design.md',
+    'test-plan': 'docs/testing/test-plan.md',
+    'test-spec': 'docs/testing/test-specification.md',
+    'test-report': 'docs/testing/test-report.md',
+    'quick-start': 'docs/user/quick-start.md',
+    'user-manual': 'docs/user/user-manual.md',
+    'admin-guide': 'docs/user/administrator-guide.md',
+    'deployment-guide': 'docs/operations/deployment-guide.md',
+    'operations-manual': 'docs/operations/operations-manual.md',
+    'traceability': 'docs/traceability/requirements-traceability-matrix.md',
+    'acceptance-report': 'docs/acceptance/acceptance-report.md',
+    'release-notes': 'docs/releases/_RELEASE.template.md',
+}
 DANGEROUS_PATTERNS = ['rm -rf /', 'rm -rf .', 'git reset --hard', 'git clean -fd', 'git push --force', 'git push -f', 'drop database', 'truncate table', 'supabase db reset', 'prisma migrate reset']
 
 GOAL_STATUSES = {"draft", "awaiting_scope_confirmation", "active", "achieved", "accepted", "paused", "blocked", "escalation_required", "cancelled"}
@@ -21,10 +39,11 @@ def load_level(root: Path) -> str:
     return str(meta.get("level") or "Standard")
 
 
-def required_files(level: str) -> list[str]:
+def required_files(level: str, delivery_documents: list[str] | None = None) -> list[str]:
     files = list(LIGHT_REQUIRED)
     if level in {"Standard", "Full"}:
         files.extend(STANDARD_REQUIRED)
+    files.extend(DELIVERY_DOCUMENTS[item] for item in delivery_documents or [] if item in DELIVERY_DOCUMENTS)
     return files
 
 
@@ -34,6 +53,23 @@ def _frontmatter_value(text: str, key: str) -> str | None:
         return None
     field = re.search(rf"(?m)^{re.escape(key)}:\s*([^\n#]+)", match.group(1))
     return field.group(1).strip() if field else None
+
+
+def _normalize_list_item(value: str) -> str:
+    return value.strip().strip("\"'").strip()
+
+
+def _frontmatter_list(text: str, key: str) -> list[str]:
+    match = re.match(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", text, re.DOTALL)
+    if not match:
+        return []
+    inline = re.search(rf"(?m)^{re.escape(key)}:\s*\[([^]]*)\]\s*$", match.group(1))
+    if inline:
+        return [_normalize_list_item(item) for item in inline.group(1).split(",") if _normalize_list_item(item)]
+    block = re.search(rf"(?ms)^{re.escape(key)}:\s*\n((?:\s{{2}}-\s*[^\n]+\n?)*)", match.group(1))
+    if not block:
+        return []
+    return [_normalize_list_item(item) for item in re.findall(r"(?m)^\s{2}-\s*([^\n#]+)", block.group(1)) if _normalize_list_item(item)]
 
 
 def _inside_root(root: Path, value: str | None) -> Path | None:
@@ -205,11 +241,45 @@ def _validate_build_authorization(path: Path, data: dict[str, object], goals: di
     return True
 
 
+def _evidenced_requirement_ids(text: str) -> set[str]:
+    evidenced: set[str] = set()
+    requirement_column: int | None = None
+    result_column: int | None = None
+    for line in text.splitlines():
+        if line.lstrip().startswith("|"):
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            normalized = [cell.strip("` ").lower() for cell in cells]
+            if "requirement ids" in normalized and "result" in normalized:
+                requirement_column = normalized.index("requirement ids")
+                result_column = normalized.index("result")
+                continue
+            if requirement_column is not None and result_column is not None:
+                if len(cells) > max(requirement_column, result_column):
+                    result = cells[result_column].strip("` ").lower()
+                    if result == "pass":
+                        evidenced.update(
+                            re.findall(
+                                r"(?<![A-Za-z0-9_-])[A-Z][A-Z0-9_-]*-\d+(?![A-Za-z0-9_-])",
+                                cells[requirement_column],
+                            )
+                        )
+                continue
+        else:
+            requirement_column = None
+            result_column = None
+        if not re.search(r"(?i)requirement(?:\s+ids?|\s+coverage)?", line):
+            continue
+        if re.search(r"(?i)\b(fail(?:ed)?|not tested|missing|blocked)\b", line):
+            continue
+        evidenced.update(re.findall(r"(?<![A-Za-z0-9_-])[A-Z][A-Z0-9_-]*-\d+(?![A-Za-z0-9_-])", line))
+    return evidenced
+
+
 def _valid_goal_acceptance(path: Path) -> bool:
     if not path.is_file():
         return False
     text = path.read_text(encoding="utf-8")
-    required = ("Criterion evidence", "Build commits", "Observed flows", "Intent reconciliation", "Worktree checkpoint")
+    required = ("Requirement coverage", "Criterion evidence", "Build commits", "Observed flows", "Intent reconciliation", "Worktree checkpoint")
     if not all(re.search(rf"(?mi)^#+\s*{re.escape(heading)}\s*$", text) for heading in required):
         return False
     if "<" in "\n".join(line for line in text.splitlines() if any(h.lower() in line.lower() for h in required)):
@@ -307,6 +377,9 @@ def _semantic_problems(root: Path) -> list[str]:
                     boundary = re.search(r"(?mi)^- Integration boundaries exercised:\s*`?([^`\n]+)`?\s*$", acceptance_text)
                     if applicability == "executable" and (not boundary or boundary.group(1).strip().lower() in {"", "none", "not-applicable", "n/a"}):
                         problems.append(f"INTEGRATION BOUNDARIES NOT VERIFIED: {acceptance_rel}")
+            evidenced_requirements = _evidenced_requirement_ids(acceptance_text)
+            missing_requirements = [requirement for requirement in _frontmatter_list(text, "requirement_ids") if requirement not in evidenced_requirements]
+            if missing_requirements: problems.append(f"ACCEPTED WITHOUT REQUIREMENT EVIDENCE: {path.relative_to(root)}: {', '.join(missing_requirements)}")
         verification = _inside_root(root, verification_rel)
         if not verification:
             problems.append(f"ACCEPTED WITHOUT PHASE VERIFICATION: {path.relative_to(root)}")
@@ -337,9 +410,16 @@ def _semantic_problems(root: Path) -> list[str]:
 
 def harness_check(root: Path) -> list[str]:
     root = root.resolve(); problems: list[str] = []
-    try: level = load_level(root)
-    except Exception as exc: return [str(exc)]
-    problems.extend(f"MISSING: {rel}" for rel in required_files(level) if not (root / rel).exists())
+    try:
+        level = load_level(root)
+        meta = json.loads((root / ".harness-version").read_text(encoding="utf-8"))
+    except Exception as exc:
+        return [str(exc)]
+    selected = meta.get("delivery_documents", []) if isinstance(meta, dict) else None
+    if not isinstance(selected, list) or any(not isinstance(item, str) or item not in DELIVERY_DOCUMENTS for item in selected):
+        problems.append(".harness-version has invalid delivery_documents")
+        selected = []
+    problems.extend(f"MISSING: {rel}" for rel in required_files(level, selected) if not (root / rel).exists())
     state = root / "harness" / "session" / "session-state.json"
     if state.exists():
         try: json.loads(state.read_text(encoding="utf-8"))

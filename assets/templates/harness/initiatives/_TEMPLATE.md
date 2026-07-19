@@ -14,7 +14,8 @@
 - 
 
 ## Acceptance criteria
-- 
+- Requirement IDs: `<FR-001, NFR-001, or none with reason>`
+- Criterion: `<observable acceptance condition>`
 
 ## Non-goals / deferred
 - 

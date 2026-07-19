@@ -24,9 +24,9 @@
 
 ## Acceptance criteria
 
-| Criterion | Result | Evidence |
-|---|---|---|
-| Given … when … then …; boundary/failure … | PASS/FAIL | `<path or observed output>` |
+| Requirement IDs | Criterion | Result | Evidence |
+|---|---|---|---|
+| `FR-001` | Given … when … then …; boundary/failure … | PASS/FAIL | `<path or observed output>` |
 
 ## Role pipeline
 

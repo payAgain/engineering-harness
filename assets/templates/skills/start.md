@@ -20,7 +20,7 @@ Recover project context before changes.
 4. Read `harness/session/session-log.md`
 5. If Charter / `.harness-version` missing → first-init path: `skills/clarify.md` only (never `skills/initiative.md`)
 6. Read `harness/initiatives/INDEX.md` and active initiative `brief.md` **only if G1 already landed**
-7. Read `docs/verification.md`, `docs/error-journal.md`, `docs/branching.md` (if present)
+7. Read `docs/verification.md` and delivery documents selected in `.harness-version`
 8. Check git branch (`git branch --show-current` or `python harness/scripts/branch_check.py`)
 9. If on `main`/`master` and the next work is implementation → create `feat/<task-or-batch>`
 10. If human asks for a new feature/version while this chat already ran another Initiative → stop; open Scope in a new chat

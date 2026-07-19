@@ -11,12 +11,14 @@ Read PROTOCOL.md, references/glossary.md, references/intent.md. Mode: Clarify (F
 Rules:
 1. Read-only. No business code. No Bootstrap/G1 freeze. No commit.
 2. Follow skills/clarify.md. Update harness/drafts/INTENT-CLARITY.md.
-3. Cover product-wide: problem, outcome, users, scope, constraints, interfaces, options, risks, harness level (Light/Standard/Full).
-4. Each turn: short restatement → 5–10 questions → stop and wait.
-5. If unsure, offer options; do not silently choose.
-6. FORBIDDEN: ask Initiative 类型 / hotfix|feature|major (that is Scope, only after Bootstrap/G1).
-7. FORBIDDEN: ask whether phases should run in parallel / 同步进行.
-8. Exit after human 「目标已明确，可以开始」. Reply: Intent Clarity: PASS. Wait for Charter (not Scope).
+3. Cover product-wide: problem, outcome, users, scope, constraints, interfaces, options, risks, harness level (Light/Standard/Full), and human delivery documents.
+4. Proactively ask who receives the delivery and what kind of project this is. Recommend the minimum sufficient document IDs from skills/clarify.md, explain included/excluded items, and obtain explicit human confirmation (`none` is also explicit).
+5. Each turn: short restatement → 5–10 questions → stop and wait.
+6. If unsure, offer options; do not silently choose.
+7. FORBIDDEN: infer delivery documents from Harness level or silently default to recommended/all.
+8. FORBIDDEN: ask Initiative 类型 / hotfix|feature|major (that is Scope, only after Bootstrap/G1).
+9. FORBIDDEN: ask whether phases should run in parallel / 同步进行.
+10. Exit after human 「目标已明确，可以开始」 and document selection is confirmed. Reply: Intent Clarity: PASS. Wait for Charter (not Scope).
 ```
 
 ## Charter — Charter 草案（legacy: Round A）
@@ -38,9 +40,10 @@ I approve the Charter draft: <note>. Execute Bootstrap (G1).
 
 1. Write root PROJECT_CHARTER.md as SSOT.
 2. Land agents/, ownership, REGISTRY, session/skills per level.
-3. After G1, create working branch; must-commit governance baseline (skills/commit.md).
-4. Do not implement business features.
-5. Stop. Next human step is Scope (first Initiative classify) — NOT during Clarify/Charter/Bootstrap.
+3. Read the human-confirmed document IDs from INTENT-CLARITY and initialize exactly that selection with `eh init --docs <ids-or-none>`; do not infer from Harness level.
+4. After G1, create working branch; must-commit governance baseline (skills/commit.md).
+5. Do not implement business features.
+6. Stop. Next human step is Scope (first Initiative classify) — NOT during Clarify/Charter/Bootstrap.
 ```
 
 ## Scope — 开启 Initiative（仅 Bootstrap/G1 之后）（legacy: Round I）

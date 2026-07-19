@@ -31,7 +31,10 @@ def main() -> int:
         scripts = environment / ("Scripts" if os.name == "nt" else "bin")
         python = scripts / ("python.exe" if os.name == "nt" else "python")
         eh = scripts / ("eh.exe" if os.name == "nt" else "eh")
-        subprocess.run([str(python), "-m", "pip", "install", "--no-deps", wheels[0]], check=True)
+        subprocess.run(
+            [str(python), "-m", "pip", "install", "--no-deps", "--force-reinstall", wheels[0]],
+            check=True,
+        )
 
         version = subprocess.run([str(eh), "--version"], check=True, capture_output=True, text=True)
         expected = (repository / "VERSION").read_text(encoding="utf-8").strip()
@@ -41,7 +44,7 @@ def main() -> int:
         target = root / "generated"
         subprocess.run([str(eh), "doctor"], cwd=root, check=True)
         subprocess.run(
-            [str(eh), "init", str(target), "--level", "Standard", "--name", "wheel-consumer"],
+            [str(eh), "init", str(target), "--level", "Standard", "--name", "wheel-consumer", "--docs", "none"],
             cwd=root,
             check=True,
         )

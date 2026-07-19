@@ -43,7 +43,7 @@ jobs:
         shell: bash
         run: |
           target="$RUNNER_TEMP/eh-generated-project"
-          eh init "$target" --level Standard --name ci-generated
+          eh init "$target" --level Standard --name ci-generated --docs none
           eh audit "$target"
 
       - name: Verify built wheel as a clean consumer

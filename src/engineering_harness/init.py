@@ -8,6 +8,9 @@ from pathlib import Path
 
 from engineering_harness import read_version
 from engineering_harness.paths import (
+    DELIVERY_DOCUMENTS,
+    DOCUMENT_PRESETS,
+    HUMAN_MAINTAINED_FILES,
     LIGHT_FILES,
     STANDARD_DIRS,
     STANDARD_FILES,
@@ -59,6 +62,8 @@ def copy_template(
 ) -> str:
     src = templates_root() / Path(source_rel)
     dst = target / Path(dest_rel)
+    if dst.exists() and dest_rel in HUMAN_MAINTAINED_FILES:
+        return f"PRESERVE human-maintained: {dest_rel}"
     if dst.exists() and not force:
         return f"SKIP existing: {dest_rel}"
     if not src.exists():
@@ -68,17 +73,53 @@ def copy_template(
     return f"WRITE: {dest_rel}"
 
 
+def resolve_delivery_documents(selection: str) -> list[str]:
+    value = selection.strip()
+    if not value:
+        raise ValueError("delivery document selection cannot be empty; use 'none' explicitly")
+    if value in DOCUMENT_PRESETS:
+        return list(DOCUMENT_PRESETS[value])
+    document_ids = [item.strip() for item in value.split(",") if item.strip()]
+    if not document_ids:
+        raise ValueError("delivery document selection cannot be empty; use 'none' explicitly")
+    unknown = sorted(set(document_ids) - DELIVERY_DOCUMENTS.keys())
+    if unknown:
+        choices = ", ".join(DELIVERY_DOCUMENTS)
+        raise ValueError(f"unknown delivery document(s): {', '.join(unknown)}; choose from: {choices}")
+    return list(dict.fromkeys(document_ids))
+
+
 def init_project(
     target: Path,
     *,
     level: str = "Standard",
     project_name: str | None = None,
     force: bool = False,
+    delivery_documents: str | None = None,
 ) -> list[str]:
     if level not in {"Light", "Standard", "Full"}:
         raise ValueError(f"unsupported level: {level}")
 
     target = target.resolve()
+    version_path = target / ".harness-version"
+    if delivery_documents is None:
+        if not version_path.is_file():
+            raise ValueError("--docs is required on first init; use 'none' to confirm no delivery documents")
+        try:
+            existing_meta = json.loads(version_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"cannot preserve delivery documents from .harness-version: {exc}") from exc
+        if not isinstance(existing_meta, dict):
+            raise ValueError("cannot preserve delivery documents: .harness-version root must be an object")
+        existing_documents = existing_meta.get("delivery_documents")
+        if not isinstance(existing_documents, list) or not all(
+            isinstance(item, str) and item in DELIVERY_DOCUMENTS for item in existing_documents
+        ):
+            raise ValueError("cannot preserve invalid delivery_documents from .harness-version")
+        selected_documents = list(dict.fromkeys(existing_documents))
+    else:
+        selected_documents = resolve_delivery_documents(delivery_documents)
+
     target.mkdir(parents=True, exist_ok=True)
     name = project_name or target.name
     timestamp = _now()
@@ -123,6 +164,20 @@ def init_project(
                 path.mkdir(parents=True, exist_ok=True)
                 logs.append(f"DIR: {rel}")
 
+    for document_id in selected_documents:
+        source_rel, dest_rel = DELIVERY_DOCUMENTS[document_id]
+        logs.append(
+            copy_template(
+                source_rel=source_rel,
+                dest_rel=dest_rel,
+                target=target,
+                project_name=name,
+                level=level,
+                timestamp=timestamp,
+                force=force,
+            )
+        )
+
     if level == "Full":
         policy = target / "docs" / "approval-policy.md"
         if policy.exists() and not force:
@@ -137,6 +192,7 @@ def init_project(
         "level": level,
         "layout": "tool-agnostic",
         "cli": "python",
+        "delivery_documents": selected_documents,
         "initialized_at": timestamp,
     }
     _write_text(target / ".harness-version", json.dumps(meta, indent=2, ensure_ascii=False) + "\n")

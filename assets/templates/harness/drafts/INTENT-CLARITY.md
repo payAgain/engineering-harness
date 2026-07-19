@@ -53,18 +53,29 @@
 ## 8. References (what may be copied vs architecture-only)
 - 
 
-## 9. Key options & recommendations
+## 9. Delivery document selection
+
+- Delivery audience: `<customer / product / test / operations / audit / internal-only>`
+- Project type: `<application / API / CLI / library / infrastructure / other>`
+- AI-recommended document IDs: `<comma-separated IDs or none>`
+- Recommendation rationale: `<why this is the minimum sufficient set>`
+- Explicitly excluded documents and reasons: `<fill>`
+- Human-confirmed document IDs: `<pending | comma-separated IDs | none>`
+
+The AI must ask; Harness level does not decide this selection. Bootstrap passes the confirmed value to `eh init --docs`.
+
+## 10. Key options & recommendations
 | Topic | Options | Recommendation | Human decision |
 |---|---|---|---|
 |  |  |  | pending |
 
-## 10. Risks & unknowns
+## 11. Risks & unknowns
 - 
 
-## 11. Open Questions
+## 12. Open Questions
 - [ ] 
 
-## 12. Deferred decisions
+## 13. Deferred decisions
 | Item | Why deferred | Impact on original intent | Can still claim requested completeness | Owner | Revisit trigger |
 |---|---|---|---|---|---|
 |  |  | none/minor/major/blocking | pending |  |  |
