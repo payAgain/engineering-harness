@@ -373,9 +373,13 @@ class FrameworkStructureTests(unittest.TestCase):
         setup = (ROOT / "setup.py").read_text(encoding="utf-8")
         package = (ROOT / "src/engineering_harness/__init__.py").read_text(encoding="utf-8")
         smoke = (ROOT / "tests/wheel_consumer_smoke.py").read_text(encoding="utf-8")
+        manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
         self.assertIn('ROOT / "assets" / "templates"', setup)
         self.assertIn('ROOT / "PROTOCOL.md"', setup)
         self.assertIn('ROOT / "VERSION"', setup)
+        self.assertIn("shutil.rmtree(resources)", setup)
+        for entry in ("include VERSION", "include PROTOCOL.md", "recursive-include assets/templates *"):
+            self.assertIn(entry, manifest)
         self.assertIn('PACKAGE_ROOT / "resources"', package)
         self.assertIn('"pip", "wheel"', smoke)
         self.assertIn('"init"', smoke)
@@ -655,8 +659,32 @@ class PythonCliSmokeTests(unittest.TestCase):
                 str(json.loads(evidence.read_text(encoding="utf-8"))),
             )
 
+            result_writer.write_text(
+                "import json, sys\n"
+                "from pathlib import Path\n"
+                "path = Path(sys.argv[1])\n"
+                "path.parent.mkdir(parents=True, exist_ok=True)\n"
+                "path.write_text(json.dumps({'test_count': 2, 'failed': 0, 'errors': 1, 'skipped': 0}), encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+            errored_suite = subprocess.run(
+                [sys.executable, str(verify_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(errored_suite.returncode, 1, errored_suite.stdout + errored_suite.stderr)
+            self.assertIn("errors must be integer 0", str(json.loads(evidence.read_text(encoding="utf-8"))))
+
             checks_by_id["unit-test"].pop("result_file")
             checks_by_id["unit-test"].pop("minimum_test_count")
+            checks_by_id["unit-test"]["command"] = f'"{sys.executable}" -c "print(123)"'
+            checks_by_id["unit-test"]["cwd"] = ".."
+            config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            escaped_cwd = subprocess.run(
+                [sys.executable, str(verify_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(escaped_cwd.returncode, 2, escaped_cwd.stdout + escaped_cwd.stderr)
+            self.assertIn("cwd must be an existing directory inside the project root", str(json.loads(evidence.read_text(encoding="utf-8"))))
+            checks_by_id["unit-test"].pop("cwd")
+
             checks_by_id["unit-test"]["command"] = f'"{sys.executable}" -c "import time; time.sleep(3)"'
             checks_by_id["unit-test"]["timeout_seconds"] = 1
             config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
@@ -692,15 +720,21 @@ class PythonCliSmokeTests(unittest.TestCase):
                 "requirement_ids:\n  - FR-001\n"
                 "acceptance_doc: harness/evidence/module/P-001/ACCEPTANCE.md\n"
                 "verification_evidence: harness/evidence/module/P-001/verification.json\n"
+                "required_verification:\n"
+                "  commands:\n"
+                "    - \"unit-test\"\n"
+                "    - \"integration-test\"\n"
                 "test_baseline:\n"
                 "  applicability: executable\n"
                 "  unit:\n"
                 "    status: required\n"
-                "    check_ids: [unit-test]\n"
+                "    check_ids:\n"
+                "      - \"unit-test\"\n"
                 "    exemption_reason: null\n"
                 "  integration:\n"
                 "    status: required\n"
-                "    check_ids: [integration-test]\n"
+                "    check_ids:\n"
+                "      - 'integration-test'\n"
                 "    boundaries: [cli-to-filesystem]\n"
                 "    exemption_reason: null\n---\n",
                 encoding="utf-8",
@@ -818,6 +852,22 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(accepted.returncode, 0, accepted.stdout + accepted.stderr)
             self.assertEqual(framework_accepted.returncode, 0, framework_accepted.stdout + framework_accepted.stderr)
             self.assertIn("HARNESS_CHECK PASS", accepted.stdout)
+
+            misleading_acceptance = acceptance.read_text(encoding="utf-8").replace(
+                "| Unit | required | `unit-test` | PASS | none | `verification.json` |",
+                "| Unit | PASS | `unit-test` | FAIL | none | `verification.json` |",
+            )
+            acceptance.write_text(misleading_acceptance, encoding="utf-8")
+            misleading = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_misleading = _cli("check", str(target))
+            self.assertIn("ACCEPTANCE TEST BASELINE INVALID", misleading.stdout)
+            self.assertIn("ACCEPTANCE TEST BASELINE INVALID", framework_misleading.stdout)
+            acceptance.write_text(misleading_acceptance.replace(
+                "| Unit | PASS | `unit-test` | FAIL | none | `verification.json` |",
+                "| Unit | required | `unit-test` | PASS | none | `verification.json` |",
+            ), encoding="utf-8")
 
             verification.write_text(
                 '{"schema_version": 1, "status": "PASS", "phase_id": "P-001", '

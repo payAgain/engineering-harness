@@ -65,17 +65,20 @@ def _test_result(path: Path, minimum: int) -> tuple[bool, dict[str, Any] | str]:
     if not isinstance(data, dict):
         return False, "test result root must be an object"
     count, failed = data.get("test_count"), data.get("failed")
+    errors = data.get("errors", 0)
     skipped = data.get("skipped", 0)
     if not isinstance(count, int) or isinstance(count, bool) or count < minimum:
         return False, f"test_count must be an integer >= {minimum}"
     if not isinstance(failed, int) or isinstance(failed, bool) or failed != 0:
         return False, "failed must be integer 0"
+    if not isinstance(errors, int) or isinstance(errors, bool) or errors != 0:
+        return False, "errors must be integer 0"
     if not isinstance(skipped, int) or isinstance(skipped, bool) or skipped < 0 or skipped > count:
         return False, "skipped must be an integer between 0 and test_count"
     executed = count - skipped
     if executed < minimum:
         return False, f"executed test count must be >= {minimum} after excluding skipped tests"
-    return True, {"test_count": count, "failed": failed, "skipped": skipped}
+    return True, {"test_count": count, "failed": failed, "errors": errors, "skipped": skipped}
 
 
 def main() -> int:
@@ -134,7 +137,11 @@ def main() -> int:
                     continue
 
                 cwd_value = item.get("cwd", ".")
-                cwd = (root / str(cwd_value)).resolve()
+                cwd = _inside_root(root, cwd_value)
+                if cwd is None or not cwd.is_dir():
+                    final_status = "INCOMPLETE"
+                    results.append({"id": check_id, "required": required, "status": "INCOMPLETE", "message": "cwd must be an existing directory inside the project root"})
+                    continue
                 timeout = item.get("timeout_seconds", 600)
                 if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout < 1:
                     final_status = "INCOMPLETE"

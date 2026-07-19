@@ -102,11 +102,12 @@ Projects that need stricter suite accounting may configure `result_file` and `mi
 {
   "test_count": 12,
   "failed": 0,
+  "errors": 0,
   "skipped": 1
 }
 ```
 
-When enabled, the executed count (`test_count - skipped`) must meet `minimum_test_count`, `failed` must be zero, and `skipped` must be between zero and `test_count`; a suite in which every discovered test is skipped does not satisfy the minimum. Stale results are deleted before execution. This enhancement is optional by default so projects can use their native test commands without building reporters or adapters. Enable it where empty-suite detection or auditable counts justify the extra integration.
+When enabled, the executed count (`test_count - skipped`) must meet `minimum_test_count`, both `failed` and `errors` must be zero, and `skipped` must be between zero and `test_count`; a suite in which every discovered test is skipped does not satisfy the minimum. Stale results are deleted before execution. This enhancement is optional by default so projects can use their native test commands without building reporters or adapters. Enable it where empty-suite detection or auditable counts justify the extra integration.
 
 ## Change-Type Matrix
 

@@ -16,7 +16,9 @@ class build_py(_build_py):
     def run(self) -> None:
         super().run()
         resources = Path(self.build_lib) / "engineering_harness" / "resources"
-        resources.mkdir(parents=True, exist_ok=True)
+        if resources.exists():
+            shutil.rmtree(resources)
+        resources.mkdir(parents=True)
         shutil.copy2(ROOT / "VERSION", resources / "VERSION")
         shutil.copy2(ROOT / "PROTOCOL.md", resources / "PROTOCOL.md")
         shutil.copytree(
