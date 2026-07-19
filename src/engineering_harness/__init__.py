@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
-FRAMEWORK_ROOT = Path(__file__).resolve().parents[2]
+PACKAGE_ROOT = Path(__file__).resolve().parent
+SOURCE_ROOT = PACKAGE_ROOT.parents[1]
+PACKAGED_RESOURCES = PACKAGE_ROOT / "resources"
+FRAMEWORK_ROOT = PACKAGED_RESOURCES if PACKAGED_RESOURCES.is_dir() else SOURCE_ROOT
 
 
 def read_version() -> str:

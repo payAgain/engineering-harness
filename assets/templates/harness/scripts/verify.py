@@ -15,6 +15,8 @@ PLACEHOLDERS = {
     "",
     "<fill-build-command>",
     "<fill-test-command>",
+    "<fill-unit-test-command>",
+    "<fill-integration-test-command>",
     "<fill-lint-command-or-na>",
     "n/a",
     "na",
@@ -42,6 +44,41 @@ def _configured(command: object) -> bool:
 def _write_evidence(path: Path, evidence: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(evidence, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+
+
+def _inside_root(root: Path, value: object) -> Path | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    candidate = (root / value).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    return candidate
+
+
+def _test_result(path: Path, minimum: int) -> tuple[bool, dict[str, Any] | str]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return False, f"test result missing or invalid: {exc}"
+    if not isinstance(data, dict):
+        return False, "test result root must be an object"
+    count, failed = data.get("test_count"), data.get("failed")
+    errors = data.get("errors", 0)
+    skipped = data.get("skipped", 0)
+    if not isinstance(count, int) or isinstance(count, bool) or count < minimum:
+        return False, f"test_count must be an integer >= {minimum}"
+    if not isinstance(failed, int) or isinstance(failed, bool) or failed != 0:
+        return False, "failed must be integer 0"
+    if not isinstance(errors, int) or isinstance(errors, bool) or errors != 0:
+        return False, "errors must be integer 0"
+    if not isinstance(skipped, int) or isinstance(skipped, bool) or skipped < 0 or skipped > count:
+        return False, "skipped must be an integer between 0 and test_count"
+    executed = count - skipped
+    if executed < minimum:
+        return False, f"executed test count must be >= {minimum} after excluding skipped tests"
+    return True, {"test_count": count, "failed": failed, "errors": errors, "skipped": skipped}
 
 
 def main() -> int:
@@ -100,19 +137,48 @@ def main() -> int:
                     continue
 
                 cwd_value = item.get("cwd", ".")
-                cwd = (root / str(cwd_value)).resolve()
+                cwd = _inside_root(root, cwd_value)
+                if cwd is None or not cwd.is_dir():
+                    final_status = "INCOMPLETE"
+                    results.append({"id": check_id, "required": required, "status": "INCOMPLETE", "message": "cwd must be an existing directory inside the project root"})
+                    continue
+                timeout = item.get("timeout_seconds", 600)
+                if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout < 1:
+                    final_status = "INCOMPLETE"
+                    results.append({"id": check_id, "required": required, "status": "INCOMPLETE", "message": "timeout_seconds must be a positive integer"})
+                    continue
+                result_path = _inside_root(root, item.get("result_file")) if item.get("result_file") is not None else None
+                minimum = item.get("minimum_test_count")
+                if minimum is not None and (not isinstance(minimum, int) or isinstance(minimum, bool) or minimum < 1 or result_path is None):
+                    final_status = "INCOMPLETE"
+                    results.append({"id": check_id, "required": required, "status": "INCOMPLETE", "message": "minimum_test_count requires a positive integer and repository-contained result_file"})
+                    continue
+                if result_path and result_path.exists():
+                    result_path.unlink()
                 print(f"=== {check_id.upper()} ===")
                 print(f"$ {command}")
                 try:
-                    proc = subprocess.run(str(command), cwd=str(cwd), shell=True, check=False)
+                    proc = subprocess.run(str(command), cwd=str(cwd), shell=True, check=False, timeout=timeout)
+                except subprocess.TimeoutExpired:
+                    proc_result = {"id": check_id, "required": required, "status": "FAIL", "command": command, "cwd": str(cwd), "timeout_seconds": timeout, "message": "command timed out"}
+                    if required:
+                        final_status = "FAIL"
                 except OSError as exc:
                     proc_result = {"id": check_id, "required": required, "status": "FAIL", "command": command, "cwd": str(cwd), "message": str(exc)}
                     if required:
                         final_status = "FAIL"
                 else:
                     status = "PASS" if proc.returncode == 0 else "FAIL"
-                    proc_result = {"id": check_id, "required": required, "status": status, "command": command, "cwd": str(cwd), "exit_code": proc.returncode}
-                    if required and proc.returncode != 0:
+                    proc_result = {"id": check_id, "required": required, "status": status, "command": command, "cwd": str(cwd), "exit_code": proc.returncode, "timeout_seconds": timeout}
+                    if proc.returncode == 0 and minimum is not None and result_path is not None:
+                        valid, detail = _test_result(result_path, minimum)
+                        if valid:
+                            proc_result.update(detail if isinstance(detail, dict) else {})
+                            proc_result["result_file"] = str(result_path)
+                        else:
+                            proc_result["status"] = "FAIL"
+                            proc_result["message"] = detail
+                    if required and proc_result["status"] != "PASS":
                         final_status = "FAIL"
                 results.append(proc_result)
 

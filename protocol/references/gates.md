@@ -71,6 +71,9 @@ Clarity PASS ≠ Charter approved. Both human gates are required.
 - Implementation and final acceptance must not share an unbarriered round
 - Missing real commands fail the corresponding gate; never fake green
 - `VERIFY INCOMPLETE` and `VERIFY FAIL` block Accept; required checks must be configured and pass
+- Executable software projects require both unit and integration test baselines. Missing or failing either layer blocks Accept; exemptions are limited to genuinely non-executable projects or changes and must be explicit, narrow, and evidenced.
+- Test presence or command success is not authentic evidence by itself: unit tests need behavioral assertions, and integration tests must exercise real component or interface boundaries rather than only fully mocked internals. Optional normalized result files may enforce non-zero suite counts when a project needs stricter accounting.
+- Required verification commands must have a positive timeout; timeout blocks Accept. When normalized test results are configured, missing, stale, invalid, or zero-test results also block Accept.
 - Command success alone is insufficient for product-source changes; record an observed affected user or system flow
 - For high-risk wording, Accept must include Intent Fidelity reconciliation; Scope complete is not enough to claim Intent satisfied.
 

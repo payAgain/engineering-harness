@@ -32,9 +32,21 @@ readiness_dimensions:
 required_verification:
   commands:
     - build
-    - test
+    - unit-test
+    - integration-test
   observed_flows:
     - <affected user or system flow>
+test_baseline:
+  applicability: executable|non-executable
+  unit:
+    status: required|exempt
+    check_ids: [unit-test]
+    exemption_reason: null
+  integration:
+    status: required|exempt
+    check_ids: [integration-test]
+    boundaries: [<components or interfaces exercised together>]
+    exemption_reason: null
 verification_profile: accept
 user_entrypoints:
   - name: <consumer entrypoint name>
@@ -158,6 +170,8 @@ python harness/scripts/verify.py
 - [ ] condition-false or optional unused steps are `skipped` with a recorded reason
 - [ ] Test and Reviewer invocations use an independent context from implementation
 - [ ] `VERIFY PASS` evidence covers every `required_verification.commands` entry
+- [ ] executable projects have passing unit and integration test evidence; each exemption is narrow, explicit, and justified
+- [ ] tests contain behavioral assertions and integration tests exercise real component boundaries rather than only mocked internals
 - [ ] every required observed flow was actually exercised and recorded
 - [ ] all affected `readiness_dimensions` have evidence or a justified not-applicable decision
 - [ ] acceptance criteria are observable and satisfied

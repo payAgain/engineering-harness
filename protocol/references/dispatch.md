@@ -109,11 +109,13 @@ Do NOT introduce yourself as "implementing Task N". You are the role above worki
 4. Test and Reviewer use `independent_context: true` and a different invocation from implementation
 5. Packet acceptance criteria are observable and each has recorded evidence
 6. Packet `verification_evidence` is repository-contained, is `PASS`, has the same `phase_id`, and covers every `required_verification.commands` id
-7. every Packet `required_verification.observed_flows` entry was exercised against the running product and recorded
-8. every affected `readiness_dimensions` entry has concrete evidence in the Packet acceptance record
-9. `acceptance_doc` 已写入且含验证摘要、observed-flow 结果、readiness 结论与 commit SHA（有变更时）
-10. 工作分支 must-commit 已完成（或记录 `deferred_reason`）
-11. invocations ledger 记录了本阶段各角色实例
+7. Packet `test_baseline` classifies applicability; executable software has passing unit and integration check IDs, while each exemption is explicit, narrow, and supported by a non-executable reason
+8. unit evidence contains behavioral assertions, and integration evidence exercises named real component or interface boundaries rather than only fully mocked internals
+9. every Packet `required_verification.observed_flows` entry was exercised against the running product and recorded
+10. every affected `readiness_dimensions` entry has concrete evidence in the Packet acceptance record and satisfies `docs/readiness.md`
+11. `acceptance_doc` 已写入且含验证摘要、test baseline、observed-flow 结果、readiness 结论与 commit SHA（有变更时）
+12. 工作分支 must-commit 已完成（或记录 `deferred_reason`）
+13. invocations ledger 记录了本阶段各角色实例
 
 ## Reviewer gate (Full / high risk)
 
@@ -152,6 +154,8 @@ Fail G3 if:
 - pipeline role ≠ actual_role ≠ handoff `from_role`
 - phase marked accepted without `acceptance_doc`
 - required command evidence is missing, not `PASS`, or does not cover the Packet check ids
+- an executable project lacks passing unit or integration evidence, or uses an exemption without a narrow non-executable reason
+- unit evidence lacks behavioral assertions, or claimed integration evidence does not exercise a named real component/interface boundary
 - an affected flow or readiness dimension was omitted, guessed, or declared not applicable without a reason
 - acceptance criteria describe an activity ("implemented", "optimized", "supported") without an observable result
 - human was asked to decide Phase parallel/同步

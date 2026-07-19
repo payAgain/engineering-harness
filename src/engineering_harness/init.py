@@ -43,6 +43,8 @@ def _render(content: str, *, project_name: str, level: str, timestamp: str) -> s
         .replace("{{HARNESS_LEVEL}}", level)
         .replace("{{TIMESTAMP}}", timestamp)
         .replace("{{BUILD_CMD}}", "<fill-build-command>")
+        .replace("{{UNIT_TEST_CMD}}", "<fill-unit-test-command>")
+        .replace("{{INTEGRATION_TEST_CMD}}", "<fill-integration-test-command>")
         .replace("{{TEST_CMD}}", "<fill-test-command>")
         .replace("{{LINT_CMD}}", "<fill-lint-command-or-NA>")
     )

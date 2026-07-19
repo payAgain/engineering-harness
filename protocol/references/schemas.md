@@ -39,8 +39,19 @@ requirement_ids: [FR-001]             # approved requirements document IDs cover
 readiness_dimensions:                 # affected dimensions declared for this Phase
   - functional-correctness
 required_verification:
-  commands: [build, test]              # ids from harness/verification.json
+  commands: [build, unit-test, integration-test]  # ids from harness/verification.json
   observed_flows: [<affected user or system flow>]
+test_baseline:
+  applicability: executable|non-executable
+  unit:
+    status: required|exempt
+    check_ids: [unit-test]
+    exemption_reason: null
+  integration:
+    status: required|exempt
+    check_ids: [integration-test]
+    boundaries: [<components or interfaces exercised together>]
+    exemption_reason: null
 risk_score: 0
 conflict_score: 0
 execution: serial|multitask|optional-worktree
@@ -49,9 +60,10 @@ direct_exception_reason: null
 ```
 
 Dispatch is illegal without `task_id`, registry entry, and either `role_pipeline` or `primary_owner`.
-Code/integration/release Packets must declare affected `readiness_dimensions`, command check IDs, and observable affected flows.
+Code/integration/release Packets must declare affected `readiness_dimensions`, command check IDs, observable affected flows, and a `test_baseline`.
+Executable software defaults both `test_baseline.unit` and `test_baseline.integration` to `required`; each must name configured check IDs. `exempt` is allowed only for genuinely non-executable projects or changes, with a narrow `exemption_reason`. Unit evidence requires behavioral assertions; integration evidence must name and exercise real component or interface boundaries.
 Acceptance criteria must name an initial condition/input, action, observable result, boundary or failure behavior, and evidence source; vague completion statements do not pass Plan. Every approved requirement ID in the selected requirements document must be allocated to an Initiative/Goal criterion and at least one Packet `requirement_ids` entry, or explicitly deferred with impact.
-Phase cannot be `accepted` without `acceptance_doc`, `VERIFY PASS` for all declared command checks, recorded observed flows, and readiness evidence.
+Phase cannot be `accepted` without `acceptance_doc`, `VERIFY PASS` for all declared command checks and required test-baseline checks, recorded observed flows, and readiness evidence.
 New plans must not use `Task N` / `WP-*` titles — see `glossary.md`.
 
 ## Goal manifest

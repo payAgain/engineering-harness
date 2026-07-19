@@ -23,6 +23,13 @@ For each required capability, test must verify the packet's `minimum_evidence`:
 
 Test must not use forbidden pseudo-evidence as the sole evidence. If only pseudo-evidence exists, result is `FAIL` or `INCOMPLETE`, not PASS.
 
+For executable software projects, test must also verify the minimum test baseline:
+
+- unit tests exercise changed logic and boundary/failure behavior with behavioral assertions;
+- integration tests exercise real component or interface boundaries, not only fully mocked internals;
+- both layers pass, or the Packet records a narrow exemption for a genuinely non-executable project or change;
+- missing, failing, empty, or assertion-free required tests produce `FAIL` or `INCOMPLETE`.
+
 # 允许修改路径
 - 任务 Packet 中授权的测试路径
 - `harness/handoffs/test/**`

@@ -41,6 +41,16 @@
 - Overall status: `PASS|FAIL|INCOMPLETE`
 - Required check IDs covered: `<ids>`
 
+## Test baseline
+
+| Layer | Applicability | Check IDs | Result | Exemption reason | Evidence |
+|---|---|---|---|---|---|
+| Unit | required/exempt | `<ids>` | PASS/FAIL/N/A | `<none or narrow reason>` | `<path>` |
+| Integration | required/exempt | `<ids>` | PASS/FAIL/N/A | `<none or narrow reason>` | `<path>` |
+
+- Behavioral assertions verified: `yes|no|not-applicable`
+- Integration boundaries exercised: `<components/interfaces or not-applicable>`
+
 ## VERIFY profile
 
 - Profile: `dev|accept|ship`

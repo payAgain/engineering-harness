@@ -57,7 +57,8 @@ Output a Session Briefing before editing.
 
 ## Real commands
 - Build: `{{BUILD_CMD}}`
-- Test: `{{TEST_CMD}}`
+- Unit test: `{{UNIT_TEST_CMD}}`
+- Integration test: `{{INTEGRATION_TEST_CMD}}`
 - Project verification contract: `harness/verification.json`
 - Project verification: `python harness/scripts/verify.py` (`PASS` only when every required check is configured and succeeds)
 - Harness check: `python harness/scripts/harness_check.py`

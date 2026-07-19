@@ -75,6 +75,7 @@ def _frontmatter_list(text: str, key: str) -> list[str]:
 def _inside_root(root: Path, value: str | None) -> Path | None:
     if not value:
         return None
+    root = root.resolve()
     candidate = (root / value).resolve()
     try:
         candidate.relative_to(root)
@@ -102,6 +103,57 @@ def _yaml_list(section: str, key: str) -> list[str]:
         return [item.strip().strip('"\'') for item in inline.group(1).split(",") if item.strip()]
     block = re.search(rf"(?ms)^\s{{2}}{re.escape(key)}:\s*\n((?:\s{{4}}-\s*[^\n]+\n?)*)", section)
     return re.findall(r"(?m)^\s{4}-\s*([^\n#]+)", block.group(1)) if block else []
+
+
+def _frontmatter(text: str) -> str:
+    match = re.match(r"\A---\s*\n(.*?)\n---(?:\s*\n|\Z)", text, re.DOTALL)
+    return match.group(1) if match else ""
+
+
+def _indented_section(text: str, name: str, indent: int) -> str:
+    prefix = " " * indent
+    child = " " * (indent + 2)
+    match = re.search(
+        rf"(?ms)^{prefix}{re.escape(name)}:\s*(?:#.*)?\n((?:^{child}.*(?:\n|$)|^\s*$)*)",
+        text,
+    )
+    return match.group(1) if match else ""
+
+
+def _indented_scalar(section: str, key: str, indent: int) -> str | None:
+    match = re.search(rf"(?m)^\s{{{indent}}}{re.escape(key)}:\s*([^\n#]+)", section)
+    if not match:
+        return None
+    value = match.group(1).strip().strip('"\'')
+    return None if value in {"null", "~"} else value
+
+
+def _indented_list(section: str, key: str, indent: int) -> list[str]:
+    inline = re.search(rf"(?m)^\s{{{indent}}}{re.escape(key)}:\s*\[([^]]*)\]\s*$", section)
+    if inline:
+        return [_normalize_list_item(item) for item in inline.group(1).split(",") if _normalize_list_item(item)]
+    block = re.search(
+        rf"(?ms)^\s{{{indent}}}{re.escape(key)}:\s*\n((?:\s{{{indent + 2}}}-\s*[^\n]+\n?)*)",
+        section,
+    )
+    if not block:
+        return []
+    return [_normalize_list_item(item) for item in re.findall(rf"(?m)^\s{{{indent + 2}}}-\s*([^\n#]+)", block.group(1)) if _normalize_list_item(item)]
+
+
+def _test_baseline(text: str) -> tuple[str | None, dict[str, dict[str, object]]]:
+    baseline = _indented_section(_frontmatter(text), "test_baseline", 0)
+    applicability = _indented_scalar(baseline, "applicability", 2)
+    layers: dict[str, dict[str, object]] = {}
+    for name in ("unit", "integration"):
+        layer = _indented_section(baseline, name, 2)
+        layers[name] = {
+            "status": _indented_scalar(layer, "status", 4),
+            "check_ids": _indented_list(layer, "check_ids", 4),
+            "boundaries": _indented_list(layer, "boundaries", 4),
+            "exemption_reason": _indented_scalar(layer, "exemption_reason", 4),
+        }
+    return applicability, layers
 
 
 def _goal_criteria(text: str) -> tuple[set[str], dict[str, str]]:
@@ -189,6 +241,25 @@ def _validate_build_authorization(path: Path, data: dict[str, object], goals: di
         problems.append(f"INVALID GOAL DELEGATION: {rel}: success criteria")
         return False
     return True
+
+
+def _acceptance_test_results(text: str) -> dict[str, str]:
+    columns: dict[str, int] = {}
+    results: dict[str, str] = {}
+    for line in text.splitlines():
+        if not line.lstrip().startswith("|"):
+            columns = {}
+            continue
+        cells = [cell.strip().strip("` ") for cell in line.strip().strip("|").split("|")]
+        normalized = [cell.lower() for cell in cells]
+        if "layer" in normalized and "result" in normalized:
+            columns = {"layer": normalized.index("layer"), "result": normalized.index("result")}
+            continue
+        if columns and len(cells) > max(columns.values()):
+            layer = cells[columns["layer"]].lower()
+            if layer in {"unit", "integration"}:
+                results[layer] = cells[columns["result"]].lower()
+    return results
 
 
 def _evidenced_requirement_ids(text: str) -> set[str]:
@@ -291,11 +362,48 @@ def _semantic_problems(root: Path) -> list[str]:
         build = builds.get(build_id or "")
         if build_id not in valid_builds or not isinstance(build.get("approved_phase_ids") if build else None, list) or phase_id not in build["approved_phase_ids"]: problems.append(f"ACCEPTED WITHOUT APPROVED BUILD: {path.relative_to(root)}")
         acceptance_rel, verification_rel = _frontmatter_value(text, "acceptance_doc"), _frontmatter_value(text, "verification_evidence")
+        applicability, baseline = _test_baseline(text)
+        verification_contract = _indented_section(_frontmatter(text), "required_verification", 0)
+        required_commands = _indented_list(verification_contract, "commands", 2)
+        if not required_commands:
+            problems.append(f"REQUIRED VERIFICATION COMMANDS MISSING: {path.relative_to(root)}")
+        if applicability not in {"executable", "non-executable"}:
+            problems.append(f"TEST BASELINE MISSING: {path.relative_to(root)}")
+        for layer_name, layer in baseline.items():
+            layer_status = layer["status"]
+            if applicability == "executable" and layer_status != "required":
+                problems.append(f"INVALID TEST BASELINE EXEMPTION: {path.relative_to(root)}: {layer_name}")
+            elif applicability == "non-executable" and layer_status == "exempt":
+                reason = str(layer["exemption_reason"] or "").strip()
+                if not reason or reason.startswith("<"):
+                    problems.append(f"INVALID TEST BASELINE EXEMPTION: {path.relative_to(root)}: {layer_name}")
+            elif layer_status not in {"required", "exempt"}:
+                problems.append(f"INVALID TEST BASELINE: {path.relative_to(root)}: {layer_name}")
+            if layer_status == "required" and not layer["check_ids"]:
+                problems.append(f"TEST BASELINE CHECK IDS MISSING: {path.relative_to(root)}: {layer_name}")
+            if layer_name == "integration" and layer_status == "required" and (
+                not layer["boundaries"] or any(not item or item.startswith("<") for item in layer["boundaries"])
+            ):
+                problems.append(f"INTEGRATION BOUNDARIES MISSING: {path.relative_to(root)}")
         acceptance = _inside_root(root, acceptance_rel)
+        acceptance_text = ""
         if not acceptance or not acceptance.is_file(): problems.append(f"ACCEPTED WITHOUT EVIDENCE: {path.relative_to(root)}")
         else:
             acceptance_text = acceptance.read_text(encoding="utf-8")
             if not re.search(r"(?m)^- Decision:\s*`accepted`\s*$", acceptance_text): problems.append(f"INVALID ACCEPTANCE DECISION: {acceptance_rel}")
+            if applicability in {"executable", "non-executable"}:
+                if not re.search(r"(?mi)^##\s+Test baseline\s*$", acceptance_text):
+                    problems.append(f"ACCEPTANCE TEST BASELINE MISSING: {acceptance_rel}")
+                else:
+                    test_results = _acceptance_test_results(acceptance_text)
+                    for label in ("unit", "integration"):
+                        if applicability == "executable" and test_results.get(label) != "pass":
+                            problems.append(f"ACCEPTANCE TEST BASELINE INVALID: {acceptance_rel}: {label}")
+                    if applicability == "executable" and not re.search(r"(?mi)^- Behavioral assertions verified:\s*`?yes`?\s*$", acceptance_text):
+                        problems.append(f"BEHAVIORAL ASSERTIONS NOT VERIFIED: {acceptance_rel}")
+                    boundary = re.search(r"(?mi)^- Integration boundaries exercised:\s*`?([^`\n]+)`?\s*$", acceptance_text)
+                    if applicability == "executable" and (not boundary or boundary.group(1).strip().lower() in {"", "none", "not-applicable", "n/a"}):
+                        problems.append(f"INTEGRATION BOUNDARIES NOT VERIFIED: {acceptance_rel}")
             evidenced_requirements = _evidenced_requirement_ids(acceptance_text)
             missing_requirements = [requirement for requirement in _frontmatter_list(text, "requirement_ids") if requirement not in evidenced_requirements]
             if missing_requirements: problems.append(f"ACCEPTED WITHOUT REQUIREMENT EVIDENCE: {path.relative_to(root)}: {', '.join(missing_requirements)}")
@@ -312,6 +420,21 @@ def _semantic_problems(root: Path) -> list[str]:
             problems.append(f"ACCEPTED WITHOUT VALID VERIFICATION: {path.relative_to(root)}: root must be an object")
         elif verification_data.get("status") != "PASS" or verification_data.get("phase_id") != phase_id:
             problems.append(f"ACCEPTED WITHOUT VERIFY PASS: {path.relative_to(root)}")
+        else:
+            results = verification_data.get("results")
+            passed_ids = {
+                str(item.get("id"))
+                for item in results
+                if isinstance(results, list) and isinstance(item, dict) and item.get("status") == "PASS" and item.get("id")
+            } if isinstance(results, list) else set()
+            for check_id in required_commands:
+                if check_id not in passed_ids:
+                    problems.append(f"REQUIRED VERIFICATION CHECK NOT PASS: {path.relative_to(root)}: {check_id}")
+            for layer_name, layer in baseline.items():
+                if layer["status"] == "required":
+                    for check_id in layer["check_ids"]:
+                        if check_id not in passed_ids:
+                            problems.append(f"TEST BASELINE CHECK NOT PASS: {path.relative_to(root)}: {layer_name}: {check_id}")
     return problems
 
 

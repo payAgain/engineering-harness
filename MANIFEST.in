@@ -1,0 +1,3 @@
+include VERSION
+include PROTOCOL.md
+recursive-include assets/templates *

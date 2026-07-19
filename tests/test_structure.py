@@ -265,6 +265,26 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("verify --profile ship", verification)
         self.assertIn("VERIFY PASS for <profile>", verification)
 
+    def test_executable_projects_require_unit_and_integration_test_baseline(self):
+        gates = (ROOT / "protocol/references/gates.md").read_text(encoding="utf-8")
+        dispatch = (ROOT / "protocol/references/dispatch.md").read_text(encoding="utf-8")
+        schemas = (ROOT / "protocol/references/schemas.md").read_text(encoding="utf-8")
+        packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
+        acceptance = (ROOT / "assets/templates/harness/evidence/_ACCEPTANCE.template.md").read_text(encoding="utf-8")
+        verification = (ROOT / "assets/templates/docs/verification.md").read_text(encoding="utf-8")
+        test_role = (ROOT / "assets/templates/agents/test.md").read_text(encoding="utf-8")
+
+        for text in (gates, dispatch, schemas, verification):
+            self.assertIn("unit", text.lower())
+            self.assertIn("integration", text.lower())
+            self.assertIn("exempt", text.lower())
+        self.assertIn("test_baseline:", packet)
+        self.assertIn("unit:", packet)
+        self.assertIn("integration:", packet)
+        self.assertIn("Test baseline", acceptance)
+        self.assertIn("behavioral assertions", test_role)
+        self.assertIn("both unit and integration", gates)
+
     def test_role_pipeline_and_invocation_contract_are_stateful(self):
         packet = (ROOT / "assets/templates/harness/tasks/_PACKET.template.md").read_text(encoding="utf-8")
         ledger = (ROOT / "assets/templates/harness/runtime/_INVOCATIONS.template.yaml").read_text(encoding="utf-8")
@@ -337,6 +357,35 @@ class FrameworkStructureTests(unittest.TestCase):
         self.assertIn("continue | achieved | escalate", dispatch)
         self.assertIn("Scope confirmation", prompts)
 
+    def test_ci_covers_supported_platform_and_python_baseline(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        self.assertIn("windows-latest", workflow)
+        self.assertIn("ubuntu-latest", workflow)
+        self.assertIn("'3.10'", workflow)
+        self.assertIn("python -m unittest discover -s tests -v", workflow)
+        self.assertIn("eh --version", workflow)
+        self.assertIn("eh init", workflow)
+        self.assertIn("eh audit", workflow)
+        self.assertIn("python tests/wheel_consumer_smoke.py", workflow)
+        self.assertIn("permissions:\n  contents: read", workflow)
+
+    def test_wheel_build_bundles_runtime_resources(self):
+        setup = (ROOT / "setup.py").read_text(encoding="utf-8")
+        package = (ROOT / "src/engineering_harness/__init__.py").read_text(encoding="utf-8")
+        smoke = (ROOT / "tests/wheel_consumer_smoke.py").read_text(encoding="utf-8")
+        manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
+        self.assertIn('ROOT / "assets" / "templates"', setup)
+        self.assertIn('ROOT / "PROTOCOL.md"', setup)
+        self.assertIn('ROOT / "VERSION"', setup)
+        self.assertIn("shutil.rmtree(resources)", setup)
+        for entry in ("include VERSION", "include PROTOCOL.md", "recursive-include assets/templates *"):
+            self.assertIn(entry, manifest)
+        self.assertIn('PACKAGE_ROOT / "resources"', package)
+        self.assertIn('"pip", "wheel"', smoke)
+        self.assertIn('"init"', smoke)
+        self.assertIn('"audit"', smoke)
+        self.assertIn("WHEEL CONSUMER PASS", smoke)
+
     def test_delivery_documents_are_selectable(self):
         requirements = (ROOT / "assets/templates/docs/requirements/software-requirements-specification.md").read_text(encoding="utf-8")
         design = (ROOT / "assets/templates/docs/design/software-design-description.md").read_text(encoding="utf-8")
@@ -403,6 +452,18 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertTrue((target / "harness/scripts/branch_check.py").exists())
             self.assertTrue((target / "harness/scripts/verify.py").exists())
             self.assertTrue((target / "harness/verification.json").exists())
+            verification_config = json.loads((target / "harness/verification.json").read_text(encoding="utf-8"))
+            checks_by_id = {item["id"]: item for item in verification_config["checks"]}
+            self.assertIn("unit-test", checks_by_id)
+            self.assertIn("integration-test", checks_by_id)
+            self.assertEqual(checks_by_id["unit-test"]["command"], "<fill-unit-test-command>")
+            self.assertEqual(checks_by_id["integration-test"]["command"], "<fill-integration-test-command>")
+            self.assertTrue(checks_by_id["unit-test"]["required"])
+            self.assertTrue(checks_by_id["integration-test"]["required"])
+            self.assertNotIn("result_file", checks_by_id["unit-test"])
+            self.assertNotIn("minimum_test_count", checks_by_id["integration-test"])
+            self.assertGreater(checks_by_id["unit-test"]["timeout_seconds"], 0)
+            self.assertGreater(checks_by_id["integration-test"]["timeout_seconds"], 0)
             self.assertTrue((target / "harness/goals/_GOAL.template.yaml").exists())
             self.assertTrue((target / "harness/goals/_GOAL-ACCEPTANCE.template.md").exists())
             self.assertTrue((target / "agents/goal-controller.md").exists())
@@ -540,8 +601,10 @@ class PythonCliSmokeTests(unittest.TestCase):
 
             config_path = target / "harness/verification.json"
             config = json.loads(config_path.read_text(encoding="utf-8"))
-            config["checks"][0]["command"] = f'"{sys.executable}" -c "print(123)"'
-            config["checks"][1]["command"] = f'"{sys.executable}" -c "print(456)"'
+            checks_by_id = {item["id"]: item for item in config["checks"]}
+            checks_by_id["build"]["command"] = f'"{sys.executable}" -c "print(123)"'
+            checks_by_id["unit-test"]["command"] = f'"{sys.executable}" -c "print(456)"'
+            checks_by_id["integration-test"]["command"] = f'"{sys.executable}" -c "print(789)"'
             config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
 
             passed = subprocess.run(
@@ -552,9 +615,87 @@ class PythonCliSmokeTests(unittest.TestCase):
             )
             self.assertEqual(passed.returncode, 0, passed.stdout + passed.stderr)
             self.assertIn("VERIFY PASS", passed.stdout)
-            self.assertEqual(json.loads(evidence.read_text(encoding="utf-8"))["status"], "PASS")
+            passed_evidence = json.loads(evidence.read_text(encoding="utf-8"))
+            self.assertEqual(passed_evidence["status"], "PASS")
+            result_by_id = {item["id"]: item for item in passed_evidence["results"]}
+            self.assertNotIn("test_count", result_by_id["unit-test"])
 
-            config["checks"][1]["command"] = f'"{sys.executable}" -c "raise SystemExit(7)"'
+            result_writer = target / "write_test_result.py"
+            result_writer.write_text(
+                "import json, sys\n"
+                "from pathlib import Path\n"
+                "path = Path(sys.argv[1])\n"
+                "path.parent.mkdir(parents=True, exist_ok=True)\n"
+                "path.write_text(json.dumps({'test_count': 0, 'failed': 0, 'skipped': 0}), encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+            result_file = target / "harness/evidence/test-results/unit-test.json"
+            checks_by_id["unit-test"].update({
+                "command": f'"{sys.executable}" "{result_writer}" "{result_file}"',
+                "result_file": "harness/evidence/test-results/unit-test.json",
+                "minimum_test_count": 1,
+            })
+            config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            empty_suite = subprocess.run(
+                [sys.executable, str(verify_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(empty_suite.returncode, 1, empty_suite.stdout + empty_suite.stderr)
+            self.assertIn("test_count must be an integer >= 1", str(json.loads(evidence.read_text(encoding="utf-8"))))
+
+            result_writer.write_text(
+                "import json, sys\n"
+                "from pathlib import Path\n"
+                "path = Path(sys.argv[1])\n"
+                "path.parent.mkdir(parents=True, exist_ok=True)\n"
+                "path.write_text(json.dumps({'test_count': 1, 'failed': 0, 'skipped': 1}), encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+            all_skipped = subprocess.run(
+                [sys.executable, str(verify_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(all_skipped.returncode, 1, all_skipped.stdout + all_skipped.stderr)
+            self.assertIn(
+                "executed test count must be >= 1 after excluding skipped tests",
+                str(json.loads(evidence.read_text(encoding="utf-8"))),
+            )
+
+            result_writer.write_text(
+                "import json, sys\n"
+                "from pathlib import Path\n"
+                "path = Path(sys.argv[1])\n"
+                "path.parent.mkdir(parents=True, exist_ok=True)\n"
+                "path.write_text(json.dumps({'test_count': 2, 'failed': 0, 'errors': 1, 'skipped': 0}), encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+            errored_suite = subprocess.run(
+                [sys.executable, str(verify_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(errored_suite.returncode, 1, errored_suite.stdout + errored_suite.stderr)
+            self.assertIn("errors must be integer 0", str(json.loads(evidence.read_text(encoding="utf-8"))))
+
+            checks_by_id["unit-test"].pop("result_file")
+            checks_by_id["unit-test"].pop("minimum_test_count")
+            checks_by_id["unit-test"]["command"] = f'"{sys.executable}" -c "print(123)"'
+            checks_by_id["unit-test"]["cwd"] = ".."
+            config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            escaped_cwd = subprocess.run(
+                [sys.executable, str(verify_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(escaped_cwd.returncode, 2, escaped_cwd.stdout + escaped_cwd.stderr)
+            self.assertIn("cwd must be an existing directory inside the project root", str(json.loads(evidence.read_text(encoding="utf-8"))))
+            checks_by_id["unit-test"].pop("cwd")
+
+            checks_by_id["unit-test"]["command"] = f'"{sys.executable}" -c "import time; time.sleep(3)"'
+            checks_by_id["unit-test"]["timeout_seconds"] = 1
+            config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            timed_out = subprocess.run(
+                [sys.executable, str(verify_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(timed_out.returncode, 1, timed_out.stdout + timed_out.stderr)
+            timeout_evidence = json.loads(evidence.read_text(encoding="utf-8"))
+            self.assertIn("command timed out", str(timeout_evidence))
+
+            checks_by_id["integration-test"]["command"] = f'"{sys.executable}" -c "raise SystemExit(7)"'
             config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
             failed = subprocess.run(
                 [sys.executable, str(verify_script)],
@@ -578,7 +719,24 @@ class PythonCliSmokeTests(unittest.TestCase):
                 "---\ntask_id: P-001\nbuild_id: B-001\nstatus: accepted\n"
                 "requirement_ids:\n  - FR-001\n"
                 "acceptance_doc: harness/evidence/module/P-001/ACCEPTANCE.md\n"
-                "verification_evidence: harness/evidence/module/P-001/verification.json\n---\n",
+                "verification_evidence: harness/evidence/module/P-001/verification.json\n"
+                "required_verification:\n"
+                "  commands:\n"
+                "    - \"unit-test\"\n"
+                "    - \"integration-test\"\n"
+                "test_baseline:\n"
+                "  applicability: executable\n"
+                "  unit:\n"
+                "    status: required\n"
+                "    check_ids:\n"
+                "      - \"unit-test\"\n"
+                "    exemption_reason: null\n"
+                "  integration:\n"
+                "    status: required\n"
+                "    check_ids:\n"
+                "      - 'integration-test'\n"
+                "    boundaries: [cli-to-filesystem]\n"
+                "    exemption_reason: null\n---\n",
                 encoding="utf-8",
             )
             check_script = target / "harness/scripts/harness_check.py"
@@ -611,10 +769,23 @@ class PythonCliSmokeTests(unittest.TestCase):
             )
             acceptance = target / "harness/evidence/module/P-001/ACCEPTANCE.md"
             acceptance.parent.mkdir(parents=True)
-            acceptance.write_text("# Evidence\n\n- Decision: `accepted`\n", encoding="utf-8")
+            acceptance.write_text(
+                "# Evidence\n\n## Test baseline\n\n"
+                "| Layer | Applicability | Check IDs | Result | Exemption reason | Evidence |\n"
+                "|---|---|---|---|---|---|\n"
+                "| Unit | required | `unit-test` | PASS | none | `verification.json` |\n"
+                "| Integration | required | `integration-test` | PASS | none | `verification.json` |\n\n"
+                "- Behavioral assertions verified: `yes`\n"
+                "- Integration boundaries exercised: `cli-to-filesystem`\n\n"
+                "- Decision: `accepted`\n",
+                encoding="utf-8",
+            )
             verification = target / "harness/evidence/module/P-001/verification.json"
             verification.write_text(
-                '{"schema_version": 1, "status": "PASS", "phase_id": "P-001"}\n', encoding="utf-8"
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-001", '
+                '"results": [{"id": "unit-test", "status": "PASS"}, '
+                '{"id": "integration-test", "status": "PASS"}]}\n',
+                encoding="utf-8",
             )
 
             missing_requirement = subprocess.run(
@@ -636,6 +807,13 @@ class PythonCliSmokeTests(unittest.TestCase):
 
             acceptance.write_text(
                 "# Evidence\n\n"
+                "## Test baseline\n\n"
+                "| Layer | Applicability | Check IDs | Result | Exemption reason | Evidence |\n"
+                "|---|---|---|---|---|---|\n"
+                "| Unit | required | `unit-test` | PASS | none | `verification.json` |\n"
+                "| Integration | required | `integration-test` | PASS | none | `verification.json` |\n\n"
+                "- Behavioral assertions verified: `yes`\n"
+                "- Integration boundaries exercised: `cli-to-filesystem`\n\n"
                 "## Acceptance criteria\n\n"
                 "| Requirement IDs | Criterion | Result | Evidence |\n"
                 "|---|---|---|---|\n"
@@ -652,6 +830,13 @@ class PythonCliSmokeTests(unittest.TestCase):
 
             acceptance.write_text(
                 "# Evidence\n\n"
+                "## Test baseline\n\n"
+                "| Layer | Applicability | Check IDs | Result | Exemption reason | Evidence |\n"
+                "|---|---|---|---|---|---|\n"
+                "| Unit | required | `unit-test` | PASS | none | `verification.json` |\n"
+                "| Integration | required | `integration-test` | PASS | none | `verification.json` |\n\n"
+                "- Behavioral assertions verified: `yes`\n"
+                "- Integration boundaries exercised: `cli-to-filesystem`\n\n"
                 "## Acceptance criteria\n\n"
                 "| Requirement IDs | Criterion | Result | Evidence |\n"
                 "|---|---|---|---|\n"
@@ -667,6 +852,52 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(accepted.returncode, 0, accepted.stdout + accepted.stderr)
             self.assertEqual(framework_accepted.returncode, 0, framework_accepted.stdout + framework_accepted.stderr)
             self.assertIn("HARNESS_CHECK PASS", accepted.stdout)
+
+            misleading_acceptance = acceptance.read_text(encoding="utf-8").replace(
+                "| Unit | required | `unit-test` | PASS | none | `verification.json` |",
+                "| Unit | PASS | `unit-test` | FAIL | none | `verification.json` |",
+            )
+            acceptance.write_text(misleading_acceptance, encoding="utf-8")
+            misleading = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_misleading = _cli("check", str(target))
+            self.assertIn("ACCEPTANCE TEST BASELINE INVALID", misleading.stdout)
+            self.assertIn("ACCEPTANCE TEST BASELINE INVALID", framework_misleading.stdout)
+            acceptance.write_text(misleading_acceptance.replace(
+                "| Unit | PASS | `unit-test` | FAIL | none | `verification.json` |",
+                "| Unit | required | `unit-test` | PASS | none | `verification.json` |",
+            ), encoding="utf-8")
+
+            verification.write_text(
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-001", '
+                '"results": [{"id": "unit-test", "status": "PASS"}]}\n',
+                encoding="utf-8",
+            )
+            missing_integration = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_missing_integration = _cli("check", str(target))
+            self.assertEqual(missing_integration.returncode, 1, missing_integration.stdout + missing_integration.stderr)
+            self.assertEqual(framework_missing_integration.returncode, 1, framework_missing_integration.stdout + framework_missing_integration.stderr)
+            self.assertIn("TEST BASELINE CHECK NOT PASS", missing_integration.stdout)
+            self.assertIn("TEST BASELINE CHECK NOT PASS", framework_missing_integration.stdout)
+
+            verification.write_text(
+                '{"schema_version": 1, "status": "PASS", "phase_id": "P-001", '
+                '"results": [{"id": "unit-test", "status": "PASS"}, '
+                '{"id": "integration-test", "status": "PASS"}]}\n',
+                encoding="utf-8",
+            )
+            acceptance.write_text("# Evidence\n\n- Decision: `accepted`\n", encoding="utf-8")
+            missing_acceptance_baseline = subprocess.run(
+                [sys.executable, str(check_script)], capture_output=True, text=True, cwd=target
+            )
+            framework_missing_acceptance_baseline = _cli("check", str(target))
+            self.assertEqual(missing_acceptance_baseline.returncode, 1, missing_acceptance_baseline.stdout + missing_acceptance_baseline.stderr)
+            self.assertEqual(framework_missing_acceptance_baseline.returncode, 1, framework_missing_acceptance_baseline.stdout + framework_missing_acceptance_baseline.stderr)
+            self.assertIn("ACCEPTANCE TEST BASELINE MISSING", missing_acceptance_baseline.stdout)
+            self.assertIn("ACCEPTANCE TEST BASELINE MISSING", framework_missing_acceptance_baseline.stdout)
 
             verification.write_text(
                 '{"schema_version": 1, "status": "PASS", "phase_id": "P-999"}\n', encoding="utf-8"
