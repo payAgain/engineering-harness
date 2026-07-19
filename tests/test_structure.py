@@ -638,6 +638,23 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertEqual(empty_suite.returncode, 1, empty_suite.stdout + empty_suite.stderr)
             self.assertIn("test_count must be an integer >= 1", str(json.loads(evidence.read_text(encoding="utf-8"))))
 
+            result_writer.write_text(
+                "import json, sys\n"
+                "from pathlib import Path\n"
+                "path = Path(sys.argv[1])\n"
+                "path.parent.mkdir(parents=True, exist_ok=True)\n"
+                "path.write_text(json.dumps({'test_count': 1, 'failed': 0, 'skipped': 1}), encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+            all_skipped = subprocess.run(
+                [sys.executable, str(verify_script)], capture_output=True, text=True, cwd=target
+            )
+            self.assertEqual(all_skipped.returncode, 1, all_skipped.stdout + all_skipped.stderr)
+            self.assertIn(
+                "executed test count must be >= 1 after excluding skipped tests",
+                str(json.loads(evidence.read_text(encoding="utf-8"))),
+            )
+
             checks_by_id["unit-test"].pop("result_file")
             checks_by_id["unit-test"].pop("minimum_test_count")
             checks_by_id["unit-test"]["command"] = f'"{sys.executable}" -c "import time; time.sleep(3)"'

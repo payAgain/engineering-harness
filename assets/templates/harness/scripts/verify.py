@@ -72,6 +72,9 @@ def _test_result(path: Path, minimum: int) -> tuple[bool, dict[str, Any] | str]:
         return False, "failed must be integer 0"
     if not isinstance(skipped, int) or isinstance(skipped, bool) or skipped < 0 or skipped > count:
         return False, "skipped must be an integer between 0 and test_count"
+    executed = count - skipped
+    if executed < minimum:
+        return False, f"executed test count must be >= {minimum} after excluding skipped tests"
     return True, {"test_count": count, "failed": failed, "skipped": skipped}
 
 
