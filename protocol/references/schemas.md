@@ -55,7 +55,7 @@ test_baseline:
 risk_score: 0
 conflict_score: 0
 execution: serial|multitask|optional-worktree
-execution_mode: subagent-required|direct-exception
+dispatch_mode: subagent-required|direct-exception
 direct_exception_reason: null
 ```
 
@@ -76,10 +76,12 @@ The checker intentionally parses only this repository-owned YAML shape, not gene
 
 Path: `harness/builds/<B-00x>.json`. Template: `harness/builds/_BUILD.template.json`.
 
-A Build uses exactly one alternative:
+A Build uses exactly one current alternative:
 
 - `status: approved` plus `authorization.type: human-build-approval`, with non-placeholder `reference` and `authorized_at`;
 - `status: authorized` plus `authorization.type: goal-delegation`, with a matching active Goal, Initiative and positive Scope revision, and `containment.status: PASS`.
+
+The legacy top-level `approval` object is accepted only when reading historical manifests that have no `authorization`; new manifests do not write both representations.
 
 Delegated containment has non-empty `success_criterion_ids`, all declared by the Goal, and an in-repository `evidence` path. Both alternatives require `schema_version`, `build_id`, `initiative_id`, positive `plan_revision`, and non-empty `approved_phase_ids`. Orchestrator may dispatch and accept only listed Phase IDs. Historical manifests are immutable and may link replacements through `supersedes`.
 

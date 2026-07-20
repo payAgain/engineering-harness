@@ -1,12 +1,12 @@
 # Copyable Prompts
 
-Tool-agnostic. Attach `PROTOCOL.md` + `references/glossary.md`.  
+Tool-agnostic target runtime: attach `harness/PROTOCOL.md` + `harness/references/glossary.md`.
 **对外只用 glossary 阶段名**；括号内 legacy 仅兼容旧会话。
 
 ## Clarify — 产品级澄清（仅首次 / 产品转向）（legacy: Round 0）
 
 ```text
-Read PROTOCOL.md, references/glossary.md, references/intent.md. Mode: Clarify (FIRST INIT).
+Read harness/PROTOCOL.md, harness/references/glossary.md, harness/references/intent.md. Mode: Clarify (FIRST INIT).
 
 Rules:
 1. Read-only. No business code. No Bootstrap/G1 freeze. No commit.
@@ -52,7 +52,7 @@ I approve the Charter draft: <note>. Execute Bootstrap (G1).
 Preflight: .harness-version AND root PROJECT_CHARTER.md exist.
 If missing → still first-init: use Clarify → Charter → Bootstrap. Do NOT ask Initiative 类型.
 
-Read PROTOCOL.md, glossary.md, lifecycle.md. Stage: Scope.
+Read harness/PROTOCOL.md, harness/references/glossary.md, harness/references/lifecycle.md. Stage: Scope.
 
 Human intent: <hotfix|feature|major> — <one-line goal>
 Initiative ID: I-00x
@@ -66,7 +66,7 @@ Initiative ID: I-00x
    - materialize Phase Packets as P-001, P-002, … (glossary IDs)
    - update current-task.md
 6. Run Plan output with glossary template. Do NOT ask human about parallel phases.
-7. Wait for Build approval (not ad-hoc implementation).
+7. Standard/Full: materialize one active Goal and continue with skills/goal.md. Wait for Build approval only if Human explicitly selected build-by-build.
 ```
 
 ## Plan — 阶段清单（在 Scope 通过后 / Build 前）
@@ -74,18 +74,18 @@ Initiative ID: I-00x
 ```text
 Stage: Plan for Initiative I-00x.
 
-1. Read references/glossary.md and references/phases.md.
-2. Output ONLY glossary titles: Initiative / Phases P-00x / Next Build B-00x.
+1. Read harness/references/glossary.md and harness/references/phases.md.
+2. Output ONLY glossary titles: Initiative / Phases P-00x / next authorization action.
 3. Each Phase = role_pipeline + acceptance_doc path. No WP-* / Task N titles.
 4. Phases are serial by default (P-001 → P-002 → …).
 5. FORBIDDEN: ask human whether two phases should run together / in parallel.
-6. Materialize Packets + REGISTRY. Stop and propose Next Build scope (usually the earliest ready Phase only).
+6. Materialize Packets + REGISTRY. In Goal mode return to Goal Controller for containment and Build issuance; in build-by-build propose one Build scope and stop.
 ```
 
-## Build — 批准执行轮（legacy: Round C / Batch）
+## Build-by-build — 显式逐轮批准（legacy: Round C / Batch）
 
 ```text
-I approve Build B-00x for Initiative I-00x: Phases <P-00x, …>.
+Execution mode is explicitly build-by-build. I approve Build B-00x for Initiative I-00x: Phases <P-00x, …>.
 
 1. Materialize `harness/builds/B-00x.json` from `_BUILD.template.json`, recording exactly the approved Phase IDs, current Plan revision, and this human approval reference/time. Do not dispatch before it exists.
 2. Spawn a **new orchestrator** instance. Human Gate must not orchestrate or implement.
@@ -93,7 +93,7 @@ I approve Build B-00x for Initiative I-00x: Phases <P-00x, …>.
 4. Human approved SCOPE only. Orchestrator decides serial vs parallel from dependencies/conflict_score/write domains. NEVER ask human about 并行/同步.
 5. Default: advance Phases serially. Multi-Phase in one Build ≠ parallel.
 6. Inside each Phase: role_pipeline (multi-role). FORBIDDEN: anonymous "implementing Task N"; FORBIDDEN: auto reviewer every Phase.
-7. Worker prompts: references/dispatch.md skeleton.
+7. Worker prompts: harness/references/dispatch.md skeleton.
 8. Reviewer only if Full / risk>=8 code / human requested.
 9. Accept: start from `_ACCEPTANCE.template.md`; verify approved scope, pipeline, project checks, observed flows, readiness, and SHA → status=accepted → REGISTRY. No Ship without human auth.
 ```
@@ -124,5 +124,14 @@ If the human wants a new feature/version, switch to Scope (initiative mode).
 Do not ask about parallelizing Phases.
 ```
 
-## Goal prompts
-Scope confirmation defaults to Goal G-00x (`execution_mode: goal`), with explicit `build-by-build` fallback. Resume before issuance; evaluate `continue | achieved | escalate`; escalate with evidence and exact resume point.
+## Goal — default Standard/Full execution
+
+```text
+Scope confirmation is recorded and execution_mode is goal. Follow skills/goal.md.
+1. Restore before issuance; resume active_build_id instead of creating another Build.
+2. If no Goal exists, materialize the next G-00x as active from the confirmed Scope and update Initiative/session pointers.
+3. Run Goal Controller as a separate role instance. It owns containment, delegated Build issuance, ledger updates, and exactly continue|achieved|escalate.
+4. Run a fresh Orchestrator for each authorized Build; it returns Build Accept evidence and one accepted commit SHA.
+5. Continue without per-Build Human approval while contained. Stop on Goal Acceptance or structured escalation.
+6. Never perform Ship or silently fall back to build-by-build.
+```

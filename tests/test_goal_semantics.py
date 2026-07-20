@@ -13,12 +13,16 @@ goal_id: G-001
 initiative_id: I-001
 status: {status}
 loop_stage: building
+execution_mode: goal
 success_criteria:
   - id: SC-001
     required: true
     status: {criterion}
 scope:
   revision: {revision}
+authorization:
+  human_scope_reference: scope-message-1
+  confirmed_at: 2026-07-16T00:00:00Z
 progress:
   active_build_id: {active}
   accepted_build_ids: {accepted_builds}
@@ -70,6 +74,15 @@ class GoalSemanticValidationTests(unittest.TestCase):
         self.assertTrue(any("initiative/scope revision mismatch" in item for item in self.check_both()))
         (self.root / "harness/goals/G-002.yaml").write_text(GOAL.format(status="active", criterion="unmet", revision=1, active="null", accepted_builds="[]", shas="[]", escalation="false").replace("G-001", "G-002"), encoding="utf-8")
         self.assertTrue(any("MULTIPLE ACTIVE GOALS" in item for item in self.check_both()))
+
+    def test_rejects_unconfirmed_active_goal_and_ambiguous_delegation(self):
+        self.goal()
+        goal_path = self.root / "harness/goals/G-001.yaml"
+        goal_path.write_text(goal_path.read_text(encoding="utf-8").replace("scope-message-1", "<scope-reference>"), encoding="utf-8")
+        self.assertTrue(any("INVALID ACTIVE GOAL AUTHORIZATION" in item for item in self.check_both()))
+
+        self.goal(); self.build(approval={"reference": "legacy", "approved_at": "2026-07-16T00:00:00Z"})
+        self.assertTrue(any("containment" in item for item in self.check_both()))
 
     def test_enforces_recovery_and_goal_acceptance(self):
         self.goal(active="B-999", accepted_builds="[B-001]", shas="[]", escalation="true")

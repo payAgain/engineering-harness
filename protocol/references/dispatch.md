@@ -1,15 +1,15 @@
 # Dispatch, Invocations, Git Checkpoints
 
-## Human Gate vs Orchestrator
+## Human Gate, Goal Controller, and Orchestrator
 
 | Surface | Allowed | Forbidden |
 |---|---|---|
-| Human Gate chat | Clarify/Scope Q&A；批准 **Build 范围**（哪些 Phase）；审 SHA；授权 Ship | implement；询问「能否并行/同步」；匿名 Task 派工 |
+| Human Gate chat | Clarify/Scope Q&A; confirm Goal; relay role handoffs; decide escalation; review SHA; authorize Ship | implement; choose delegated Build scope; impersonate controller/orchestrator |
+| Goal Controller | evaluate Goal gaps; contain/replan; issue delegated Build; update Goal ledger | implement; verify own work; alter Scope/criteria; Ship |
 | Orchestrator role instance | 按依赖推进 Phase；**自行判定**串行/并行；按 `role_pipeline` 派角色；Accept 收尾；must-commit | 写业务模块代码；假装 reviewer；把并行决策甩给人类 |
 
 
-**The Human Gate chat must spawn the orchestrator as a separate role instance.**  
-If the host tool has no subagent mechanism, stop with `delegation-unavailable`.
+Goal mode requires separate Goal Controller and Orchestrator instances. The controller may launch the Orchestrator when nested dispatch exists; otherwise the Human Gate relays the persisted dispatch unchanged. If the host cannot create required instances, stop with `role-runtime-unavailable`.
 
 概念：`references/glossary.md`、`phases.md`。禁止：`anti-patterns.md`。
 
@@ -27,7 +27,7 @@ If the host tool has no subagent mechanism, stop with `delegation-unavailable`.
 ## Serial vs parallel（强制）
 
 1. Phase **默认串行**（`P-001 → P-002 → …`）。  
-2. Human 批准的是 Build **范围**，不是并行策略。  
+2. Goal Controller authorizes delegated Build scope; Human approves Build scope only in explicit `build-by-build`. Neither decides parallel strategy.
 3. **禁止**向人类提问：「这两个阶段要不要一起做 / 同步进行？」  
 4. Orchestrator 仅在同时满足时静默并行，并写 `parallel_group`：  
    - 无相互依赖  
@@ -38,21 +38,22 @@ If the host tool has no subagent mechanism, stop with `delegation-unavailable`.
 
 ## Temporary orchestrator
 
-Each approved **Build** creates a **new** orchestrator role instance that restores from:
+Each authorized **Build** creates a **new** orchestrator role instance that restores from:
 
 - Charter / ADR / contracts
 - ownership / **Task Registry + Phase Packets**
 - active Initiative brief
-- approved `harness/builds/<B-00x>.json` (Phase scope + Plan revision + human approval reference)
+- active Goal when authorization is `goal-delegation`
+- `harness/builds/<B-00x>.json` with exactly one valid authorization path
 - `current-task.md` / `harness/session/*`
 - git status / HEAD / current branch
-- approval reference (Build B-00x scope)
+- authorization reference (Human Build approval or Goal delegation)
 
 Missing required restore inputs → `context-incomplete`.
 
 ## How to advance Phases（不是 1 Phase = 1 匿名 Agent）
 
-1. Read the approved Build manifest and select only its `approved_phase_ids`; missing/invalid approval → `build-approval-missing`
+1. Read the authorized Build manifest and select only its `approved_phase_ids`; missing/invalid authorization → `build-authorization-missing`
 2. From that scope, choose Phases whose dependencies are satisfied（default serial by ID/dependency）
 3. 读 `role_pipeline`（缺失则停止为 `packet-incomplete`；不得运行时猜测并写回质量角色）
 4. 求值每个 step `condition`：false 或未使用的 optional step 写 `status: skipped` + `status_reason`
@@ -60,14 +61,14 @@ Missing required restore inputs → `context-incomplete`.
 6. 角色完成后同时更新 ledger、handoff/evidence 和 Packet step status；重试必须使用新 invocation ID
 7. 同角色可合并；不同角色写权不冲突时可并行 steps
 8. `reviewer` 在 Full、risk≥8 或人类点名时 condition=true；其他情况合法 `skipped`
-9. **Accept**：用 `_ACCEPTANCE.template.md` 核对 approval/pipeline/ledger/质量证据 → must-commit → `accepted` → REGISTRY
+9. **Accept**：用 `_ACCEPTANCE.template.md` 核对 authorization/pipeline/ledger/质量证据 → must-commit → `accepted` → REGISTRY
 
 ## Forced role delegation
 
 Must create a **separate role instance** when any is true:
 
-- role is `orchestrator` for an approved batch
-- Packet `execution_mode: subagent-required`（默认）
+- role is `orchestrator` for an authorized Build
+- Packet `dispatch_mode: subagent-required`（默认）
 - pipeline 中的任一步 `role`（含 code/test/review/contract/…）
 - risk score ≥ 8
 - multi-file / cross-module / public contract / data / version / migration / release

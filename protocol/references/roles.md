@@ -7,7 +7,10 @@
 ## Topology (required)
 
 ```text
-Human Gate chat  ──approve / clarify only──►  Orchestrator (MUST be separate role instance)
+Human Gate chat  ──confirm / relay only──► Goal Controller (separate role instance)
+                                                    │ issues bounded Build
+                                                    ▼
+                                           Orchestrator (separate role instance)
                                                     │
                     ┌───────────────┬───────────────┼───────────────┬──────────────┐
                     ▼               ▼               ▼               ▼              ▼
@@ -20,14 +23,15 @@ Human Gate chat  ──approve / clarify only──►  Orchestrator (MUST be se
 
 `*` = optional at Light; recommended at Standard+ when scope is unclear.
 
-**Hard rule:** the Human Gate chat must **not** impersonate orchestrator, implementer, tester, or reviewer.
+**Hard rule:** the Human Gate chat may launch/relay role instances but must **not** impersonate Goal Controller, Orchestrator, implementer, tester, or reviewer.
 “更快，我自己在主会话做”不是例外。
 
 ## Core roles (always at Standard+)
 
 | Role | Responsibility | Write authority | Must be separate instance? |
 |---|---|---|---|
-| `orchestrator` | Decompose batch, dispatch, authenticity checks, session/handoff, require commits | harness/session, invocations, current-task, ownership/registry (governance) | **Yes — never the Human Gate chat** |
+| `goal-controller` | Goal gap evaluation, contained replan, delegated Build issuance, Goal Acceptance | goals/builds, Goal pointers in Initiative/session, unstarted plan records | **Yes in Goal mode** |
+| `orchestrator` | Execute one authorized Build, dispatch, authenticity checks, session/handoff, require commits | harness/session, invocations, current-task, ownership/registry (governance) | **Yes — never the Human Gate chat** |
 | `architect-contract` | Contracts, ADR drafts, SPI freeze | `contracts/`, `DECISIONS/` drafts, related harness drafts | Yes for contract/ADR tasks |
 | `module-<name>` / implementer | Feature code in owned paths | module ownership paths only | Yes for code |
 | `test` | Tests, smoke, verification evidence | test paths + evidence | Yes for test |
@@ -71,10 +75,10 @@ Human Gate chat  ──approve / clarify only──►  Orchestrator (MUST be se
 
 ## Completeness checklist for a new project
 
-1. Is there exactly one ephemeral orchestrator instance per batch?
+1. Is there one active Goal Controller and exactly one fresh Orchestrator per authorized Build?
 2. Does every `code|test|review|contract|integration|release` task have a non-Human-Gate instance?
 3. Is reviewer present for Full / risk≥8 code before the required commit?
 4. Are optional specialists only created when a Task Packet names them?
 
 ## Goal roles
-Goal Controller and Build Orchestrator are separate role instances. The controller plans and returns `continue | achieved | escalate`; the orchestrator executes an authorized Build.
+Goal Controller and Build Orchestrator are separate role instances. The controller owns Goal/Build manifests, plans and returns `continue | achieved | escalate`; the orchestrator executes one authorized Build and returns acceptance evidence plus the accepted SHA. If nested dispatch is unavailable, Human Gate relays the persisted handoff unchanged. Missing role runtime escalates instead of changing execution mode.

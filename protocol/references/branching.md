@@ -33,7 +33,7 @@ Direct commits on `main` are allowed only when **all** are true:
 - risk ≤ 7
 - single write domain
 - no public contract / data / version / migration / release impact
-- Task Packet sets `execution_mode: direct-exception` **and** `branch_exception: main-allowed`
+- Task Packet sets `dispatch_mode: direct-exception` **and** `branch_exception: main-allowed`
 - Human explicitly approves the exception in chat
 
 “Faster on main” is not valid.

@@ -1,3 +1,4 @@
 include VERSION
 include PROTOCOL.md
+recursive-include protocol/references *.md
 recursive-include assets/templates *

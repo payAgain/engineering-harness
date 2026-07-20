@@ -42,12 +42,15 @@ def audit_project(target: Path) -> tuple[int, list[str]]:
         lines.extend(problems)
         lines.append("AUDIT FAIL: harness_check")
         return 1, lines
-    lines.append(f"HARNESS_CHECK PASS (level={load_level(target)}, layout=tool-agnostic)")
+    harness_level = load_level(target)
+    lines.append(f"HARNESS_CHECK PASS (level={harness_level}, layout=tool-agnostic)")
     goal_id, goal_status, loop_stage = _goal_runtime_summary(target)
     if goal_id:
         lines.append(f"Goal state: {goal_id} {goal_status or 'unknown'} (loop_stage={loop_stage or 'unknown'})")
+    elif harness_level in {"Standard", "Full"}:
+        lines.append("Goal state: none (awaiting confirmed Scope or explicit build-by-build selection)")
     else:
-        lines.append("Goal state: none (legacy/build-by-build compatible)")
+        lines.append("Goal state: unavailable at Light level")
 
     lines.append("=== SAFE_BASH_GUARD smoke ===")
     ok, msg = guard_command("echo ok")

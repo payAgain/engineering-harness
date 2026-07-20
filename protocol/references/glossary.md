@@ -12,7 +12,7 @@
 | **Bootstrap** | `bootstrap` | init / 角色·ownership·REGISTRY 落盘 | G1 · Round B |
 | **Scope** | `scope` | Initiative 分类 + 范围澄清（**仅 Bootstrap/G1 之后**） | Round I |
 | **Plan** | `plan` | 拆 Phase → 写入 REGISTRY / Packets | S6 |
-| **Build** | `build` | 人类批准的一轮执行（角色流水线 + must-commit） | G2–G3 · Round C / Batch |
+| **Build** | `build` | 一次有界执行（Goal delegation 或 Human approval + 角色流水线 + must-commit） | G2–G3 · Round C / Batch |
 | **Accept** | `accept` | 阶段验收文档 + Phase `accepted` | G3 完成证明 |
 | **Integrate** | `integrate` | 跨模块集成屏障（需要时） | G4 |
 | **Evidence** | `evidence` | 证据包与文档对齐（需要时） | G5 |
@@ -27,7 +27,7 @@
 |---|---|---|---|
 | **Initiative** | 一次有边界的交付外环 | `I-001` | 用「项目」「版本」当进度 ID |
 | **Phase** | 计划中的一个阶段（进度 SSOT） | `P-001` | 计划标题写 `Task 0` / `WP-1.0` / `Round C` |
-| **Build** | 本轮批准要推进的 Phase 集合 | `B-001` | 把 Build 当成「并行开关」 |
+| **Build** | 本轮被授权推进的 Phase 集合 | `B-001` | 把 Build 当成「并行开关」 |
 | **Step** | Phase 内 `role_pipeline` 的一步 | `role` + `purpose` | 再发明「子 Task / 子 Agent 工单」花名 |
 
 Packet 文件名建议：`harness/tasks/P-001.md`（`task_id: P-001`）。  
@@ -50,7 +50,7 @@ Next Build: B-001 → P-001   # 默认一次只推进依赖已满足的最早 Ph
 | 规则 | 说明 |
 |---|---|
 | Phase **默认串行** | `P-001 → P-002 → …` |
-| Human Gate **只批范围** | 批准「B-001 包含哪些 Phase」= 批准做什么；**不问**能否并行/同步 |
+| Build scope authorization | Goal mode 由 Controller 在 Scope 内授权；只有 `build-by-build` 由 Human 批准；两者都**不问**并行/同步 |
 | **并行仅 Orchestrator 判定** | 依据 Packet `dependencies`、`conflict_score`、ownership 写域；写入 invocations |
 | Build 含多 Phase ≠ 并行 | 多 Phase 同属一个 Build 时，仍按依赖**顺序**推进 |
 | **禁止话术** | 「这两个阶段要不要一起做/同步进行？请你选」 |
@@ -70,9 +70,10 @@ Next Build: B-001 → P-001   # 默认一次只推进依赖已满足的最早 Ph
 |---|---|
 | `clarify` | Clarify |
 | `init` | Charter + Bootstrap |
-| `initiative` | Scope → Plan |
-| `batch` | Build → Accept（… Integrate/Evidence/Ship 按需） |
-| `resume` | 续当前 Initiative 的下一 Build |
+| `initiative` | Scope → default Goal |
+| `goal` | Plan/Replan → Build → Accept → Evaluate |
+| `build-by-build` / `batch` | explicit Human-approved Build → Accept |
+| `resume` | 先恢复当前 Goal/Build |
 | `audit` / `upgrade` | 驾驭架健康 / 升级 |
 
 ## 6. Agent 自检（输出计划或请批准前）

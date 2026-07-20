@@ -8,6 +8,12 @@ from engineering_harness import FRAMEWORK_ROOT
 
 LEVELS = ("Light", "Standard", "Full")
 
+PROTOCOL_REFERENCE_NAMES = (
+    "anti-patterns.md", "branching.md", "dispatch.md", "gates.md", "glossary.md",
+    "goals.md", "intent.md", "layout.md", "levels.md", "lifecycle.md", "phases.md",
+    "prompts.md", "roles.md", "schemas.md", "session.md",
+)
+
 DELIVERY_DOCUMENTS = {
     "delivery-list": ("docs/delivery/delivery-list.md", "docs/delivery/delivery-list.md"),
     "requirements": ("docs/requirements/software-requirements-specification.md", "docs/requirements/software-requirements-specification.md"),
@@ -90,7 +96,9 @@ STANDARD_DIRS = [
     "harness/handoffs/readonly-results", "harness/evidence/orchestrator", "contracts",
 ]
 
-LIGHT_REQUIRED = [dest for _, dest in LIGHT_FILES]
+PROTOCOL_REFERENCE_DESTS = [f"harness/references/{name}" for name in PROTOCOL_REFERENCE_NAMES]
+
+LIGHT_REQUIRED = [dest for _, dest in LIGHT_FILES] + PROTOCOL_REFERENCE_DESTS
 STANDARD_REQUIRED = [dest for _, dest in STANDARD_FILES if not dest.endswith("_TEMPLATE.md")]
 
 DANGEROUS_PATTERNS = [
@@ -106,3 +114,7 @@ def templates_root() -> Path:
 
 def protocol_path() -> Path:
     return FRAMEWORK_ROOT / "PROTOCOL.md"
+
+
+def protocol_references_root() -> Path:
+    return FRAMEWORK_ROOT / "protocol" / "references"

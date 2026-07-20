@@ -22,6 +22,11 @@ class build_py(_build_py):
         shutil.copy2(ROOT / "VERSION", resources / "VERSION")
         shutil.copy2(ROOT / "PROTOCOL.md", resources / "PROTOCOL.md")
         shutil.copytree(
+            ROOT / "protocol" / "references",
+            resources / "protocol" / "references",
+            dirs_exist_ok=True,
+        )
+        shutil.copytree(
             ROOT / "assets" / "templates",
             resources / "assets" / "templates",
             dirs_exist_ok=True,

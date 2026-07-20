@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 
 LIGHT_REQUIRED = ['AGENTS.md', 'current-task.md', 'docs/verification.md', 'docs/readiness.md', 'harness/session/session-state.json', 'harness/session/session-log.md', 'skills/clarify.md', 'skills/start.md', 'skills/handoff.md', 'harness/scripts/harness_check.py', 'harness/scripts/verify.py', 'harness/verification.json', 'harness/drafts/INTENT-CLARITY.md']
+PROTOCOL_REFERENCE_NAMES = ['anti-patterns.md', 'branching.md', 'dispatch.md', 'gates.md', 'glossary.md', 'goals.md', 'intent.md', 'layout.md', 'levels.md', 'lifecycle.md', 'phases.md', 'prompts.md', 'roles.md', 'schemas.md', 'session.md']
 STANDARD_REQUIRED = ['harness/session/progress-map.md', 'harness/session/command-history.md', 'skills/plan.md', 'skills/review.md', 'skills/commit.md', 'skills/initiative.md', 'skills/goal.md', 'agents/goal-controller.md', 'harness/goals/_GOAL.template.yaml', 'harness/goals/_GOAL-ACCEPTANCE.template.md', 'harness/initiatives/INDEX.md', 'harness/scripts/safe_bash_guard.py', 'harness/scripts/branch_check.py', 'agents/orchestrator.md', 'agents/architect-contract.md', 'agents/reviewer.md', 'agents/integration-release.md', 'agents/test.md', 'harness/tasks/REGISTRY.yaml', 'harness/ownership/OWNERSHIP.yaml', 'harness/runtime/_INVOCATIONS.template.yaml', 'harness/builds/_BUILD.template.json', 'harness/evidence/_ACCEPTANCE.template.md', 'DECISIONS/INDEX.md']
 DELIVERY_DOCUMENTS = {
     'delivery-list': 'docs/delivery/delivery-list.md',
@@ -29,6 +30,7 @@ DELIVERY_DOCUMENTS = {
 DANGEROUS_PATTERNS = ['rm -rf /', 'rm -rf .', 'git reset --hard', 'git clean -fd', 'git push --force', 'git push -f', 'drop database', 'truncate table', 'supabase db reset', 'prisma migrate reset']
 
 GOAL_STATUSES = {"draft", "awaiting_scope_confirmation", "active", "achieved", "accepted", "paused", "blocked", "escalation_required", "cancelled"}
+GOAL_LOOP_STAGES = {"planning", "building", "evaluating", "replanning"}
 
 
 def load_level(root: Path) -> str:
@@ -40,7 +42,7 @@ def load_level(root: Path) -> str:
 
 
 def required_files(level: str, delivery_documents: list[str] | None = None) -> list[str]:
-    files = list(LIGHT_REQUIRED)
+    files = list(LIGHT_REQUIRED) + [f'harness/references/{name}' for name in PROTOCOL_REFERENCE_NAMES]
     if level in {"Standard", "Full"}:
         files.extend(STANDARD_REQUIRED)
     files.extend(DELIVERY_DOCUMENTS[item] for item in delivery_documents or [] if item in DELIVERY_DOCUMENTS)
@@ -178,6 +180,7 @@ def _load_goals(root: Path, problems: list[str]) -> dict[str, dict[str, object]]
     for path in sorted((root / "harness" / "goals").glob("G-*.yaml")):
         text = path.read_text(encoding="utf-8")
         goal_id, initiative_id, status = (_yaml_scalar(text, key) for key in ("goal_id", "initiative_id", "status"))
+        schema_version, loop_stage, execution_mode = (_yaml_scalar(text, key) for key in ("schema_version", "loop_stage", "execution_mode"))
         scope = _section(text, "scope")
         revision_match = re.search(r"(?m)^\s{2}revision:\s*(\d+)\s*$", scope)
         criteria, required = _goal_criteria(text)
@@ -189,8 +192,17 @@ def _load_goals(root: Path, problems: list[str]) -> dict[str, dict[str, object]]
             continue
         if status not in GOAL_STATUSES:
             problems.append(f"INVALID GOAL: {path.relative_to(root)}: status")
+        if schema_version != "1" or loop_stage not in GOAL_LOOP_STAGES or execution_mode != "goal":
+            problems.append(f"INVALID GOAL: {path.relative_to(root)}: schema_version/loop_stage/execution_mode")
         if not revision_match or not criteria:
             problems.append(f"INVALID GOAL: {path.relative_to(root)}: scope revision/success criteria")
+        if status == "active":
+            authorization = _section(text, "authorization")
+            reference = re.search(r"(?m)^\s{2}human_scope_reference:\s*([^\n#]+)", authorization)
+            confirmed = re.search(r"(?m)^\s{2}confirmed_at:\s*([^\n#]+)", authorization)
+            values = [match.group(1).strip().strip('"\'') if match else "" for match in (reference, confirmed)]
+            if any(not value or value.startswith("<") for value in values):
+                problems.append(f"INVALID ACTIVE GOAL AUTHORIZATION: {goal_id}")
         if status == "active" and initiative_id in active_by_initiative:
             problems.append(f"MULTIPLE ACTIVE GOALS: {initiative_id}")
         elif status == "active":
@@ -198,6 +210,8 @@ def _load_goals(root: Path, problems: list[str]) -> dict[str, dict[str, object]]
         progress, escalation = _section(text, "progress"), _section(text, "escalation")
         active_build = re.search(r"(?m)^\s{2}active_build_id:\s*([^\n#]+)", progress)
         active_build_id = active_build.group(1).strip().strip('"\'') if active_build and active_build.group(1).strip() not in {"null", "~"} else None
+        if active_build_id and loop_stage != "building":
+            problems.append(f"INVALID GOAL LOOP STAGE: {goal_id}: active Build requires building")
         escalation_match = re.search(r"(?m)^\s{2}required:\s*(true|false)\s*$", escalation)
         goals[goal_id] = {"initiative_id": initiative_id, "status": status, "scope_revision": int(revision_match.group(1)) if revision_match else None, "criteria": criteria, "required_criteria_statuses": required, "active_build_id": active_build_id, "accepted_build_ids": _yaml_list(progress, "accepted_build_ids"), "accepted_commit_shas": _yaml_list(progress, "accepted_commit_shas"), "escalation_required": bool(escalation_match and escalation_match.group(1) == "true")}
     return goals
@@ -218,7 +232,7 @@ def _validate_build_authorization(path: Path, data: dict[str, object], goals: di
     reference, timestamp = auth.get("reference"), auth.get("authorized_at")
     valid_common = all(isinstance(value, str) and value.strip() and not value.startswith("<") for value in (reference, timestamp))
     if data.get("status") == "approved" and auth.get("type") == "human-build-approval":
-        if not valid_common:
+        if not valid_common or isinstance(legacy, dict):
             problems.append(f"INVALID BUILD: {rel}: authorization reference/time")
             return False
         return True
@@ -233,7 +247,8 @@ def _validate_build_authorization(path: Path, data: dict[str, object], goals: di
         problems.append(f"INVALID GOAL DELEGATION: {rel}: initiative/scope revision mismatch")
         return False
     containment = data.get("containment")
-    if not isinstance(containment, dict) or containment.get("status") != "PASS" or not _inside_root(path.parents[2], containment.get("evidence") if isinstance(containment.get("evidence"), str) else None):
+    evidence_path = _inside_root(path.parents[2], containment.get("evidence") if isinstance(containment, dict) and isinstance(containment.get("evidence"), str) else None)
+    if not isinstance(containment, dict) or containment.get("status") != "PASS" or not evidence_path or not evidence_path.is_file() or isinstance(legacy, dict):
         problems.append(f"INVALID GOAL DELEGATION: {rel}: containment")
         return False
     criterion_ids = containment.get("success_criterion_ids")

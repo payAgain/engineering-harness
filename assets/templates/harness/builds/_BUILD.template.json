@@ -15,10 +15,6 @@
     "authorized_at": "<ISO-8601>",
     "authorized_by": "human"
   },
-  "approval": {
-    "reference": "<human-approval-reference>",
-    "approved_at": "<ISO-8601>"
-  },
   "containment": null,
   "supersedes": null,
   "scope_changes": []

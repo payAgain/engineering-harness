@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Ephemeral per-batch orchestrator. Must run as a separate role instance — never as the Human Gate chat.
+description: Ephemeral per-Build orchestrator. Must run as a separate role instance — never as the Human Gate chat.
 model: inherit
 readonly: false
 is_background: false
@@ -39,3 +39,5 @@ is_background: false
 
 ## Goal authorization
 Consume exactly one valid path: `approved + human-build-approval`, or `authorized + goal-delegation` with active matching Goal, matching Scope revision, and containment PASS. Complete Build Accept and an accepted commit SHA before returning to Goal Controller.
+
+The Goal Controller is the sole writer of Goal state and delegated Build manifests. Treat `harness/goals/**` and the dispatched `harness/builds/B-00x.json` as read-only. Return evidence and the accepted SHA; never clear `active_build_id`, issue another Build, or decide Goal completion.

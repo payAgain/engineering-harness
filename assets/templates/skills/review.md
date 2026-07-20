@@ -1,6 +1,6 @@
 # Review Procedure
 
-## Goal
+## Purpose
 Review current diff for correctness, scope drift, and validation readiness.
 
 ## Rules

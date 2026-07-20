@@ -10,7 +10,7 @@ test_owner: test
 risk_score: 8
 conflict_score: 0
 execution: serial
-execution_mode: subagent-required
+dispatch_mode: subagent-required
 direct_exception_reason: null
 status: ready
 blocker: null

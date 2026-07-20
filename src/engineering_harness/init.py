@@ -12,9 +12,11 @@ from engineering_harness.paths import (
     DOCUMENT_PRESETS,
     HUMAN_MAINTAINED_FILES,
     LIGHT_FILES,
+    PROTOCOL_REFERENCE_NAMES,
     STANDARD_DIRS,
     STANDARD_FILES,
     protocol_path,
+    protocol_references_root,
     templates_root,
 )
 
@@ -102,15 +104,19 @@ def init_project(
 
     target = target.resolve()
     version_path = target / ".harness-version"
-    if delivery_documents is None:
-        if not version_path.is_file():
-            raise ValueError("--docs is required on first init; use 'none' to confirm no delivery documents")
+    existing_meta: dict[str, object] | None = None
+    if version_path.is_file():
         try:
-            existing_meta = json.loads(version_path.read_text(encoding="utf-8"))
+            loaded_meta = json.loads(version_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
-            raise ValueError(f"cannot preserve delivery documents from .harness-version: {exc}") from exc
-        if not isinstance(existing_meta, dict):
-            raise ValueError("cannot preserve delivery documents: .harness-version root must be an object")
+            raise ValueError(f"cannot read existing .harness-version: {exc}") from exc
+        if not isinstance(loaded_meta, dict):
+            raise ValueError("existing .harness-version root must be an object")
+        existing_meta = loaded_meta
+
+    if delivery_documents is None:
+        if existing_meta is None:
+            raise ValueError("--docs is required on first init; use 'none' to confirm no delivery documents")
         existing_documents = existing_meta.get("delivery_documents")
         if not isinstance(existing_documents, list) or not all(
             isinstance(item, str) and item in DELIVERY_DOCUMENTS for item in existing_documents
@@ -119,6 +125,13 @@ def init_project(
         selected_documents = list(dict.fromkeys(existing_documents))
     else:
         selected_documents = resolve_delivery_documents(delivery_documents)
+
+    current_version = read_version()
+    if existing_meta is not None and existing_meta.get("version") != current_version and not force:
+        raise ValueError(
+            "framework upgrade requires --force so generated protocol/procedure files cannot be silently skipped; "
+            "human-maintained delivery documents are still preserved"
+        )
 
     target.mkdir(parents=True, exist_ok=True)
     name = project_name or target.name
@@ -144,6 +157,16 @@ def init_project(
     else:
         _write_text(protocol_dst, protocol_path().read_text(encoding="utf-8"))
         logs.append("WRITE: harness/PROTOCOL.md")
+
+    for reference_name in PROTOCOL_REFERENCE_NAMES:
+        source = protocol_references_root() / reference_name
+        destination = target / "harness" / "references" / reference_name
+        relative = f"harness/references/{reference_name}"
+        if destination.exists() and not force:
+            logs.append(f"SKIP existing: {relative}")
+        else:
+            _write_text(destination, source.read_text(encoding="utf-8"))
+            logs.append(f"WRITE: {relative}")
 
     if level in {"Standard", "Full"}:
         for source_rel, dest_rel in STANDARD_FILES:
@@ -188,7 +211,7 @@ def init_project(
 
     meta = {
         "framework": "engineering-harness",
-        "version": read_version(),
+        "version": current_version,
         "level": level,
         "layout": "tool-agnostic",
         "cli": "python",

@@ -1,6 +1,6 @@
 ﻿# Current Task
 
-## Goal
+## Objective
 Initialize engineering harness for this repository.
 
 ## Current Status

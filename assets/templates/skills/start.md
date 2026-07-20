@@ -1,6 +1,6 @@
 # Start Procedure
 
-## Goal
+## Purpose
 Recover project context before changes.
 
 ## Rules
@@ -9,7 +9,7 @@ Recover project context before changes.
 - Do **not** ask whether Phases can run in parallel
 - If goals/acceptance are ambiguous for the **current** Initiative, switch to scoped clarify / `skills/clarify.md`
 - Read required files first
-- Confirm GitHub Flow working branch before implementation batches
+- Confirm GitHub Flow working branch before implementation Builds
 - Output a Session Briefing
 - If files are missing, report them and recommend harness_check
 
@@ -20,17 +20,18 @@ Recover project context before changes.
 4. Read `harness/session/session-log.md`
 5. If Charter / `.harness-version` missing → first-init path: `skills/clarify.md` only (never `skills/initiative.md`)
 6. Read `harness/initiatives/INDEX.md` and active initiative `brief.md` **only if G1 already landed**
-7. Read `docs/verification.md` and delivery documents selected in `.harness-version`
-8. Check git branch (`git branch --show-current` or `python harness/scripts/branch_check.py`)
-9. If on `main`/`master` and the next work is implementation → create `feat/<task-or-batch>`
-10. If human asks for a new feature/version while this chat already ran another Initiative → stop; open Scope in a new chat
-11. Output Session Briefing (use glossary stage names)
+7. Restore the unique active Goal and its `active_build_id`; read both manifests before deciding the next action
+8. Read `docs/verification.md` and delivery documents selected in `.harness-version`
+9. Check git branch (`git branch --show-current` or `python harness/scripts/branch_check.py`)
+10. If on `main`/`master` and the next work is implementation → create `feat/<initiative-or-build>`
+11. If human asks for a new feature/version while this chat already ran another Initiative → stop; open Scope in a new chat
+12. Output Session Briefing (use glossary stage names)
 
 ## Output
 ```text
 Session Briefing
 
-Current Goal:
+Formal Goal ID / status / loop stage:
 Initiative ID / Type: N/A until after Bootstrap; then current open Initiative
 Current Stage: Clarify|Charter|Bootstrap|Scope|Plan|Build|Accept|Ship|Archive
 Active Build / Phases: B-00x / P-00x
@@ -45,4 +46,4 @@ Resume From:
 ```
 
 ## Goal recovery
-Restore the unique Goal and inspect `active_build_id`. If present, resume it. Do not issue a second Build. Stop for unknown worktree changes, missing accepted SHA, conflicting Goals, or revision mismatch.
+If an active Goal exists, switch to `skills/goal.md`. If `active_build_id` is present, resume that Build and do not issue another. Stop for unknown worktree changes, missing accepted SHA, conflicting Goals, revision mismatch, or unavailable required role runtime.

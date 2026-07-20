@@ -32,8 +32,8 @@
 ## 核心原则（请先读）
 
 1. **先澄清目标，再行动**：多轮提问消除二义性后，才能 Charter / Bootstrap / 写代码。
-2. **Human Gate ≠ 干活线程**：用户聊天只负责澄清、批准 Build 范围、审查 SHA、授权 Ship；编排与实现必须由**独立角色实例**（含 orchestrator）执行。
-3. **统一命名 + Phase 串行默认**：对外用 glossary（Clarify/…/Build/Accept）；进度 ID 为 `I/P/B-00x`。人只批 Build 范围；禁止问「两阶段能否并行」。见 `protocol/references/glossary.md`。
+2. **Human Gate ≠ 干活线程**：用户聊天确认 Scope/Goal、中继仓库化角色交接、处理升级、审查 SHA 和授权 Ship；Goal Controller、Orchestrator 与实现必须由**独立角色实例**执行。
+3. **Goal 是 Standard/Full 默认**：Scope 确认后由 Goal Controller 在边界内授权 Build；只有显式 `build-by-build` 才逐 Build 人工批准。Phase 默认串行，禁止问人类并行策略。
 4. **验证后必须 commit**：工作分支上留下可验收的 commit SHA；未提交的「已完成」视为流程失败。
 5. **人类把控发布面（Ship）**：仅 `tag` / `push` / `release`（及更新受保护 `main`）需要明确授权；本地 `commit` 不再逐次乞求批准。
 6. **运行时 SSOT 永远是目标项目仓库**。
@@ -49,7 +49,8 @@ Clarify
 → Charter / Bootstrap
 → Scope
 → Plan（可观察的验收标准 + 影响分析）
-→ Human 批准 Build 范围
+→ Standard/Full 创建 active Goal（或显式 build-by-build）
+→ Goal Controller 签发有界 Build
 → 独立 Role Pipeline
 → 单元测试 + 集成测试 + 真实流程观察
 → 风险触发的 Production Readiness 验证
@@ -65,7 +66,7 @@ Clarify
 |---|---|---|
 | Verification Contract | 配置真实 build、unit-test、integration-test 和可选 lint/type 命令及超时 | `harness/verification.json` |
 | Quality/readiness dimensions | 在 Phase Packet 中声明功能、可靠性、数据、安全、性能、可观测性、部署、回滚、兼容性和可维护性影响 | `harness/tasks/P-00x.md` |
-| Build Approval Manifest | 固化人类批准的 Plan revision 与 Phase 范围 | `harness/builds/B-00x.json` |
+| Build Authorization Manifest | 固化 Goal delegation 或 Human approval、Plan/Scope revision 与 Phase 范围 | `harness/builds/B-00x.json` |
 | Phase Packet | 记录影响面、验收标准、角色步骤、验证 ID 和真实流程 | `harness/tasks/P-00x.md` |
 | Invocation Ledger | 证明 Implement/Test/Reviewer 等角色由独立实例执行，并保留失败与重试 | `harness/runtime/invocations/B-00x.yaml` |
 | Phase Verification Evidence | 保存与具体 Phase 绑定的命令、退出码和检查结果 | Packet 的 `verification_evidence` |
@@ -150,7 +151,7 @@ eh.cmd init <project> --level Standard --name my-app --docs recommended
 eh.cmd init <project> --docs requirements,design,test-plan,test-report
 ```
 
-会把模板复制进目标项目（含 `AGENTS.md`、`skills/`、`harness/PROTOCOL.md`、`.harness-version` 等）。
+会把模板和完整渐进式协议复制进目标项目（含 `AGENTS.md`、`skills/`、`harness/PROTOCOL.md`、`harness/references/`、`.harness-version` 等）。从旧 framework 版本升级时必须使用 `--force`，避免新版本号与旧入口文件混用；已填写的人类交付文档仍会保留。
 
 ### 怎么选 Light / Standard / Full
 
@@ -167,6 +168,7 @@ eh.cmd init <project> --docs requirements,design,test-plan,test-report
 | 目标澄清 + 会话续作 | ✓ | ✓ | ✓ |
 | 可选交付文档（`--docs`） | 按项目选择 | 按项目选择 | 按项目选择 |
 | 多角色 + Task DAG + 调度台账 | ✗ | ✓ | ✓ |
+| Goal Controller 连续有界执行 | ✗（直接/简化流程） | ✓（默认） | ✓（默认） |
 | Reviewer / 集成屏障 / 发版纪律 | ✗ | 按需 | **强制** |
 
 更细的对比与升级路径见 [`protocol/references/levels.md`](./protocol/references/levels.md)。
@@ -293,7 +295,8 @@ engineering-harness/
 | `AGENTS.md` | 目标项目中任意 Agent 的操作入口 |
 | `current-task.md` | 当前任务或 Build 的人类可读焦点 |
 | `agents/` | Standard+ 的独立角色定义 |
-| `skills/` | clarify、initiative、plan、review、commit、handoff 等流程技能 |
+| `skills/` | clarify、initiative、goal、plan、review、commit、handoff 等流程技能 |
+| `harness/references/` | 随目标项目分发的协议细则，供 PROTOCOL 与 skills 渐进读取 |
 | `harness/drafts/` | 首次产品目标澄清草稿 |
 | `harness/initiatives/` | feature、hotfix、major 等 Initiative brief 与索引 |
 | `harness/tasks/` | Phase Packet 模板和任务注册表 |
@@ -369,7 +372,7 @@ integrations/
 
 ```text
 AGENTS.md                 # 任意 Agent 的项目操作入口
-current-task.md           # 当前任务 / batch 焦点
+current-task.md           # 当前 Goal / Build 焦点
 agents/                   # 角色定义（含 goal-controller，工具无关）
 skills/                   # clarify / initiative / goal / start / plan / review / commit / handoff
 harness/
@@ -378,6 +381,7 @@ harness/
   drafts/                 # INTENT-CLARITY.md（产品级澄清）
   initiatives/            # 每个 feature/版本的 brief + INDEX
   PROTOCOL.md             # 协议副本
+  references/             # goals / schemas / dispatch / session 等可运行细则
   session/                # 可恢复会话状态
   scripts/                # harness_check / branch_check / verify / safe_bash_guard
   tasks/                  # P-00x Phase Packet、影响分析和验收契约

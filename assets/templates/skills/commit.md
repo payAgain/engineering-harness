@@ -1,6 +1,6 @@
 # Commit Procedure
 
-## Goal
+## Purpose
 After verification passes on a working branch, **create a real git commit** so humans can review the SHA.  
 Do **not** `push` / `tag` / `release` without explicit human authorization.
 

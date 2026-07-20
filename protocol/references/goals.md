@@ -10,9 +10,13 @@ Scope complete ≠ Intent satisfied. Build accepted ≠ Goal accepted.
 
 `human Scope confirmation → Goal G-00x → goal-delegation Build B-00x`. A Build uses exactly one authorization type: `human-build-approval` or `goal-delegation`. Goal delegation is not a fake Human approval.
 
+For Standard/Full, post-confirmation creation copies `_GOAL.template.yaml` to the next monotonic ID, replaces all placeholders, and persists `status: active`. `awaiting_scope_confirmation` is allowed only for a separately prepared draft; a confirmed runtime Goal must not remain there. Light has no Goal runtime and must not claim this default.
+
 ## 3. Loop
 
 `plan/replan → containment → Build → Accept → evaluate`. Evaluation is exactly `continue | achieved | escalate`. `continue` issues the next bounded Build; `achieved` creates Goal Acceptance; `escalate` stops before another Build.
+
+The Goal Controller is the sole writer of Goal state and delegated Build manifests. A fresh Orchestrator executes one Build and returns acceptance evidence plus its accepted SHA. Human Gate may launch instances and relay persisted handoffs but does not choose delegated Build scope. If separate role instances are unavailable, escalate with `role-runtime-unavailable` rather than switching modes.
 
 ## 4. Containment
 
@@ -33,3 +37,5 @@ Goal accepted requires every required criterion to be `met` with evidence and co
 ## 8. Recovery
 
 Restore branch/worktree, open Initiative, the one active Goal, `active_build_id`, invocations, evidence, and commit SHAs. Resume an active Build instead of issuing another. Contradictory state becomes `escalation_required`; never guess.
+
+After every persisted transition, run the project-local harness checker. Chat state alone never authorizes a Build or proves Goal acceptance.

@@ -317,6 +317,9 @@ class FrameworkStructureTests(unittest.TestCase):
             self.assertIn(token, goals)
         self.assertIn("fake Human approval", anti)
         self.assertIn("no-progress", anti)
+        self.assertIn("| `goal` |", protocol)
+        self.assertIn("Standard/Full default to `execution_mode: goal`", protocol)
+        self.assertNotIn("Human approves **Build B-00x** scope", protocol)
 
     def test_goal_templates_define_bounded_authorization(self):
         goal = (ROOT / "assets/templates/harness/goals/_GOAL.template.yaml").read_text(encoding="utf-8")
@@ -327,6 +330,8 @@ class FrameworkStructureTests(unittest.TestCase):
         for token in ("goal_id: G-001", "execution_mode: goal", "loop_stage:", "success_criteria:", "scope:", "budgets:", "evaluation_ledger:", "escalation:"):
             self.assertIn(token, goal)
         self.assertEqual(build["authorization"]["type"], "human-build-approval")
+        self.assertEqual(re.search(r"(?m)^status:\s*(\w+)$", goal).group(1), "active")
+        self.assertNotIn("approval", build)
         self.assertIn("goal_id", build)
         self.assertIn("containment", build)
         self.assertIn("Criterion evidence", acceptance)
@@ -343,11 +348,12 @@ class FrameworkStructureTests(unittest.TestCase):
         state = json.loads((ROOT / "assets/templates/harness/session/session-state.json").read_text(encoding="utf-8"))
         dispatch = (ROOT / "protocol/references/dispatch.md").read_text(encoding="utf-8")
         prompts = (ROOT / "protocol/references/prompts.md").read_text(encoding="utf-8")
+        skill = (ROOT / "assets/templates/skills/goal.md").read_text(encoding="utf-8")
         self.assertIn("execution_mode: goal", initiative)
         self.assertIn("build-by-build", initiative)
-        self.assertIn("Goal G-00x", initiative)
+        self.assertIn("`active` G-00x", initiative)
         self.assertIn("active_build_id", start)
-        self.assertIn("Do not issue a second Build", start)
+        self.assertIn("resume that Build and do not issue another", start)
         self.assertIn("scope_revision", handoff)
         self.assertIn("goal-delegation", orchestrator)
         self.assertIn("human-build-approval", orchestrator)
@@ -356,6 +362,9 @@ class FrameworkStructureTests(unittest.TestCase):
             self.assertIn(key, state)
         self.assertIn("continue | achieved | escalate", dispatch)
         self.assertIn("Scope confirmation", prompts)
+        self.assertIn("role-runtime-unavailable", skill)
+        self.assertIn("no legacy `approval` object", skill)
+        self.assertNotIn("Next: await human Build approval", (ROOT / "assets/templates/skills/plan.md").read_text(encoding="utf-8"))
 
     def test_ci_covers_supported_platform_and_python_baseline(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
@@ -376,9 +385,10 @@ class FrameworkStructureTests(unittest.TestCase):
         manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
         self.assertIn('ROOT / "assets" / "templates"', setup)
         self.assertIn('ROOT / "PROTOCOL.md"', setup)
+        self.assertIn('ROOT / "protocol" / "references"', setup)
         self.assertIn('ROOT / "VERSION"', setup)
         self.assertIn("shutil.rmtree(resources)", setup)
-        for entry in ("include VERSION", "include PROTOCOL.md", "recursive-include assets/templates *"):
+        for entry in ("include VERSION", "include PROTOCOL.md", "recursive-include protocol/references *.md", "recursive-include assets/templates *"):
             self.assertIn(entry, manifest)
         self.assertIn('PACKAGE_ROOT / "resources"', package)
         self.assertIn('"pip", "wheel"', smoke)
@@ -418,7 +428,7 @@ class PythonCliSmokeTests(unittest.TestCase):
     def test_version_and_doctor(self):
         ver = _cli("--version")
         self.assertEqual(ver.returncode, 0, ver.stdout + ver.stderr)
-        self.assertEqual(ver.stdout.strip(), "0.9.0")
+        self.assertEqual(ver.stdout.strip(), "0.9.1")
 
         doc = _cli("doctor")
         self.assertEqual(doc.returncode, 0, doc.stdout + doc.stderr)
@@ -468,6 +478,8 @@ class PythonCliSmokeTests(unittest.TestCase):
             self.assertTrue((target / "harness/goals/_GOAL-ACCEPTANCE.template.md").exists())
             self.assertTrue((target / "agents/goal-controller.md").exists())
             self.assertTrue((target / "skills/goal.md").exists())
+            self.assertTrue((target / "harness/references/goals.md").exists())
+            self.assertTrue((target / "harness/references/schemas.md").exists())
 
             requirements = target / "docs/requirements/software-requirements-specification.md"
             requirements.write_text("# Approved requirements\n\nDO NOT OVERWRITE\n", encoding="utf-8")
@@ -478,6 +490,7 @@ class PythonCliSmokeTests(unittest.TestCase):
 
             audit = _cli("audit", str(target))
             self.assertEqual(audit.returncode, 0, audit.stdout + audit.stderr)
+            self.assertIn("Goal state: none (awaiting confirmed Scope or explicit build-by-build selection)", audit.stdout)
             self.assertIn("AUDIT PASS", audit.stdout)
 
             guard_bad = _cli("guard", "--", "git reset --hard")
@@ -576,6 +589,52 @@ class PythonCliSmokeTests(unittest.TestCase):
                 self.assertIn(token, combined)
             for token in ("push", "merge", "tag", "release"):
                 self.assertIn(token, combined)
+
+            protocol = (target / "harness/PROTOCOL.md").read_text(encoding="utf-8")
+            initiative = (target / "skills/initiative.md").read_text(encoding="utf-8")
+            self.assertIn("| `goal` |", protocol)
+            self.assertNotIn("Human approves **Build B-00x** scope", protocol)
+            self.assertIn("不再等待 Build 审批", initiative)
+
+    def test_light_does_not_claim_goal_runtime_but_receives_protocol_references(self):
+        with tempfile.TemporaryDirectory(prefix="eh-light-contract-") as tmp:
+            target = Path(tmp) / "demo"
+            init = _cli("init", str(target), "--level", "Light", "--docs", "none")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+            agents = (target / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("Light keeps its direct/simple flow", agents)
+            self.assertFalse((target / "skills/goal.md").exists())
+            self.assertFalse((target / "agents/goal-controller.md").exists())
+            self.assertTrue((target / "harness/references/goals.md").exists())
+            checked = _cli("check", str(target))
+            self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+            audit = _cli("audit", str(target))
+            self.assertEqual(audit.returncode, 0, audit.stdout + audit.stderr)
+            self.assertIn("Goal state: unavailable at Light level", audit.stdout)
+
+    def test_framework_upgrade_requires_force_before_touching_generated_files(self):
+        with tempfile.TemporaryDirectory(prefix="eh-safe-upgrade-") as tmp:
+            target = Path(tmp) / "demo"
+            init = _cli("init", str(target), "--level", "Standard", "--docs", "none")
+            self.assertEqual(init.returncode, 0, init.stdout + init.stderr)
+            meta_path = target / ".harness-version"
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            current_version = meta["version"]
+            meta["version"] = "0.0.0"
+            meta_path.write_text(json.dumps(meta), encoding="utf-8")
+            agents_path = target / "AGENTS.md"
+            agents_path.write_text("OLD GENERATED ENTRY\n", encoding="utf-8")
+
+            refused = _cli("init", str(target), "--level", "Standard")
+            self.assertEqual(refused.returncode, 2, refused.stdout + refused.stderr)
+            self.assertIn("framework upgrade requires --force", refused.stderr)
+            self.assertEqual(agents_path.read_text(encoding="utf-8"), "OLD GENERATED ENTRY\n")
+            self.assertEqual(json.loads(meta_path.read_text(encoding="utf-8"))["version"], "0.0.0")
+
+            upgraded = _cli("init", str(target), "--level", "Standard", "--force")
+            self.assertEqual(upgraded.returncode, 0, upgraded.stdout + upgraded.stderr)
+            self.assertIn("Goal mode", agents_path.read_text(encoding="utf-8"))
+            self.assertEqual(json.loads(meta_path.read_text(encoding="utf-8"))["version"], current_version)
 
     def test_verification_requires_real_project_commands(self):
         with tempfile.TemporaryDirectory(prefix="eh-verify-") as tmp:

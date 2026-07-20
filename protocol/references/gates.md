@@ -49,7 +49,7 @@ For high-risk wording, gate advancement must distinguish these claims:
 5. **S4 Generate `agents/*`** — only after G1/Charter landed
 6. **S5 Ownership conflict check**
 7. **S6 Task DAG / Task Packets**
-8. **S7 Invoke runtime role instances** — temporary orchestrator per batch
+8. **S7 Invoke runtime role instances** — Goal Controller plus temporary Orchestrator per authorized Build
 9. **S8 Execute** — workers write only their namespaces
 10. **S9 Integration barrier** — freeze candidates before G4
 11. **S10 Release single-writer**

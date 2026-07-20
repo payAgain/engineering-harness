@@ -51,9 +51,10 @@ def main() -> int:
         subprocess.run([str(eh), "audit", str(target)], cwd=root, check=True)
 
         protocol = target / "harness" / "PROTOCOL.md"
+        goal_reference = target / "harness" / "references" / "goals.md"
         packet = target / "harness" / "tasks" / "_PACKET.template.md"
-        if not protocol.is_file() or not packet.is_file():
-            raise RuntimeError("installed wheel did not generate packaged protocol/templates")
+        if not protocol.is_file() or not goal_reference.is_file() or not packet.is_file():
+            raise RuntimeError("installed wheel did not generate packaged protocol/references/templates")
 
     print("WHEEL CONSUMER PASS")
     return 0

@@ -20,7 +20,7 @@ acceptance_doc + must-commit + status=accepted
 |---|---|---|
 | Initiative | 一次有边界的交付 | `I-001` |
 | **Phase** | 计划里的一个阶段 | `P-001` |
-| Build | 人类批准的本轮 Phase 集合 | `B-001` |
+| Build | Goal Controller 授权或人类明确批准的本轮 Phase 集合 | `B-001` |
 | Step | Phase 内一次角色实例 | `role` + `purpose` |
 | Accept | 阶段验收文档 | Packet `acceptance_doc` |
 
@@ -50,7 +50,7 @@ A self-contained matrix is not enough. Plan must also identify what would make t
 ## 串行与并行（强制）
 
 1. Phase **默认** `P-001 → P-002 → …`  
-2. Human Gate 只批准 Build **范围**（含哪些 Phase），**禁止**询问「能否同步/并行」  
+2. Goal mode 由 Controller 授权 Build 范围；`build-by-build` 才由 Human 批准；**禁止**询问「能否同步/并行」
 3. 若一个 Build 含多个 Phase：仍按依赖顺序推进；合并 ≠ 并行  
 4. 仅 Orchestrator 可根据 `dependencies` + `conflict_score` + 写权不相交判定并行，并写入 invocations `parallel_group`  
 5. 拿不准 → 串行  
@@ -88,7 +88,7 @@ role_pipeline:
 
 ## 与 Build 的关系
 
-- Build = 人类批准「本轮推进哪些 Phase」  
+- Build = 由 Goal delegation 或 Human Build approval 授权的 Phase 集合
 - Orchestrator 负责顺序/并行与角色派发  
 - Phase 未 `accepted` 前不得勾成完成  
 

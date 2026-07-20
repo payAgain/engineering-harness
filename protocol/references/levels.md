@@ -23,7 +23,7 @@
 | Level | 一句话 |
 |---|---|
 | **Light** | 最小可恢复壳：能澄清目标、能续作、能自检；**不**强制多角色与完整门禁 |
-| **Standard** | 常规工程默认：角色、任务包、分支策略、危险命令护栏、batch 台账齐全 |
+| **Standard** | 常规工程默认：Goal Controller、角色、任务包、分支策略与授权台账齐全 |
 | **Full** | 在 Standard 之上把 G0–G6、评审门、集成屏障、发版审批当成**硬要求** |
 
 ## 你会得到什么 / 可以省略什么
@@ -36,6 +36,7 @@
 | GitHub Flow / `branch_check` | 建议有 | ✓（init 即落地） | ✓ |
 | 固定角色 `agents/*` + ownership + Task DAG | ✗ | ✓ | ✓ |
 | 独立角色实例调度 + invocation 台账 | 可选（简单任务可直做） | ✓（强制） | ✓（强制） |
+| Goal mode 连续有界执行 | ✗（直接/简化流程） | ✓（Scope 后默认） | ✓（Scope 后默认） |
 | Reviewer 门（risk≥8 / code） | ✗ | 建议 | ✓（强制） |
 | 完整 G0–G6 / 集成屏障 / 发版单写 | ✗ | 按需 | ✓（强制） |
 | `docs/approval-policy.md`（tag/push/release） | ✗ | 可选 | ✓（init Full 写入） |
@@ -54,7 +55,7 @@
 
 - 新业务服务 / 库，预期会维护几个月以上
 - 需要 connector、API、多文件功能迭代
-- 希望 Agent 按 batch 干活，人审 SHA，再授权 push
+- 希望 Agent 在确认 Scope 内连续完成有界 Build，人审 SHA，再授权 push
 
 **选 Full**
 

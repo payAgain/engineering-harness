@@ -1,8 +1,8 @@
 # Plan Procedure
 
-## Goal
+## Purpose
 产出可追踪的 **Phase 清单**（进度 SSOT 的草稿 → 物化）。  
-命名必须遵守 `protocol/references/glossary.md`。
+命名必须遵守 `harness/references/glossary.md`。
 
 ## Rules
 - Inspect relevant files first; keep scope tight
@@ -41,7 +41,7 @@ Files Likely Affected:
 Validation:
 Risks:
 
-Next: await human Build approval (scope only — not parallel strategy)
+Next: Goal Controller containment/issuance | await Human approval only when execution_mode=build-by-build
 ```
 
 ## Replan

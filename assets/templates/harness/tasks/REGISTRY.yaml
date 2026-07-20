@@ -1,7 +1,7 @@
 schema_version: 1
 charter_version: "0.0.0"
 updated: "{{TIMESTAMP}}"
-# Phase progress index. IDs: I-00x / P-00x / B-00x — see protocol/references/glossary.md
+# Phase progress index. IDs: I-00x / G-00x / P-00x / B-00x — see harness/references/glossary.md
 # tasks:
 #   - task_id: P-001
 #     title: "…"

@@ -7,10 +7,11 @@
 3. `harness/session/session-state.json`
 4. `harness/session/session-log.md`
 5. `PROJECT_CHARTER.md`
-6. applicable ADR / contracts / ownership / task packet
-7. `docs/verification.md`
-8. current blockers and verification evidence
-9. relevant `agents/<role>.md` and `skills/*.md`
+6. active `harness/goals/G-00x.yaml` and `harness/builds/B-00x.json`
+7. applicable ADR / contracts / ownership / task packet
+8. `docs/verification.md`
+9. current blockers and verification evidence
+10. relevant `agents/<role>.md` and `skills/*.md`
 
 Do not edit business code during start.
 
@@ -21,10 +22,10 @@ Follow `skills/start.md`.
 ```text
 Session Briefing
 
-Current Goal:
+Formal Goal ID / status / loop stage:
 Current Status:
 Current Phase:
-Active Batch / Tasks:
+Active Build / Phases:
 Next 3 Steps:
 Relevant Files:
 Validation Commands:

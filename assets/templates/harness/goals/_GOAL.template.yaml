@@ -1,7 +1,8 @@
 schema_version: 1
 goal_id: G-001
 initiative_id: I-001
-status: awaiting_scope_confirmation
+# Copy this template only after Human Scope confirmation; a runtime Goal starts active.
+status: active
 loop_stage: planning
 execution_mode: goal
 objective: <human-confirmed-objective>
